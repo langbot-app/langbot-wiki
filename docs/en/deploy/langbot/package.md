@@ -10,4 +10,4 @@ LangBot is packaged and released to PyPI. Please install [uv](https://docs.astra
 uvx langbot@latest
 ```
 
-This will set the current directory as the working directory, and you can access http://localhost:5300 to start using it.
+This will set the current directory as the working directory, and you can access `http://localhost:5300` to start using it.

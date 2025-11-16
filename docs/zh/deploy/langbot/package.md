@@ -10,4 +10,4 @@ LangBot 已打包发布至 PyPI。请安装[uv](https://docs.astral.sh/uv/gettin
 uvx langbot@latest
 ```
 
-这将把该目录作为工作目录，访问 http://localhost:5300 即可开始使用。
+这将把该目录作为工作目录，访问 `http://localhost:5300` 即可开始使用。
