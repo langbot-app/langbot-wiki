@@ -344,6 +344,7 @@ export default defineConfig({
                 text: "Deploy LangBot",
                 collapsed: true,
                 items: [
+                  { text: "Package Manager Deployment", link: "/en/deploy/langbot/package" },
                   { text: "Docker Deployment", link: "/en/deploy/langbot/docker" },
                   {
                     text: "1Panel Deployment",
