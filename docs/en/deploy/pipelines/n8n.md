@@ -15,10 +15,19 @@ Then configure and fill in the other settings according to the content below.
 ## Configuring n8n Workflow Connection
 
 ![n8n Workflow](/assets/image/zh/deploy/pipelines/n8n/create_wf.png)
+or
+![n8n Workflow](/assets/image/zh/deploy/pipelines/n8n/create_wf01.png)
 
-You need to select `Webhook` as the trigger and configure it according to the image below:
+Select `Webhook` or `On chat message` as the trigger and configure as follows:
+- Webhook:
+    ![n8n webhook configuration](/assets/image/zh/deploy/pipelines/n8n/config_webhook.png)
+- On chat message:
+    ![n8n on chat message configuration](/assets/image/zh/deploy/pipelines/n8n/config_n8n_onchatmessage.png)
 
-![n8n webhook configuration](/assets/image/zh/deploy/pipelines/n8n/config_webhook.png)
+:::info
+If you need streaming responses, set `Response Mode` to `Streaming`.
+![n8n streaming configuration](/assets/image/zh/deploy/pipelines/n8n/config_response_model.png)
+:::
 
 :::info
 Authentication corresponds to the authentication methods in LangBot's pipeline configuration, which you can modify as needed.
@@ -26,7 +35,12 @@ Authentication corresponds to the authentication methods in LangBot's pipeline c
 ![n8n workflow configuration](/assets/image/zh/deploy/pipelines/n8n/config_auth.png)
 :::
 
-For the workflow response content in n8n, please use the `Respond to Webhook` node and configure it according to the image below:
+Configure the node that calls the AI model as `AI Agent`, following the setup below:
+> For streaming responses, add the items highlighted in the red box. If you don't need streaming, you can skip this.
+
+![n8n AI model call configuration](/assets/image/zh/deploy/pipelines/n8n/config_call_ai.png)
+
+For the workflow response content in n8n, please use the `Respond to Webhook` node and configure it according to the image below (if you choose streaming responses with the `AI Agent` node, you do not need this step):
 
 ![n8n workflow response configuration](/assets/image/zh/deploy/pipelines/n8n/config_respond.png)
 

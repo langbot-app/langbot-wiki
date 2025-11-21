@@ -10,15 +10,26 @@ LangBot 目前支持通过 n8n 工作流的 `Webhook` 节点，来触发工作�
 
 ![n8n 作为运行器](/assets/image/zh/deploy/pipelines/n8n/config_runner.png)
 
+
 并根据下方内容设置并填写其他配置。
 
 ## 配置 n8n 工作流连接
 
 ![n8n 工作流](/assets/image/zh/deploy/pipelines/n8n/create_wf.png)
+or 
+![n8n 工作流](/assets/image/zh/deploy/pipelines/n8n/create_wf01.png)
 
-需要选择`Webhook`触发，并参考下图配置：
+需要选择`Webhook`或者`On chat message`触发，并参考下图配置：
+* webhook
+    ![n8n webhook 配置](/assets/image/zh/deploy/pipelines/n8n/config_webhook.png)
+* on chat message
+    ![n8n on chat message 配置](/assets/image/zh/deploy/pipelines/n8n/config_n8n_onchatmessage.png)
 
-![n8n webhook 配置](/assets/image/zh/deploy/pipelines/n8n/config_webhook.png)
+:::info
+如果要需要流式，其中的`Response Mode`都需要选择为`Streaming`。
+![n8n 流式配置](/assets/image/zh/deploy/pipelines/n8n/config_response_model.png)
+:::
+
 
 :::info
 Authentication 对应 LangBot 流水线配置中的几种鉴权方式，可自行更改。
@@ -26,7 +37,14 @@ Authentication 对应 LangBot 流水线配置中的几种鉴权方式，可自�
 ![n8n 工作流配置](/assets/image/zh/deploy/pipelines/n8n/config_auth.png)
 :::
 
-n8n 的工作流响应内容请使用`Respond to Webhook`节点，并参考下图配置：
+
+调用ai模型的节点可配置为`AI Agent`，并参考下图配置：
+> 需要流式则将图片中红框内容添加，不需要则不管
+
+![n8n 调用ai模型配置](/assets/image/zh/deploy/pipelines/n8n/config_call_ai.png)
+
+
+n8n 的工作流响应内容请使用`Respond to Webhook`节点，并参考下图配置（如果你选择的是流式响应和`AI Agent`节点，则不需要操作此步骤）：
 
 ![n8n 工作流响应配置](/assets/image/zh/deploy/pipelines/n8n/config_respond.png)
 
