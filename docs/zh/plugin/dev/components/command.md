@@ -130,6 +130,7 @@ class Info(Command):
 - `!info` 匹配 name="" 的子命令
 - `!info field` 匹配 name="field" 的子命令
 - `!info field value` 匹配 name="field" 的子命令，`value` 为子命令参数
+- 特殊地，`name="*"` 匹配所有未匹配的一级子命令，并将`info`后的每一节作为参数传递传递参数，例如`!info 123`, `!info abc`. 此时可以从`context.crt_params`中获取到`['123']`或`['abc']`，取决于用户输入的参数。
 
 子命令函数中，可通过 `context` 变量读取到命令参数。
 

@@ -130,6 +130,7 @@ In this code, the `send` function is registered as a subcommand through the `@se
 - `!info` matches the subcommand with name=""
 - `!info field` matches the subcommand with name="field"
 - `!info field value` matches the subcommand with name="field", with `value` as the subcommand parameter
+- Specialy, `name="*"` matches all unmatched first-level subcommands, and passes each section after `info` as parameters, for example `!info 123`, `!info abc`. You can get `['123']` or `['abc']` from `context.crt_params`, depending on the user's input.
 
 In subcommand functions, you can read command parameters through the `context` variable.
 
