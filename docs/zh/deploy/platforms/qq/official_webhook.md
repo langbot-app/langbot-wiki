@@ -2,6 +2,12 @@
 
 本文章只提供测试版机器人的发布，具体机器人上线请按照 [发布流程](https://q.qq.com/qqbot/#/home) 进行部署。
 
+:::warning
+目前 QQ 官方发布公告，禁止违规接入 AIGC 功能，请慎重使用。
+:::
+
+
+
 ## 注册 QQ 机器人（测试机器人）
 
 ### 配置机器人基本信息
@@ -98,9 +104,15 @@ sudo systemctl status caddy
 
 首先 **启动 LangBot** 。
 
-点击 机器人管理端网页中的 `回调配置`，勾选下面 `添加事件` 中的所有事件。 在请求地址中填写 Caddyfile 中设置的域名，后缀为`/callback/command`。
+点击 机器人管理端网页中的 `回调配置`，勾选下面 `添加事件` 中的所有事件。 
 
-比如域名为 `testlb.com`，那么请求地址中填写 `testlb.com/callback/command` ，点击确定配置。如果回调地址保存成功，那么意味着部署成功。若出现 `校验失败` 字样，请认真检查上述配置项是否填写正确。
+进入 LangBot 配置页面，启用并且选择对应的QQ机器人，粘贴对应机器人配置页面中的 Webhook 回调地址，将其中的 IP 地址和端口改成之前 Caddy 配置的域名，在请求地址中填入。
+
+如图：
+![Caddy文档](/assets/image/zh/deploy/bots/qq/official/qqofficial4.png)
+
+
+比如域名为 `testlb.com`，那么请求地址中填写 `testlb.com/bots/xxxxxx-xxxxxx` ，点击确定配置。如果回调地址保存成功，那么意味着部署成功。若出现 `校验失败` 字样，请认真检查上述配置项是否填写正确。
 
 ## 发布方式
 

@@ -50,7 +50,7 @@
 
 点击` 接收消息 `，` 设置API接收 `，开始填写接收服务器消息配置。
 
-URL填写为` http://your_ip_address:2290/callback/command `，你的IP地址就是部署LangBot的服务器的地址。
+在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址，填写到 URL 中。
 
 Token 和 EncodingAESKey 点击随机获取，并记录下来
 

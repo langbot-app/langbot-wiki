@@ -51,6 +51,5 @@
 `LoadingMessage`选项为加载信息，可以更改为其他内容，仅在模式为`passive`下有效。将 `enable` 设置为 `true` 。
 
 填写成功后，**启动 LangBot** 。
-
-将 URL 填写为`https://your_domain_name/callback/command`，其中的 `your_domain_name` 就是 Caddy 中填写的域名。点击保存。如果可以保存成功，那么意味着部署成功。如果出现**系统发生错误，请稍后重试**，那么请重新检查以上配置内容是否填写正确。
+在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址，返回微信公众号机器人配置页面，填写到`URL`。比如 URL 填写为`https://your_domain_name/bots/xxxxx`，其中的 `your_domain_name` 就是 Caddy 中填写的域名。点击保存。如果可以保存成功，那么意味着部署成功。如果出现**系统发生错误，请稍后重试**，那么请重新检查以上配置内容是否填写正确。
 

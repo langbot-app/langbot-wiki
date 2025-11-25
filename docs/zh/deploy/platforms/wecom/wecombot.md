@@ -29,7 +29,7 @@
 
 ![企业微信智能机器人适配器](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_4.png)
 
-返回企业微信机器人配置页面，在`URL回调`中填写入机器人回调地址（接受http），例：**http://xxx.xxx.xx.xx:2291/callback/command** 。若创建成功，则会跳转至详情页面，若出现`请求URL失败`字样，请再三检查上述操作是否一一完成。
+在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址，返回企业微信机器人配置页面，填写到`URL回调`中。若创建成功，则会跳转至详情页面，若出现`请求URL失败`字样，请再三检查上述操作是否一一完成。
 
 创建成功之后的详情页：
 ![创建成功](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_5.png)
