@@ -78,11 +78,28 @@
 
 
 
+## 对接 LangBot
 
+接下来打开 LangBot 配置页面：
 
+1. 点击 "机器人"，然后点击 "添加"
+![alt text](/assets/image/zh/deploy/bots/line/line26.png)
+2. 在 "平台/适配器选择" 中选择 "LINE"
+![alt text](/assets/image/zh/deploy/bots/line/line27.png)
+
+3. 填写配置信息：
+   - Channel Secret：您之前获取的 Channel Secret
+   - Channel Access Token：您之前获取的 Channel Access Token
+   ![alt text](/assets/image/zh/deploy/bots/line/line28.png)
+
+4. 点击 "保存" 完成配置
+   ![alt text](/assets/image/zh/deploy/bots/line/line29.png)
 
 
 ## 配置Webhook
+
+* 从 LangBot 配置页面获取 Webhook 回调地址
+![alt text](/assets/image/zh/deploy/bots/line/line30.png)
 
 * 点击控制台或者直接访问 [控制台](https://developers.line.biz/console/)
 ![alt text](/assets/image/zh/deploy/bots/line/line17.png)
@@ -101,23 +118,6 @@
 5. 点击 "Verify" 按钮测试连接是否成功
 ![alt text](/assets/image/zh/deploy/bots/line/line25.png)
 
-
-## 对接 LangBot
-
-接下来打开 LangBot 配置页面：
-
-1. 点击 "机器人"，然后点击 "添加"
-![alt text](/assets/image/zh/deploy/bots/line/line26.png)
-2. 在 "平台/适配器选择" 中选择 "LINE"
-![alt text](/assets/image/zh/deploy/bots/line/line27.png)
-
-3. 填写配置信息：
-   - Channel Secret：您之前获取的 Channel Secret
-   - Channel Access Token：您之前获取的 Channel Access Token
-   ![alt text](/assets/image/zh/deploy/bots/line/line28.png)
-
-4. 点击 "保存" 完成配置
-   ![alt text](/assets/image/zh/deploy/bots/line/line29.png)
 
 
 ## 功能配置

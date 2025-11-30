@@ -14,7 +14,7 @@
 
 ## 对接 LangBot
 
-![对接 LangBot](/assets/image/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+![对接 LangBot](/assets/image/zh/deploy/bots/wecom/wecomcs/connect_to_langbot01.png)
 
 后续的配置方式和配置项和[企业微信内部应用](wecom.md)一样，只是不需要 `contacts_secret`。
 

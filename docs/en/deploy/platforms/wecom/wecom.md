@@ -50,7 +50,8 @@ Click `Enterprise Trusted IP` at the bottom and add the server where LangBot is 
 
 Click `Receive Messages`, `Set API Reception`, and start filling in the server message reception configuration.
 
-Fill in the URL as `http://your_ip_address:2290/callback/command`, where your IP address is the address of the server where LangBot is deployed.
+On the LangBot homepage, enable and select the corresponding bot, click to enter the configuration page, copy the Webhook callback address, and fill it into the URL.
+![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/wecom6.png)
 
 Click to randomly generate the Token and EncodingAESKey, and record them
 

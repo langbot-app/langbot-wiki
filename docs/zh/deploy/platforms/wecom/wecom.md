@@ -51,6 +51,7 @@
 点击` 接收消息 `，` 设置API接收 `，开始填写接收服务器消息配置。
 
 在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址，填写到 URL 中。
+![Webhook 回调地址](/assets/image/zh/deploy/bots/wecom/wecom/wecom6.png)
 
 Token 和 EncodingAESKey 点击随机获取，并记录下来
 
