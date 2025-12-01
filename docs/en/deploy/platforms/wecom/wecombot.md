@@ -31,6 +31,10 @@ Among them, the token is Token, the Encoding-AESKey is EncodingAESKey, and the B
 
 On the LangBot homepage, enable and select the corresponding bot, click to enter the configuration page, copy the Webhook callback address
 
+::: info
+We recommend that you first refer to [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
+:::
+
 ![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_8.png)
 
 Return to the WeCom robot configuration page and fill the copied webhook address into `URL Callback`. If the creation is successful, it will jump to the details page. If the message `Request URL Failed` appears, please double-check whether the above steps have been completed one by one.

@@ -38,12 +38,11 @@ After completing all the above operations, open the LangBot Webui configuration 
 ## Start Bot
 
 ::: info
-Since Slack officially requires https, you can refer to the [Caddy configuration part in the QQ official bot deployment process](/en/deploy/platforms/qq/official_webhook.md#caddy-operation-process), mapping the port to LangBot's startup port.
+Since Slack officially requires https, please configure reverse proxy first according to the documentation [Configure HTTP Reverse Proxy and SSL](/en/workshop/production/proxy-and-ssl).
 :::
 
 After filling in the Slack configuration items, **start LangBot**.
-Enable and open the Slack bot configuration page on the LangBot homepage, copy the WebHook URL from it, then follow Slack's official requirements to set up Https proxy, and concatenate the proxied domain name with the WebHook URL.
-Then in the `Request URL` of the Event Subscriptions you just configured, fill in the concatenated URL.
+Enable and open the Slack bot configuration page on the LangBot homepage, copy the WebHook URL from it, then in the `Request URL` of the Event Subscriptions you just configured, fill in the WebHook URL.
 
 
 After filling in all the above configuration items, click save link. If it shows a green **Verified**, it means the deployment is successful.

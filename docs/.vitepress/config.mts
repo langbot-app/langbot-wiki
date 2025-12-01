@@ -511,6 +511,12 @@ export default defineConfig({
             text: "Workshops",
             items: [
               {
+                text: "Using LangBot in Production Environment",
+                items: [
+                  { text: "Configuring HTTP Reverse Proxy or Accessing LangBot via Gateway", link: "/en/workshop/production/proxy-and-ssl" },
+                ],
+              },
+              {
                 text: "How to Implement a Message Platform Adapter?",
                 link: "/en/workshop/impl-platform-adapter",
               },

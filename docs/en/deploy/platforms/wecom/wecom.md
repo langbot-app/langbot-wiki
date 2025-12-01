@@ -51,6 +51,11 @@ Click `Enterprise Trusted IP` at the bottom and add the server where LangBot is 
 Click `Receive Messages`, `Set API Reception`, and start filling in the server message reception configuration.
 
 On the LangBot homepage, enable and select the corresponding bot, click to enter the configuration page, copy the Webhook callback address, and fill it into the URL.
+
+::: info
+We recommend that you first refer to [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
+:::
+
 ![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/wecom6.png)
 
 Click to randomly generate the Token and EncodingAESKey, and record them

@@ -1,0 +1,111 @@
+# Configure HTTP Reverse Proxy or Access LangBot Through Gateway
+
+LangBot does not have built-in SSL support for HTTPS services. If you need to resolve a domain name to a LangBot instance, or need to use HTTPS to access LangBot WebUI and webhook addresses for various bots, please refer to this document to deploy NGINX or Caddy to implement HTTP reverse proxy.
+
+You need to deploy LangBot on a host with a public IP address, purchase a domain name, and resolve the domain name to the host's public IP.
+
+::: warning
+If you need to use bots that require Webhook callback addresses such as QQ Official Bot, WeChat Official Account, WeCom, Slack, LINE, etc., you must configure HTTP reverse proxy according to this document.
+:::
+
+## Caddy
+
+Caddy is a modern HTTP server that supports automatic HTTPS certificate application and renewal, reverse proxy, and automatic DNS resolution configuration.
+
+[Caddy Installation Documentation](https://caddy2.dengxiaolong.com/docs/install). Select the installation steps corresponding to your operating system and proceed with the installation.
+
+### Configure Caddyfile
+
+This document assumes using the Ubuntu system to deploy LangBot. In the system, the default location of Caddyfile is `/etc/caddy/Caddyfile`.
+Use vim or nano to edit Caddyfile, and fill in the Caddyfile as follows:
+
+```json
+your.domain.com {
+        reverse_proxy 127.0.0.1:5300
+}
+```
+
+::: info
+If your Caddy and LangBot are deployed using containers, please check [Container Network Configuration Details](/en/workshop/network-details)
+:::
+
+Now, you can access LangBot WebUI through your browser at `https://your.domain.com`.
+
+### Set Bot Callback Address Prefix
+
+If you need to use bots that require Webhook callback addresses such as QQ Official Bot, WeChat Official Account, WeCom, Slack, LINE, etc., please set `api.webhook_prefix` in the data/config.yaml file to your domain name. For example: `https://your.domain.com`.
+
+After that, you will see the correctly displayed callback address on the bot management page.
+
+## NGINX
+
+NGINX is also a commonly used HTTP server and reverse proxy tool that can be used to implement HTTPS access to LangBot.
+
+### Install NGINX
+
+On Ubuntu, you can install NGINX with the following commands:
+
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+### Prepare SSL Certificate
+
+You can use [Let's Encrypt](https://letsencrypt.org/) to apply for a free SSL certificate. It is recommended to use the [Certbot](https://certbot.eff.org/) tool to obtain a certificate:
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx
+```
+
+Follow the prompts to enter your domain name, and certificate application and NGINX configuration will be completed automatically. If you need to configure manually, you can refer to the following content.
+
+### Configure NGINX Reverse Proxy
+
+Edit the NGINX configuration file `/etc/nginx/sites-available/langbot` (you can use vim or nano editor):
+
+```nginx
+server {
+    listen 80;
+    server_name your.domain.com;
+    # Redirect HTTP traffic to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name your.domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/your.domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your.domain.com/privkey.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Reverse proxy to LangBot instance
+    location / {
+        proxy_pass http://127.0.0.1:5300;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Replace `your.domain.com` with your actual domain name.
+
+Enable this configuration and restart NGINX:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/langbot /etc/nginx/sites-enabled/langbot
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Set Bot Callback Address Prefix
+
+Similarly, set `api.webhook_prefix` to `https://your.domain.com` in the `data/config.yaml` configuration file, so that the bot Webhook callback address will be correct.
+
+After completing the above configuration, you can securely access LangBot WebUI and bot Webhook services through `https://your.domain.com`.

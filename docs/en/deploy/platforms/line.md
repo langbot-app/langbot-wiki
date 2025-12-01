@@ -90,6 +90,10 @@ Next, open the LangBot configuration page:
 
 ## Configure Webhook
 
+::: info
+We recommend that you first refer to [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
+:::
+
 * Get the Webhook callback URL from the LangBot configuration page
 ![alt text](/assets/image/zh/deploy/bots/line/line30.png)
 
