@@ -56,6 +56,12 @@ LangBot is an open-source LLM native instant messaging robot development platfor
 | RAG | ✅ | Using Chroma as vector database |
 | MCP | ✅ | Support Stdio and HTTP protocol |
 
+## System Extensibility
+
+- HTTP Service API: Supports accessing various entities of LangBot through HTTP API interfaces with API key authentication.
+- Outgoing Webhook: Supports sending internal events of LangBot to external systems through Webhook.
+- Production-grade plugin system: A production-grade plugin system based on cross-process communication technology and asynchronous technology, supporting various component extensions.
+
 ## Case Screenshots
 
 ![bot_page](/assets/image/zh/insight/features/bot-page.png)

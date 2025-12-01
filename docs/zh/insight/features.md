@@ -58,6 +58,12 @@ LangBot 是一个开源的大语言模型原生即时通信机器人开发平台
 | RAG | ✅ | 使用 Chroma 作为向量数据库 |
 | MCP | ✅ | 支持 Stdio 和 HTTP 两种方式 |
 
+## 系统扩展性
+
+- HTTP Service API: 支持通过基于 API key 鉴权的 HTTP API 接口访问 LangBot 各种实体。
+- Outgoing Webhook: 支持通过 Webhook 发送 LangBot 内部事件到外部系统。
+- 生产级插件系统: 基于跨进程通信技术和异步技术实现的生产级插件系统，支持多种组件扩展。
+
 ## 案例截图
 
 ![bot_page](/assets/image/zh/insight/features/bot-page.png)

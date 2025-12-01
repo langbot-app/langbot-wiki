@@ -240,6 +240,7 @@ export default defineConfig({
             items: [
               {
                 text: "将 LangBot 用于生产环境",
+                collapsed: true,
                 items: [
                   { text: "配置 HTTP 反向代理或通过网关访问 LangBot", link: "/zh/workshop/production/proxy-and-ssl" },
                 ]
@@ -519,6 +520,7 @@ export default defineConfig({
             items: [
               {
                 text: "Using LangBot in Production Environment",
+                collapsed: true,
                 items: [
                   { text: "Configuring HTTP Reverse Proxy or Accessing LangBot via Gateway", link: "/en/workshop/production/proxy-and-ssl" },
                 ],
