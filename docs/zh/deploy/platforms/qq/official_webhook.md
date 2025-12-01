@@ -47,46 +47,7 @@
 
 ## 配置回调地址
 
-由于QQ官方机器人必须要求回调地址是 https 请求，但 LangBot 仅提供 http 方式，所以需要自行配置反向代理。
-
-本文建议使用 [Caddy](https://caddy2.dengxiaolong.com/docs/) 反向代理，操作流程如下文。
-
-### 操作caddy流程
-
-#### 安装caddy
-
-进入[Caddy安装文档](https://caddy2.dengxiaolong.com/docs/install)。选择对应自己操作系统的安装步骤，进行安装。
-
-#### 填写Caddyfile
-
-本文假设使用 ubuntu 系统部署 LangBot ，那么在系统中，Caddyfile 的默认位置为 `/etc/caddy/Caddyfile`。
-使用 vim 或 nano 编辑 Caddyfile ，Caddyfile文件填写为：
-```json
-your_domain_name {
-        reverse_proxy 127.0.0.1:2284
-}
-```
-例如，如果你有域名 testlb.com，并且解析地址为本机，同时开启**443**端口，那么填写为：
-```json
-testlb.com {
-        reverse_proxy 127.0.0.1:2284
-}
-```
-
-保存并且退出文件。
-
-**注，Caddyfile文件的填写要求非常严苛，请按照正确的格式填写，如果遇到问题请自行查询Caddy文档或者询问AI。**
-
-#### 启动caddy
-输入命令
-```bash
-sudo systemctl start caddy
-```
-
-成功启动后，检查 Caddy 状态命令：
-```bash
-sudo systemctl status caddy
-```
+要求 LangBot 部署在具有公网 IP 的服务器上，并已成功启用 HTTPS。请根据文档[配置 HTTP 反向代理和 SSL](/zh/workshop/production/proxy-and-ssl) 操作。
 
 
 #### 后续配置

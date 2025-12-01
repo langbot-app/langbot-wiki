@@ -233,6 +233,12 @@ export default defineConfig({
             text: "实践",
             items: [
               {
+                text: "将 LangBot 用于生产环境",
+                items: [
+                  { text: "配置 HTTP 反向代理或通过网关访问 LangBot", link: "/zh/workshop/production/proxy-and-ssl" },
+                ]
+              },
+              {
                 text: "如何实现一个消息平台适配器？",
                 link: "/zh/workshop/impl-platform-adapter",
               },

@@ -98,6 +98,10 @@
 
 ## 配置Webhook
 
+::: info
+推荐您先参照[配置 HTTP 反向代理](/zh/workshop/production/proxy-and-ssl)来配置 LangBot 回调地址。
+:::
+
 * 从 LangBot 配置页面获取 Webhook 回调地址
 ![alt text](/assets/image/zh/deploy/bots/line/line30.png)
 

@@ -51,5 +51,4 @@ In the configuration items, the `Mode` option is the selected integration mode, 
 The `LoadingMessage` option is the loading message, which can be changed to other content, and is only valid when the mode is `passive`. Set `enable` to `true`.
 
 After filling in successfully, **start LangBot**.
-
-Fill in the URL as `https://your_domain_name/callback/command`, where `your_domain_name` is the domain name filled in Caddy. Click Save. If it can be saved successfully, it means the deployment is successful. If you see **System error, please try again later**, please recheck whether the above configuration content is filled in correctly.
+On the LangBot homepage, enable and select the corresponding bot, click to enter the configuration page, copy the Webhook callback address, return to the WeChat Official Account bot configuration page, and fill it into `URL`. For example, if the URL is filled as `https://your_domain_name/bots/xxxxx`, where `your_domain_name` is the domain name filled in Caddy. Click Save. If it can be saved successfully, it means the deployment is successful. If you see **System error, please try again later**, please recheck whether the above configuration content is filled in correctly.

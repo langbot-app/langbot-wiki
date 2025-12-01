@@ -31,6 +31,10 @@
 
 在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址
 
+::: info
+推荐您先参照[配置 HTTP 反向代理](/zh/workshop/production/proxy-and-ssl)来配置 LangBot 回调地址。
+:::
+
 ![Webhook 回调地址](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_8.png)
 
 返回企业微信机器人配置页面将复制的webhook地址填写到`URL回调`中。若创建成功，则会跳转至详情页面，若出现`请求URL失败`字样，请再三检查上述操作是否一一完成。
