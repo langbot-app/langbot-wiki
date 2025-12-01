@@ -1,0 +1,111 @@
+# 配置 HTTP 反向代理或通过网关访问 LangBot
+
+LangBot 内部未支持内置 SSL 提供 HTTPS 服务，若您需要解析域名到 LangBot 实例，或需要使用 HTTPS 访问 LangBot WebUI 和各个机器人的 Webhook 地址，请参考此文档部署 NGINX 或 Caddy 实现 HTTP 反向代理。
+
+您需要将 LangBot 部署在具有公网 IP 的主机上，并购买域名，将域名解析到主机公网 IP 上。
+
+::: warning
+若您需要使用 QQ官方机器人、微信公众号、企业微信、Slack、LINE 等需要 Webhook 回调地址的机器人，请务必按照本文档配置 HTTP 反向代理。
+:::
+
+## Caddy
+
+Caddy 是一个现代的 HTTP 服务器，支持自动 HTTPS 证书申请和续期，支持反向代理，支持自动配置 DNS 解析。
+
+[Caddy 安装文档](https://caddy2.dengxiaolong.com/docs/install)。选择对应自己操作系统的安装步骤，进行安装。
+
+### 填写 Caddyfile
+
+本文假设使用 ubuntu 系统部署 LangBot ，那么在系统中，Caddyfile 的默认位置为 `/etc/caddy/Caddyfile`。
+使用 vim 或 nano 编辑 Caddyfile ，Caddyfile文件填写为：
+
+```json
+your.domain.com {
+        reverse_proxy 127.0.0.1:5300
+}
+```
+
+::: info
+若您的 Caddy 和 LangBot 使用容器部署，请查看[容器网络配置详解](/zh/workshop/network-details)
+:::
+
+现在，您即可通过浏览器访问 `https://your.domain.com` 访问 LangBot WebUI。
+
+### 设置机器人回调地址前缀
+
+若您需要使用 QQ官方机器人、微信公众号、企业微信、Slack、LINE 等需要 Webhook 回调地址的机器人，请在 data/config.yaml 文件中设置`api.webhook_prefix`为您的域名。例如：`https://your.domain.com`。
+
+之后，在机器人管理页面，您将看到正确显示的回调地址。
+
+## NGINX
+
+NGINX 也是常用的 HTTP 服务器和反向代理工具，可以用来实现 LangBot 的 HTTPS 接入。
+
+### 安装 NGINX
+
+在 Ubuntu 上可以通过以下命令安装 NGINX：
+
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+### 准备 SSL 证书
+
+您可以使用 [Let’s Encrypt](https://letsencrypt.org/) 免费申请 SSL 证书。推荐使用 [Certbot](https://certbot.eff.org/) 工具来获取证书：
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx
+```
+
+按照提示输入域名，证书申请与 NGINX 配置会自动完成。如果需要手动配置，可参考以下内容。
+
+### 配置 NGINX 反向代理
+
+编辑 NGINX 配置文件 `/etc/nginx/sites-available/langbot`（可以使用 vim 或 nano 编辑器）：
+
+```nginx
+server {
+    listen 80;
+    server_name your.domain.com;
+    # 将 HTTP 流量重定向到 HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name your.domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/your.domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your.domain.com/privkey.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # 反向代理到 LangBot 实例
+    location / {
+        proxy_pass http://127.0.0.1:5300;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+将 `your.domain.com` 替换为您实际的域名。
+
+启用此配置并重启 NGINX：
+
+```bash
+sudo ln -s /etc/nginx/sites-available/langbot /etc/nginx/sites-enabled/langbot
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### 设置机器人回调地址前缀
+
+同样，在 `data/config.yaml` 配置文件中将 `api.webhook_prefix` 设置为 `https://your.domain.com`，这样机器人 Webhook 回调地址才会正确。
+
+完成上述配置后，即可通过 `https://your.domain.com` 安全访问 LangBot WebUI 和机器人 Webhook 服务。

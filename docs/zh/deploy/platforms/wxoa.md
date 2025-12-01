@@ -32,11 +32,9 @@
 
 记录下来`开发者ID（AppID）`，`开发者密码（AppSecret）`，并将部署 LangBot 的服务器添加入`IP白名单`。
 
-### 设置反向代理
+### 为 LangBot 设置反向代理
 
-由于微信公众号的只支持http（80端口），https（443端口），所以本文假设80端口已被占用，使用443端口反向代理至 LangBot 。
-
-具体的反向代理配置教程与[QQ官方机器人反向代理配置](/zh/deploy/platforms/qq/official_webhook.md#操作caddy流程)相同，只是将`reverse_proxy 127.0.0.1:2284`改为`reverse_proxy 127.0.0.1:2287`。
+由于微信公众号的只支持http（80端口），https（443端口），请根据文档[配置 HTTP 反向代理和 SSL](/zh/workshop/production/proxy-and-ssl) 操作。
 
 ### 保存回调地址
 
@@ -50,7 +48,5 @@
 
 `LoadingMessage`选项为加载信息，可以更改为其他内容，仅在模式为`passive`下有效。将 `enable` 设置为 `true` 。
 
-填写成功后，**启动 LangBot** 。
-
-将 URL 填写为`https://your_domain_name/callback/command`，其中的 `your_domain_name` 就是 Caddy 中填写的域名。点击保存。如果可以保存成功，那么意味着部署成功。如果出现**系统发生错误，请稍后重试**，那么请重新检查以上配置内容是否填写正确。
+填写成功后，在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址，返回微信公众号机器人配置页面，填写到`URL`。比如 URL 填写为`https://your_domain_name/bots/xxxxx`，其中的 `your_domain_name` 就是 Caddy 中填写的域名。点击保存。如果可以保存成功，那么意味着部署成功。如果出现**系统发生错误，请稍后重试**，那么请重新检查以上配置内容是否填写正确。
 

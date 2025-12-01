@@ -38,13 +38,13 @@
 
 ## 启动机器人
 
- Slack 配置项在填写完成后，**启动 LangBot**。
- 然后在刚才Event Subscriptions的 `Request URL`中，填写入你的 LangBot 的部署地址。
-
 ::: info
-由于 Slack 官方要求使用 https，可以参考[QQ官方机器人部署流程中的Caddy配置部分](/zh/deploy/platforms/qq/official_webhook.md#操作caddy流程)，注意端口使用 Slack 适配器配置的端口。
-
+由于 Slack 官方要求使用 https，请根据文档[配置 HTTP 反向代理和 SSL](/zh/workshop/production/proxy-and-ssl) 先配置好反向代理。
 :::
+
+Slack 配置项在填写完成后，**启动 LangBot**。
+启用并打开 LangBot 主页中的 Slack 机器人配置页面，复制其中的 WebHook URL，在刚才Event Subscriptions的 `Request URL`中，填写入 WebHook URL。
+
 
 上述配置项都填写完成后，点击保存链接，若标识为绿色的**Verified**，那么就说明部署成功。
 否则查看上述配置项是否填写正确。

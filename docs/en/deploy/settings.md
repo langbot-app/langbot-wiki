@@ -16,6 +16,10 @@ admins: []
 # API port
 api:
     port: 5300
+    # LangBot centrally manages all bot addresses that require Webhook listening
+    # This is the Webhook address prefix displayed on the bot page that requires Webhook connection
+    # You can modify it according to your network environment
+    webhook_prefix: 'http://127.0.0.1:5300'
 
 # Command configuration
 command:

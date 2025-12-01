@@ -16,6 +16,10 @@ admins: []
 # API 端口
 api:
     port: 5300
+    # LangBot 统一管理所有需要 Webhook 监听的机器人地址
+    # 这是显示在需要 Webhook 连接的机器人页面上的 Webhook地址前缀
+    # 您可以根据自身网络环境修改
+    webhook_prefix: 'http://127.0.0.1:5300'
 
 # 命令配置
 command:

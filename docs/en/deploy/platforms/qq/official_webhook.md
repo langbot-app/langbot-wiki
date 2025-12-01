@@ -2,6 +2,12 @@
 
 This article only provides the deployment of test bots. For the official launch of bots, please follow the [release process](https://q.qq.com/qqbot/#/home).
 
+:::warning
+QQ Official has issued an announcement prohibiting unauthorized access to AIGC features. Please use with caution.
+:::
+
+
+
 ## Register QQ Bot (Test Bot)
 
 ### Configure Basic Bot Information
@@ -34,53 +40,14 @@ Next, open the LangBot configuration page
 
 Click on Bots, then click Add
 
-Select `OneBot v11` for `Platform/Adapter Selection`
+Select `QQ Official API` for `Platform/Adapter Selection`
 
 ![QQ Official Bot Integration with LangBot](/assets/image/zh/deploy/bots/qq/official/qqofficial3.png)
 
 
 ## Configure Callback Address
 
-Since QQ official bots require the callback address to be an https request, but LangBot only provides http, you need to configure a reverse proxy yourself.
-
-This article recommends using [Caddy](https://caddy2.dengxiaolong.com/docs/) for reverse proxy, with the process as follows.
-
-### Caddy Operation Process
-
-#### Install Caddy
-
-Go to the [Caddy Installation Documentation](https://caddy2.dengxiaolong.com/docs/install). Choose the installation steps for your operating system and install.
-
-#### Fill in Caddyfile
-
-This article assumes that LangBot is deployed on an Ubuntu system, where the default location of Caddyfile is `/etc/caddy/Caddyfile`.
-Use vim or nano to edit Caddyfile, and fill in the Caddyfile as:
-```json
-your_domain_name {
-        reverse_proxy 127.0.0.1:2284
-}
-```
-For example, if you have a domain testlb.com that resolves to your machine, and you have port **443** open, fill in:
-```json
-testlb.com {
-        reverse_proxy 127.0.0.1:2284
-}
-```
-
-Save and exit the file.
-
-**Note, the Caddyfile format is very strict, please fill it in correctly. If you encounter problems, please refer to the Caddy documentation or ask AI.**
-
-#### Start Caddy
-Enter the command
-```bash
-sudo systemctl start caddy
-```
-
-After successful startup, check the Caddy status with:
-```bash
-sudo systemctl status caddy
-```
+LangBot must be deployed on a server with a public IP address, and HTTPS must be successfully enabled. Please follow the documentation [Configure HTTP Reverse Proxy and SSL](/en/workshop/production/proxy-and-ssl) for configuration.
 
 
 #### Subsequent Configuration
@@ -98,9 +65,15 @@ Here are some possible issues:
 
 First **start LangBot**.
 
-Click on `Callback Configuration` in the bot management portal, check all events under `Add Event`. In the request address, enter the domain set in Caddyfile, with the suffix `/callback/command`.
+Click on `Callback Configuration` in the bot management portal, check all events under `Add Event`.
 
-For example, if the domain is `testlb.com`, then enter `testlb.com/callback/command` in the request address, and click to confirm the configuration. If the callback address is saved successfully, it means the deployment is successful. If you see `Verification Failed`, please carefully check if the above configuration items are filled in correctly.
+Go to the LangBot configuration page, enable and select the corresponding QQ bot, copy the Webhook callback address from the corresponding bot configuration page, replace the IP address and port with the domain name configured in Caddy, and enter it in the request address.
+
+As shown in the image:
+![Caddy Documentation](/assets/image/zh/deploy/bots/qq/official/qqofficial4.png)
+
+
+For example, if the domain is `testlb.com`, then enter `testlb.com/bots/xxxxxx-xxxxxx` in the request address, and click to confirm the configuration. If the callback address is saved successfully, it means the deployment is successful. If you see `Verification Failed`, please carefully check if the above configuration items are filled in correctly.
 
 ## Publication Method
 

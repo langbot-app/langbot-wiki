@@ -2,6 +2,12 @@
 
 本文章只提供测试版机器人的发布，具体机器人上线请按照 [发布流程](https://q.qq.com/qqbot/#/home) 进行部署。
 
+:::warning
+目前 QQ 官方发布公告，禁止违规接入 AIGC 功能，请慎重使用。
+:::
+
+
+
 ## 注册 QQ 机器人（测试机器人）
 
 ### 配置机器人基本信息
@@ -34,53 +40,14 @@
 
 点击机器人，点击添加
 
-`平台/适配器选择`为`OneBot v11`
+`平台/适配器选择`为`QQ官方API`
 
 ![QQ 官方 Bot 对接 LangBot](/assets/image/zh/deploy/bots/qq/official/qqofficial3.png)
 
 
 ## 配置回调地址
 
-由于QQ官方机器人必须要求回调地址是 https 请求，但 LangBot 仅提供 http 方式，所以需要自行配置反向代理。
-
-本文建议使用 [Caddy](https://caddy2.dengxiaolong.com/docs/) 反向代理，操作流程如下文。
-
-### 操作caddy流程
-
-#### 安装caddy
-
-进入[Caddy安装文档](https://caddy2.dengxiaolong.com/docs/install)。选择对应自己操作系统的安装步骤，进行安装。
-
-#### 填写Caddyfile
-
-本文假设使用 ubuntu 系统部署 LangBot ，那么在系统中，Caddyfile 的默认位置为 `/etc/caddy/Caddyfile`。
-使用 vim 或 nano 编辑 Caddyfile ，Caddyfile文件填写为：
-```json
-your_domain_name {
-        reverse_proxy 127.0.0.1:2284
-}
-```
-例如，如果你有域名 testlb.com，并且解析地址为本机，同时开启**443**端口，那么填写为：
-```json
-testlb.com {
-        reverse_proxy 127.0.0.1:2284
-}
-```
-
-保存并且退出文件。
-
-**注，Caddyfile文件的填写要求非常严苛，请按照正确的格式填写，如果遇到问题请自行查询Caddy文档或者询问AI。**
-
-#### 启动caddy
-输入命令
-```bash
-sudo systemctl start caddy
-```
-
-成功启动后，检查 Caddy 状态命令：
-```bash
-sudo systemctl status caddy
-```
+要求 LangBot 部署在具有公网 IP 的服务器上，并已成功启用 HTTPS。请根据文档[配置 HTTP 反向代理和 SSL](/zh/workshop/production/proxy-and-ssl) 操作。
 
 
 #### 后续配置
@@ -98,9 +65,15 @@ sudo systemctl status caddy
 
 首先 **启动 LangBot** 。
 
-点击 机器人管理端网页中的 `回调配置`，勾选下面 `添加事件` 中的所有事件。 在请求地址中填写 Caddyfile 中设置的域名，后缀为`/callback/command`。
+点击 机器人管理端网页中的 `回调配置`，勾选下面 `添加事件` 中的所有事件。 
 
-比如域名为 `testlb.com`，那么请求地址中填写 `testlb.com/callback/command` ，点击确定配置。如果回调地址保存成功，那么意味着部署成功。若出现 `校验失败` 字样，请认真检查上述配置项是否填写正确。
+进入 LangBot 配置页面，启用并且选择对应的QQ机器人，粘贴对应机器人配置页面中的 Webhook 回调地址，将其中的 IP 地址和端口改成之前 Caddy 配置的域名，在请求地址中填入。
+
+如图：
+![Caddy文档](/assets/image/zh/deploy/bots/qq/official/qqofficial4.png)
+
+
+比如域名为 `testlb.com`，那么请求地址中填写 `testlb.com/bots/xxxxxx-xxxxxx` ，点击确定配置。如果回调地址保存成功，那么意味着部署成功。若出现 `校验失败` 字样，请认真检查上述配置项是否填写正确。
 
 ## 发布方式
 

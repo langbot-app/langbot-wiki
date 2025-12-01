@@ -13,7 +13,7 @@ As shown:
 
 ![Intelligent Bot](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_2.png)
 
-Click `Create Bot`, scroll to the bottom of the page, click `API模式创建`, and enter the page:
+Click `Create Bot`, scroll to the bottom of the page, click `Create via API Mode`, and enter the page:
 
 ![Create via API Mode](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_3.png)
 
@@ -29,7 +29,15 @@ Among them, the token is Token, the Encoding-AESKey is EncodingAESKey, and the B
 
 ![WeCom Intelligent Bot Adapter](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_4.png)
 
-Return to the WeCom robot configuration page, and fill in the robot callback URL (accepts HTTP) in `URL`, for example: **http://xxx.xxx.xx.xx:2291/callback/command**. If the creation is successful, it will jump to the details page. If the message `Request URL Failed` appears, please double-check whether the above steps have been completed one by one.
+On the LangBot homepage, enable and select the corresponding bot, click to enter the configuration page, copy the Webhook callback address
+
+::: info
+We recommend that you first refer to [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
+:::
+
+![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_8.png)
+
+Return to the WeCom robot configuration page and fill the copied webhook address into `URL Callback`. If the creation is successful, it will jump to the details page. If the message `Request URL Failed` appears, please double-check whether the above steps have been completed one by one.
 
 Details page after successful creation:  
 ![Creation Successful](/assets/image/zh/deploy/bots/wecom/wecombot/wecombot_5.png)

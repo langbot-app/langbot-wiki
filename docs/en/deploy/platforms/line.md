@@ -71,7 +71,31 @@ After creation, you will obtain the following important information, please reco
 * Click the icon to copy
 ![alt text](/assets/image/zh/deploy/bots/line/line21.png)
 
+## Connecting to LangBot
+
+Next, open the LangBot configuration page:
+
+1. Click "Bots", then click "Add"
+![alt text](/assets/image/zh/deploy/bots/line/line26.png)
+2. Select "LINE" in "Platform/Adapter Selection"
+![alt text](/assets/image/zh/deploy/bots/line/line27.png)
+
+3. Fill in the configuration information:
+   - Channel Secret: The Channel secret you obtained earlier
+   - Channel Access Token: The Channel access token you obtained earlier
+   ![alt text](/assets/image/zh/deploy/bots/line/line28.png)
+
+4. Click "Save" to complete the configuration
+   ![alt text](/assets/image/zh/deploy/bots/line/line29.png)
+
 ## Configure Webhook
+
+::: info
+We recommend that you first refer to [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
+:::
+
+* Get the Webhook callback URL from the LangBot configuration page
+![alt text](/assets/image/zh/deploy/bots/line/line30.png)
 
 * Click console or directly visit [Console](https://developers.line.biz/console/)
 ![alt text](/assets/image/zh/deploy/bots/line/line17.png)
@@ -90,22 +114,6 @@ After creation, you will obtain the following important information, please reco
 5. Click the "Verify" button to test if the connection is successful
 ![alt text](/assets/image/zh/deploy/bots/line/line25.png)
 
-## Connecting to LangBot
-
-Next, open the LangBot configuration page:
-
-1. Click "Bots", then click "Add"
-![alt text](/assets/image/zh/deploy/bots/line/line26.png)
-2. Select "LINE" in "Platform/Adapter Selection"
-![alt text](/assets/image/zh/deploy/bots/line/line27.png)
-
-3. Fill in the configuration information:
-   - Channel Secret: The Channel secret you obtained earlier
-   - Channel Access Token: The Channel access token you obtained earlier
-   ![alt text](/assets/image/zh/deploy/bots/line/line28.png)
-
-4. Click "Save" to complete the configuration
-   ![alt text](/assets/image/zh/deploy/bots/line/line29.png)
 
 ## Feature Configuration
 
