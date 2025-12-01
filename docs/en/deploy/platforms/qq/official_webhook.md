@@ -34,7 +34,7 @@ Next, open the LangBot configuration page
 
 Click on Bots, then click Add
 
-Select `OneBot v11` for `Platform/Adapter Selection`
+Select `QQ Official API` for `Platform/Adapter Selection`
 
 ![QQ Official Bot Integration with LangBot](/assets/image/zh/deploy/bots/qq/official/qqofficial3.png)
 

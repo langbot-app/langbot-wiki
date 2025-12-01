@@ -14,7 +14,7 @@ This article details the process of deploying LangBot to a WeCom customer servic
 
 ## Connect to LangBot
 
-![Connect to LangBot](/assets/image/zh/deploy/bots/wecom/wecomcs/connect_to_langbot01.png)
+![Connect to LangBot](/assets/image/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
 
 The subsequent configuration method and configuration items are the same as [WeCom Internal Application](wecom.md), except that `contacts_secret` is not required.
 

@@ -40,7 +40,7 @@
 
 点击机器人，点击添加
 
-`平台/适配器选择`为`OneBot v11`
+`平台/适配器选择`为`QQ官方API`
 
 ![QQ 官方 Bot 对接 LangBot](/assets/image/zh/deploy/bots/qq/official/qqofficial3.png)
 
