@@ -18,6 +18,7 @@ LangBot 是一个开源的大语言模型原生即时通信机器人开发平台
 | Telegram | ✅ | 支持流式输出 |
 | Slack | ✅ |  |
 | LINE | ✅ |  |
+| KOOK | ✅ |  |
 | WhatsApp | 🚧 |  |
 
 🚧: 正在开发中
