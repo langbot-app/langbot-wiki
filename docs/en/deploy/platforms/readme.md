@@ -11,6 +11,7 @@ Bots are used to receive message events from messaging platforms and call pipeli
 | Telegram | ✅ |  | [Tutorial](/en/deploy/platforms/telegram) |
 | Slack | ✅ |  | [Tutorial](/en/deploy/platforms/slack) |
 | LINE | ✅ |  | [Tutorial](/en/deploy/platforms/line) |
+| KOOK | ✅ |  | [Tutorial](/en/deploy/platforms/kook) |
 | Lark | ✅ |  | [Tutorial](/en/deploy/platforms/lark) |
 | DingTalk | ✅ |  | [Tutorial](/en/deploy/platforms/dingtalk) |
 | WeCom (Enterprise WeChat) | ✅ | Enterprise internal bot | [Tutorial](/en/deploy/platforms/wecom/wecom) |

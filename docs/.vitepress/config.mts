@@ -150,6 +150,7 @@ export default defineConfig({
                   { text: "Telegram", link: "/zh/deploy/platforms/telegram" },
                   { text: "Slack", link: "/zh/deploy/platforms/slack" },
                   { text: "LINE", link: "/zh/deploy/platforms/line" },
+                  { text: "KOOK", link: "/zh/deploy/platforms/kook" },
                 ],
               },
               {
@@ -380,6 +381,7 @@ export default defineConfig({
                   { text: "Telegram", link: "/en/deploy/platforms/telegram" },
                   { text: "Slack", link: "/en/deploy/platforms/slack" },
                   { text: "LINE", link: "/en/deploy/platforms/line" },
+                  { text: "KOOK", link: "/en/deploy/platforms/kook" },
                   { text: "Lark", link: "/en/deploy/platforms/lark" },
                   { text: "DingTalk", link: "/en/deploy/platforms/dingtalk" },
                   {
