@@ -280,6 +280,7 @@ export default defineConfig({
             text: "[Beta] Service API 参考",
             items: [
               { text: "概述", link: "/zh/tags/readme" },
+              { text: "Webhooks", link: "/zh/tags/webhook" },
               ...sidebarZh.generateSidebarGroups({
                 linkPrefix: '/zh/tags/',
               }).map(group => ({
@@ -557,6 +558,7 @@ export default defineConfig({
             text: "[Beta] Service API Reference",
             items: [
               { text: "Overview", link: "/en/tags/readme" },
+              { text: "Webhooks", link: "/en/tags/webhook" },
               ...sidebarEn.generateSidebarGroups({
                 linkPrefix: '/en/tags/',
               }).map(group => ({
