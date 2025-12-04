@@ -27,7 +27,7 @@ class PersonMessageReceived(BaseEventModel):
     """发送者ID"""
 
     sender_id: typing.Union[int, str]
-    """发送者ID"""
+    """发送者ID，私聊情况下与 launcher_id 相同"""
 
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
@@ -66,10 +66,13 @@ class PersonNormalMessageReceived(BaseEventModel):
     event_name: str = "PersonNormalMessageReceived"
 
     launcher_type: str
+    """发起对象类型(person)"""
 
     launcher_id: typing.Union[int, str]
+    """发起对象ID"""
 
     sender_id: typing.Union[int, str]
+    """发送者ID，私聊情况下与 launcher_id 相同"""
 
     text_message: str
     """消息文本"""
@@ -94,10 +97,13 @@ class GroupNormalMessageReceived(BaseEventModel):
     event_name: str = "GroupNormalMessageReceived"
 
     launcher_type: str
+    """发起对象类型(group)"""
 
     launcher_id: typing.Union[int, str]
+    """群号"""
 
     sender_id: typing.Union[int, str]
+    """发送者ID"""
 
     text_message: str
     """消息文本"""
@@ -131,10 +137,13 @@ class PersonCommandSent(BaseEventModel):
     event_name: str = "PersonCommandSent"
 
     launcher_type: str
+    """发起对象类型(person)"""
 
     launcher_id: typing.Union[int, str]
+    """发起对象ID"""
 
     sender_id: typing.Union[int, str]
+    """发送者ID，私聊情况下与 launcher_id 相同"""
 
     command: str
     """命令文本"""
@@ -155,10 +164,13 @@ class GroupCommandSent(BaseEventModel):
     event_name: str = "GroupCommandSent"
 
     launcher_type: str
+    """发起对象类型(group)"""
 
     launcher_id: typing.Union[int, str]
+    """群号"""
 
     sender_id: typing.Union[int, str]
+    """发送者ID"""
 
     command: str
     """命令文本"""
@@ -185,10 +197,13 @@ class NormalMessageResponded(BaseEventModel):
     event_name: str = "NormalMessageResponded"
 
     launcher_type: str
+    """发起对象类型(person)"""
 
     launcher_id: typing.Union[int, str]
+    """发起对象ID"""
 
     sender_id: typing.Union[int, str]
+    """发送者ID，私聊情况下与 launcher_id 相同"""
 
     session: provider_session.Session
     """会话对象"""
@@ -222,6 +237,7 @@ class PromptPreProcessing(BaseEventModel):
     event_name: str = "PromptPreProcessing"
 
     session_name: str
+    """会话名称，格式为 person_1234567890 或 group_1234567890"""
 
     # ========== 可设置的属性 ==========
 
@@ -245,6 +261,20 @@ class PromptPreProcessing(BaseEventModel):
 ```
 
 事件处理方法将被传入`EventContext`对象，该对象包含事件的上下文信息，该对象同时具有[请求 API](/zh/plugin/dev/apis/common)和事件上下文特定 API，以下为事件上下文特定 API 列表：
+
+### 获取原事件属性
+
+`event_context.event` 属性为原事件对象，可获取原事件的属性。其类型即为监听的事件类型。
+
+例如：当监听的事件是`GroupMessageReceived`时：
+
+```python
+event = event_context.event
+print(event.launcher_type)  # 发起对象类型(group)
+print(event.launcher_id)    # 群号
+print(event.sender_id)      # 发送者账号 ID
+print(event.message_chain)  # 消息链
+```
 
 ### 阻止默认行为
 

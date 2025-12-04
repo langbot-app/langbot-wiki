@@ -241,6 +241,20 @@ class PromptPreProcessing(BaseEventModel):
 
 Event processing methods will be passed the `EventContext` object, which contains event context information, and the object has both [Request API](/en/plugin/dev/apis/common) and event context specific APIs. The following is a list of event context specific APIs:
 
+### Get Original Event Attributes
+
+`event_context.event` attribute is the original event object, which can get the attributes of the original event. The type is the type of the event being listened to.
+
+For example, when the event being listened to is `GroupMessageReceived`:
+
+```python
+event = event_context.event
+print(event.launcher_type)  # Launcher object type (group)
+print(event.launcher_id)    # Group ID
+print(event.sender_id)      # Sender account ID
+print(event.message_chain)  # Message chain
+```
+
 ### Prevent Default Behavior
 
 ```python
