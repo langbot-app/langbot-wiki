@@ -29,6 +29,9 @@ class PersonMessageReceived(BaseEventModel):
     sender_id: typing.Union[int, str]
     """发送者ID，私聊情况下与 launcher_id 相同"""
 
+    message_event: platform_events.PersonMessage
+    """原消息事件对象。包含发送者的信息。"""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
@@ -48,6 +51,9 @@ class GroupMessageReceived(BaseEventModel):
 
     sender_id: typing.Union[int, str]
     """发送者ID"""
+
+    message_event: platform_events.GroupMessage
+    """原消息事件对象。包含群聊和发送者的信息。"""
 
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
@@ -76,6 +82,9 @@ class PersonNormalMessageReceived(BaseEventModel):
 
     text_message: str
     """消息文本"""
+
+    message_event: platform_events.PersonMessage
+    """原消息事件对象。包含发送者的信息。"""
 
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
@@ -107,6 +116,9 @@ class GroupNormalMessageReceived(BaseEventModel):
 
     text_message: str
     """消息文本"""
+
+    message_event: platform_events.GroupMessage
+    """原消息事件对象。包含群聊和发送者的信息。"""
 
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"

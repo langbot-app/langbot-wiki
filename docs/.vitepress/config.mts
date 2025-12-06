@@ -32,7 +32,7 @@ export default defineConfig({
 
   sitemap: {
     hostname: 'https://docs.langbot.app',
-    
+
   },
 
   locales: {
@@ -54,7 +54,11 @@ export default defineConfig({
             items: [
               { text: "新手指引（必看）", link: "/zh/insight/guide" },
               { text: "社区资源", link: "/zh/insight/community" },
-              { text: "特性规格", link: "/zh/insight/features" },
+              {
+                text: "特性规格", link: "/zh/insight/features", collapsed: true, items: [
+                  { text: "消息平台特性支持性", link: "/zh/insight/platform-features" }
+                ]
+              },
             ],
           },
           {
