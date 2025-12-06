@@ -42,6 +42,8 @@ AI 能力主要分为两个部分，选择运行器和配置运行器参数。
 - `session_id`：用户会话id，私聊为 `person_<id>`，群聊为 `group_<id>`
 - `conversation_id`：字符串，用户会话id，由 LangBot 生成。用户重置会话后，会重新生成
 - `msg_create_time`：数字类型，收到此消息的时间戳（秒）
+- `group_name`：群聊名称，仅在群消息事件时设置
+- `sender_name`：发送者名称
 
 您可以[通过插件自定义任何变量](/zh/plugin/dev/apis/common.html#%E8%AE%BE%E7%BD%AE%E8%AF%B7%E6%B1%82%E5%8F%98%E9%87%8F)。
 
