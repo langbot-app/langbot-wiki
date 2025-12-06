@@ -3,24 +3,33 @@
 部署企业微信机器人接入 LangBot 。
 
 :::info
-此种接入方式为企业内部自建应用，是在企业内部使用的，若需要对外接待，请查看[企业微信客服接入方案](wecomcs.md)。
+- 此种接入方式为企业内部自建应用，是在企业内部使用的，若需要对外接待，请查看[企业微信客服接入方案](wecomcs.md)。
+- 企业微信回调地址需要公网IP和域名，推荐您先参照[配置 HTTP 反向代理](/zh/workshop/production/proxy-and-ssl)来配置 LangBot 回调地址。
 :::
 
+## 记录企业ID
+
+打开[企业微信管理后台](https://work.weixin.qq.com/)，点击`我的企业`，记录下最下面的`企业ID`。
+
+![Corp ID](/assets/image/zh/deploy/bots/wecom/wecom/03-corp-id.png)
 
 ## 创建机器人
 
-进入[企业微信管理后台](https://work.weixin.qq.com/)，登陆账号，进入主页面后，点击` 应用管理 `,` 自建 `,` 创建应用 `,填写机器人基本信息，创建好之后，会出现类似这样的界面：
-![机器人页面](/assets/image/zh/deploy/bots/wecom/wecom/wecom1.png)
+点击` 应用管理 `,` 自建 `,` 创建应用`
 
-## 设置回调地址
+![App Management](/assets/image/zh/deploy/bots/wecom/wecom/01-wecom-apps.png)
 
-### 获取企业微信配置项
+填写机器人基本信息：
 
-1. 打开企业微信管理后台主页，点击`我的企业`，记录下最下面的企业ID。
+![Create Application](/assets/image/zh/deploy/bots/wecom/wecom/02-create-app.png)
 
-![企业ID](/assets/image/zh/deploy/bots/wecom/wecom/wecom2.png)
+查看并记录机器人密钥（Secret）：
 
-2. 开启通讯录同步权限
+![Bot Secret](/assets/image/zh/deploy/bots/wecom/wecom/04-bot-secret.png)
+
+从企业微信客户端根据提示获取。
+
+## 开启通讯录同步权限
 
 :::info
 - 此配置项是为了实现 LangBot 的群发消息，具体代码位于libs/wecom_api/api.py 。
@@ -28,54 +37,43 @@
 - 此配置项可以填写入随机字符，**不能为空**。
 :::
 
-![通讯录权限](/assets/image/zh/deploy/bots/wecom/wecom/wecom5.png)
-
-点击`安全与管理`,`管理工具`,`通讯录同步`
-
-![通讯录同步secret](/assets/image/zh/deploy/bots/wecom/wecom/wecom3.jpg)
+点击`安全与管理`,`管理工具`,`通讯录同步`；先配置可信IP，添加部署 LangBot 的服务器IP。
 
 点击`查看secret`，记录下来，这是 contacts_secret（通讯录同步 secret）。
 
-3. 点击`应用管理`，找到刚才创建的机器人，查看机器人的 secret ,记录下来。
+![Contact Sync Secret](/assets/image/zh/deploy/bots/wecom/wecom/08-contact-secret.png)
 
-![机器人secret](/assets/image/zh/deploy/bots/wecom/wecom/wecom4.png)
+## 在 LangBot 新建机器人
 
-至此，已经获得了三个配置项，分别是 corpid（企业ID），secret（机器人 secret），contacts_secret（通讯录同步 secret）。
+在 LangBot 机器人页面，点击`创建机器人`，填入名称，选择`企业微信`，此步骤只需要填入 企业ID 和 机器人密钥，以及通讯录同步 secret。
 
-### 配置回调地址
+![Create WeCom Bot](/assets/image/zh/deploy/bots/wecom/wecom/05-fill-in-corpid-secret.png)
 
-进入机器人页面。
+点击提交，跳转到机器人编辑页面，点击启用；此时即可看到 Webhook 回调地址，复制下来：
 
-点击最下方的`企业可信IP`，将部署 LangBot 的服务器添加进去。
+![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/06-webhook-callback-address.png)
 
-点击` 接收消息 `，` 设置API接收 `，开始填写接收服务器消息配置。
+## 设置回调地址
 
-在 LangBot 主页中，启用并选择对应的机器人，点击进入配置页面，复制其中的 Webhook 回调地址，填写到 URL 中。
+回到企业微信的机器人管理页面，点击`接收消息`，`设置API接收`，将 LangBot 的 Webhook 回调地址填入`URL`中：
 
-::: info
-推荐您先参照[配置 HTTP 反向代理](/zh/workshop/production/proxy-and-ssl)来配置 LangBot 回调地址。
-:::
+![Set API Receiver](/assets/image/zh/deploy/bots/wecom/wecom/07-set-api-receiver.png)
 
-![Webhook 回调地址](/assets/image/zh/deploy/bots/wecom/wecom/wecom6.png)
+点击 Token 和 EncodingAESKey 的`随机获取`，并记录下来，**保持此页开启**。返回到 LangBot 的企微机器人配置页面，将 Token 和 EncodingAESKey 填入，点击保存。
 
-Token 和 EncodingAESKey 点击随机获取，并记录下来
+![Save WeCom Bot](/assets/image/zh/deploy/bots/wecom/wecom/09-save-wecom-bot.png)
 
-## 对接 LangBot
+再回到**刚刚填写 Webhook 回调地址的页面**，点击保存即可配置完成；如果出现**请求URL失败**，请再三检查你的配置项填写是否正确。
 
-![对接 LangBot](/assets/image/zh/deploy/bots/wecom/wecom/connect_to_langbot.png)
+## 配置应用的企业可信 IP
 
-## 保存回调地址
-当前面五个配置项已经正确获取，并且准确的填入到企业微信适配器中，那么**启动 LangBot**。
+回到该应用到管理页，在下方找到`企业可信 IP`，添加部署 LangBot 的服务器IP。
 
-回到配置回调地址页面并且点击保存，如果以上的配置项填写正确，那么可以保存成功，这意味着企业微信和 LangBot 可以进行通信（部署成功），如果出现**openapi 请求回调地址不通过**，请再三检查你的配置项填写是否正确。
+![Corp Trusted IP](/assets/image/zh/deploy/bots/wecom/wecom/10-corp-trusted-ip.png)
 
+点击保存即可。
 
+## 常见问题
 
-
-
-
-
-
-
-
-
+Q：企微上找不到机器人对话框？
+A：可以到企微管理页面上该应用的详情页，点击`功能`->`发送消息`->`发消息`，选择自己账号，发送消息，即可在自己的对话框中看到机器人。

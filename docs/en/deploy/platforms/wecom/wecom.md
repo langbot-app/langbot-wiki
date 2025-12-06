@@ -1,70 +1,79 @@
 # Deploy WeCom Bot
 
-Deploy WeCom (Enterprise WeChat) bot to connect with LangBot.
+Deploy the WeCom (Enterprise WeChat) bot to integrate with LangBot.
 
 :::info
-This integration method is for internal enterprise applications, used within the enterprise. If you need external customer service, please check the [WeCom Customer Service integration solution](wecomcs.md).
+- This integration is for internal enterprise applications, used within your organization. If external customer support is needed, please refer to the [WeCom Customer Service integration solution](wecomcs.md).
+- The WeCom callback address requires a public IP and domain name. We recommend you first follow [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
 :::
 
+## Record Corporate ID
+
+Open the [WeCom Admin Portal](https://work.weixin.qq.com/), click `My Enterprise`, and record the `Corporate ID` at the bottom.
+
+![Corp ID](/assets/image/zh/deploy/bots/wecom/wecom/03-corp-id.png)
 
 ## Create Bot
 
-Enter the [WeCom Admin Portal](https://work.weixin.qq.com/), log in to your account, after entering the main page, click `App Management`, `Build Your Own`, `Create App`, fill in the basic information of the bot, after creation, you will see a page similar to this:
-![Bot Page](/assets/image/zh/deploy/bots/wecom/wecom/wecom1.png)
+Click `App Management`, then `Build Your Own`, and click `Create App`.
+
+![App Management](/assets/image/zh/deploy/bots/wecom/wecom/01-wecom-apps.png)
+
+Fill in the basic information for the bot:
+
+![Create Application](/assets/image/zh/deploy/bots/wecom/wecom/02-create-app.png)
+
+View and record the bot's secret:
+
+![Bot Secret](/assets/image/zh/deploy/bots/wecom/wecom/04-bot-secret.png)
+
+Get it from the WeCom client as prompted.
+
+## Enable Contact Sync Permission
+
+:::info
+- This configuration is required for LangBot to support mass messaging. The related code can be found at libs/wecom_api/api.py.
+- This feature has not been implemented yet as LangBot is still under development.
+- This field can be filled with any random characters, but **cannot be empty**.
+:::
+
+Click `Security and Management`, then `Management Tools`, `Contact Sync`; configure the trusted IP by adding the IP address of the server where LangBot is deployed.
+
+Click `View Secret` and record it - this is the contacts_secret (Contact Sync Secret).
+
+![Contact Sync Secret](/assets/image/zh/deploy/bots/wecom/wecom/08-contact-secret.png)
+
+## Create Bot on LangBot
+
+On the LangBot bot page, click `Create Bot`, enter a name, select `WeCom`, and fill in the Corporate ID, Bot Secret, and Contact Sync Secret.
+
+![Create WeCom Bot](/assets/image/zh/deploy/bots/wecom/wecom/05-fill-in-corpid-secret.png)
+
+Click submit to enter the bot edit page, then click enable. At this point you'll see the Webhook callback address—copy it:
+
+![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/06-webhook-callback-address.png)
 
 ## Set Callback Address
 
-### Get WeCom Configuration Items
+Return to the WeCom bot admin page, click `Receive Messages`, `Set API Reception`, and paste LangBot's Webhook callback address into the `URL` field:
 
-1. Open the WeCom Admin Portal homepage, click `My Enterprise`, and record the Enterprise ID at the bottom.
+![Set API Receiver](/assets/image/zh/deploy/bots/wecom/wecom/07-set-api-receiver.png)
 
-![Enterprise ID](/assets/image/zh/deploy/bots/wecom/wecom/wecom2.png)
+Click to randomly generate the Token and EncodingAESKey, and record them. **Keep this page open.** Go back to the LangBot WeCom bot configuration page, enter the Token and EncodingAESKey, and click Save.
 
-2. Enable Contact Sync Permission
+![Save WeCom Bot](/assets/image/zh/deploy/bots/wecom/wecom/09-save-wecom-bot.png)
 
-:::info
-- This configuration item is for implementing LangBot's mass messaging feature, the specific code is located in libs/wecom_api/api.py.
-- LangBot is still under development, so the functionality related to this configuration item has not been implemented yet.
-- This configuration item can be filled with random characters, but **cannot be empty**.
-:::
+Return to the **page where you just filled in the Webhook callback address**, and click Save to complete the configuration. If you see **request URL failed**, please carefully double-check your configuration.
 
-![Contact Permission](/assets/image/zh/deploy/bots/wecom/wecom/wecom5.png)
+## Configure Corporate Trusted IP
 
-Click `Security and Management`, `Management Tools`, `Contact Sync`
+Go back to this application's admin page, find `Enterprise Trusted IP` at the bottom, and add the IP address of your LangBot deployment server.
 
-![Contact Sync Secret](/assets/image/zh/deploy/bots/wecom/wecom/wecom3.jpg)
+![Corp Trusted IP](/assets/image/zh/deploy/bots/wecom/wecom/10-corp-trusted-ip.png)
 
-Click `View Secret`, record it, this is the contacts_secret (Contact Sync Secret).
+Click Save.
 
-3. Click `App Management`, find the bot you just created, view the bot's secret, and record it.
+## FAQ
 
-![Bot Secret](/assets/image/zh/deploy/bots/wecom/wecom/wecom4.png)
-
-At this point, you have obtained three configuration items: corpid (Enterprise ID), secret (Bot Secret), and contacts_secret (Contact Sync Secret).
-
-### Configure Callback Address
-
-Enter the bot page.
-
-Click `Enterprise Trusted IP` at the bottom and add the server where LangBot is deployed.
-
-Click `Receive Messages`, `Set API Reception`, and start filling in the server message reception configuration.
-
-On the LangBot homepage, enable and select the corresponding bot, click to enter the configuration page, copy the Webhook callback address, and fill it into the URL.
-
-::: info
-We recommend that you first refer to [Configure HTTP Reverse Proxy](/en/workshop/production/proxy-and-ssl) to configure the LangBot callback address.
-:::
-
-![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/wecom6.png)
-
-Click to randomly generate the Token and EncodingAESKey, and record them
-
-## Connect to LangBot
-
-![Connect to LangBot](/assets/image/zh/deploy/bots/wecom/wecom/connect_to_langbot.png)
-
-## Save Callback Address
-When the five configuration items above have been correctly obtained and accurately filled into the WeCom adapter, then **start LangBot**.
-
-Return to the callback address configuration page and click save. If the above configuration items are filled in correctly, the save will be successful, which means that WeCom and LangBot can communicate (deployment successful). If you see **openapi request callback address failed**, please triple-check that your configuration items are filled in correctly.
+Q: Can't find the bot chat in WeCom?
+A: Go to the app's detail page in WeCom admin, click `Features` > `Send Message` > `Send Message`, choose your own account, send a message, and you will see the bot in your chat window.
