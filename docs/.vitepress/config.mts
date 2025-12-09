@@ -45,6 +45,7 @@ export default defineConfig({
         // https://vitepress.dev/reference/default-theme-config
         nav: [
           { text: "主页", link: "https://langbot.app" },
+          { text: "市场", link: "https://space.langbot.app"},
           { text: "路线图", link: "https://langbot.featurebase.app/roadmap" },
         ],
 
@@ -341,6 +342,7 @@ export default defineConfig({
 
         nav: [
           { text: "Home", link: "https://langbot.app" },
+          { text: "Market", link: "https://space.langbot.app" },
           { text: "Roadmap", link: "https://langbot.featurebase.app/roadmap" },
         ],
 
