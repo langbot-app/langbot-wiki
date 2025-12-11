@@ -59,9 +59,11 @@ sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx
 ```
 
-按照提示输入域名，证书申请与 NGINX 配置会自动完成。如果需要手动配置，可参考以下内容。
+按照提示输入域名，证书申请与 NGINX 配置会自动完成。请参考如下内容完成 NGINX 配置。
 
 ### 配置 NGINX 反向代理
+
+LangBot 的流水线调试功能需要使用 WebSocket 连接，因此需要配置 NGINX 支持 WebSocket。
 
 编辑 NGINX 配置文件 `/etc/nginx/sites-available/langbot`（可以使用 vim 或 nano 编辑器）：
 

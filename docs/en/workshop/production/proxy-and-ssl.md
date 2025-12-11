@@ -59,9 +59,11 @@ sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx
 ```
 
-Follow the prompts to enter your domain name, and certificate application and NGINX configuration will be completed automatically. If you need to configure manually, you can refer to the following content.
+Follow the prompts to enter your domain name, and certificate application and NGINX configuration will be completed automatically. Please refer to the following content to complete the NGINX configuration.
 
 ### Configure NGINX Reverse Proxy
+
+LangBot's pipeline debugging feature requires using WebSocket connections, so NGINX needs to be configured to support WebSocket.
 
 Edit the NGINX configuration file `/etc/nginx/sites-available/langbot` (you can use vim or nano editor):
 
