@@ -2,7 +2,7 @@
 
 ## 创建机器人
 
-前往[飞书开放平台](https://open.feishu.cn/app)，登录后，创建企业自建应用。
+前往[飞书开放平台](https://open.feishu.cn/app)，登录后，创建企业自建应用/商店应用 [(区别介绍)](https://open.feishu.cn/document/platform-overveiw/overview)。
 
 ![alt text](/assets/image/zh/deploy/bots/lark/lark_01.png)
 
@@ -81,3 +81,6 @@ Webhook 模式配置方式：
 私聊也可以直接使用
 
 ![alt text](/assets/image/zh/deploy/bots/lark/lark_12.png)
+
+## 常见问题
+- 商店应用机器人创建/保存后无法立刻响应聊天消息，由于[app_ticket事件](https://open.feishu.cn/document/server-docs/application-v6/event/app_ticket-events)延迟机制，需要等待2分钟左右才可以正常使用。

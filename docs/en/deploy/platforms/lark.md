@@ -2,7 +2,7 @@
 
 ## Create Bot
 
-Go to the [Feishu Open Platform](https://open.feishu.cn/app), log in, and create an enterprise self-built application.
+Go to the [Feishu Open Platform](https://open.feishu.cn/app), log in, and create an enterprise self-built application or store application. [(difference introduction)](https://open.feishu.cn/document/platform-overveiw/overview)
 
 ![alt text](/assets/image/zh/deploy/bots/lark/lark_01.png)
 
@@ -81,3 +81,6 @@ Add the bot to a Feishu group to use it:
 Private chat can also be used directly
 
 ![alt text](/assets/image/zh/deploy/bots/lark/lark_12.png)
+
+## Common Issues
+- Store app bots cannot respond to chat messages immediately after creation/saving. Due to the [app_ticket event](https://open.feishu.cn/document/server-docs/application-v6/event/app_ticket-events) delay mechanism, you need to wait about 2 minutes before it can work normally.
