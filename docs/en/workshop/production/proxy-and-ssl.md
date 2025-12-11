@@ -66,6 +66,12 @@ Follow the prompts to enter your domain name, and certificate application and NG
 Edit the NGINX configuration file `/etc/nginx/sites-available/langbot` (you can use vim or nano editor):
 
 ```nginx
+# WebSocket connection upgrade mapping (place outside server block)
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
 server {
     listen 80;
     server_name your.domain.com;
@@ -90,6 +96,12 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 86400;
     }
 }
 ```
