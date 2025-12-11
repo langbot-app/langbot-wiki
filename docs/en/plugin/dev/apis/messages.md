@@ -14,14 +14,14 @@ LangBot supports multiple messaging platforms, and each platform has different `
 
 This is a message chain containing one Plain component (Hello World) and one Image component (Usagi).
 
-The definitions of message chains and message chain components are located in `langbot_plugin.api.entities.platform.message`.
+The definitions of message chains and message chain components are located in `langbot_plugin.api.entities.builtin.platform.message`.
 
 ### Constructing Message Chains
 
-Please first import the `langbot_plugin.api.entities.platform.message` package to use the message components within it.
+Please first import the `langbot_plugin.api.entities.builtin.platform.message` package to use the message components within it.
 
 ```python
-from langbot_plugin.api.entities.platform.message import *
+from langbot_plugin.api.entities.builtin.platform.message import *
 
 # Build a message containing text "Hello LangBot" and an image (from URL)
 msg_chain = MessageChain([
@@ -56,7 +56,7 @@ Currently supported message chain components:
     - Not supported on many platforms, not recommended
 - `File` - File message
 
-When creating components, named parameters must be used. For specific usage, you can check the definitions in the source code `langbot_plugin.api.entities.platform.message`.
+When creating components, named parameters must be used. For specific usage, you can check the definitions in the source code `langbot_plugin.api.entities.builtin.platform.message`.
 
 ## Other Entities
 

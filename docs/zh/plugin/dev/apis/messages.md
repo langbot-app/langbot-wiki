@@ -14,14 +14,14 @@ LangBot 支持多种消息平台，每个消息平台的`消息实体`格式均�
 
 这就是一个消息链，包含 一个 Plain 组件（Hello World）和 一个 Image 组件（乌萨奇）
 
-消息链和消息链组件的定义位于`langbot_plugin.api.entities.platform.message`中。
+消息链和消息链组件的定义位于`langbot_plugin.api.entities.builtin.platform.message`中。
 
 ### 构造消息链
 
-请先引入`langbot_plugin.api.entities.platform.message`包，才能使用其中的消息组件。  
+请先引入`langbot_plugin.api.entities.builtin.platform.message`包，才能使用其中的消息组件。  
 
 ```python
-from langbot_plugin.api.entities.platform.message import *
+from langbot_plugin.api.entities.builtin.platform.message import *
 
 # 构建一个包含文字 Hello LangBot 和图片（从URL获取）的消息
 msg_chain = MessageChain([
@@ -56,7 +56,7 @@ msg_chain = MessageChain([
     - 在很多平台不受支持，不建议使用
 - `File` 文件消息
 
-创建组件时，须使用具名参数传入。具体使用方式可以查看源码`langbot_plugin.api.entities.platform.message`中的定义。
+创建组件时，须使用具名参数传入。具体使用方式可以查看源码`langbot_plugin.api.entities.builtin.platform.message`中的定义。
 
 ## 其他实体
 
