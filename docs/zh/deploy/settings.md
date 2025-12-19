@@ -128,16 +128,18 @@ vdb:
         user: 'postgres'
         password: 'postgres'
     seekdb:
-        mode: embedded  # 嵌入式模式（'embedded' 或 'server'）
+        # 嵌入式模式（'embedded' 或 'server'）
+        mode: embedded  
         # 嵌入式模式配置：
-        path: './data/seekdb'          # 数据库文件存放路径
-        database: 'langbot'            # 数据库名称
+        path: './data/seekdb'          
+        database: 'langbot'            
         # 服务器模式配置（当 mode='server' 时生效）：
-        host: 'localhost'              # 数据库服务器地址
-        port: 2881                     # 数据库端口
-        user: 'root'                   # 用户名
-        password: ''                   # 密码
-        tenant: ''                     # 可选，用于 OceanBase 多租户场景
+        host: 'localhost'              
+        port: 2881                     
+        user: 'root'                   
+        password: ''                   
+        # 可选，用于 OceanBase 多租户场景
+        tenant: ''                     
 ```
 
 ## 通过环境变量设置
