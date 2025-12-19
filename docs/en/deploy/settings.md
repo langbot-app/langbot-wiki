@@ -112,6 +112,7 @@ vdb:
     # - qdrant (external vector database, please configure below)
     # - milvus (scalable vector database, please configure below)
     # - pgvector (PostgreSQL extension, please configure below)
+    # - seekdb (Built-in embedded-model database, please configure below)
     use: chroma
     # Qdrant configuration
     qdrant:
@@ -134,6 +135,19 @@ vdb:
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    seekdb:
+        # 'embedded' or 'server'
+        mode: embedded  
+        # Embedded mode options:
+        path: './data/seekdb'          
+        database: 'langbot'            
+         # Server mode options (used when mode='server'):
+        host: 'localhost'              
+        port: 2881                     
+        user: 'root'                   
+        password: ''                   
+        # Optional, for OceanBase server
+        tenant: ''  
 ```
 
 ## Set configuration via environment variables
