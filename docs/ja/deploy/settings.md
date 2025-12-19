@@ -112,6 +112,7 @@ vdb:
     # - qdrant (外部ベクトルデータベース、以下で設定してください)
     # - milvus (スケーラブルベクトルデータベース、以下で設定してください)
     # - pgvector (PostgreSQL拡張、以下で設定してください)
+    # - seekdb (組み込み埋め込みモデルを提供するデータベース、以下で設定してください)
     use: chroma
     # Qdrant設定
     qdrant:
@@ -134,6 +135,19 @@ vdb:
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    seekdb:
+        # 動作モード（'embedded' または 'server'）
+        mode: embedded  
+        # 組み込みモード設定：
+        path: './data/seekdb'          
+        database: 'langbot'            
+        # サーバーモード設定（mode='server'の場合に有効）：
+        host: 'localhost'              
+        port: 2881                     
+        user: 'root'                   
+        password: ''                   
+        # OceanBaseマルチテナントシナリオ用、オプション
+        tenant: ''     
 ```
 
 ## 環境変数による設定
