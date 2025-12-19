@@ -126,6 +126,17 @@ vdb:
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    seekdb:
+        mode: embedded  # 'embedded' or 'server'
+        # Embedded mode options:
+        path: './data/seekdb'
+        database: 'langbot'
+        # Server mode options (used when mode='server'):
+        host: 'localhost'
+        port: 2881
+        user: 'root'
+        password: ''
+        tenant: ''  # Optional, for OceanBase server
 ```
 
 ## 通过环境变量设置
