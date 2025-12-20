@@ -39,3 +39,9 @@
 <img width="400px" src="/assets/image/zh/deploy/models/embedding_model.png" alt="embedding_model" />
 
 填入这四个参数`模型名称`、`模型供应商`、`请求 URL`、`API Key`，然后提交即可，之后请在知识库中配置使用此模型。
+
+### 使用 seekdb 内置嵌入模型（零配置）
+系统已集成 seekdb 提供的官方嵌入模型，无需填写任何参数。
+- 在“嵌入模型”页面选择「seekdb-内置」；
+- 点击「保存」即可立即使用；
+- 后续在知识库中选择该模型即可生效。
