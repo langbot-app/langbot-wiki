@@ -105,7 +105,7 @@ system:
         secret: 'xxxx'
     # Whether to allow changing the password
     allow_change_password: true
-    # Recovery key
+    # Recovery password key
     recovery_key: 'xxxx'
 
 # Vector database configuration

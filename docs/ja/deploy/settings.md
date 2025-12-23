@@ -103,6 +103,10 @@ system:
         expire: 604800
         # JWTシークレットキー、最初の起動時に自動生成されます
         secret: 'xxxx'
+    # パスワード変更を許可するか
+    allow_change_password: true
+    # 復旧キー
+    recovery_key: 'xxxx'
 
 # ベクトルデータベース設定
 vdb:
