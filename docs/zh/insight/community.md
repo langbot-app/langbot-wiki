@@ -14,9 +14,9 @@
 
 解答各种问题
 
+- LangBot 社区（一）：619154800 ([链接](https://qm.qq.com/q/1K9GjQuza))  
+- LangBot 社区（二）：1030838208 ([链接](https://qm.qq.com/q/PF9OuQCCcM))  
 - LangBot 社区（三）：966235608 ([链接](https://qm.qq.com/q/JLi38whHum))  
-- 【已满】LangBot 社区（二）：1030838208 ([链接](https://qm.qq.com/q/PF9OuQCCcM))  
-- 【已满】LangBot 社区（一）：619154800 ([链接](https://qm.qq.com/q/1K9GjQuza))  
 
 ### 🧩 插件开发群
 
