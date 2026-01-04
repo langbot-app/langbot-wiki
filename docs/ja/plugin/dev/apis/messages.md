@@ -14,14 +14,14 @@ LangBotは複数のメッセージングプラットフォームをサポート�
 
 これは、1つのPlainコンポーネント(Hello World)と1つのImageコンポーネント(Usagi)を含むメッセージチェーンです。
 
-メッセージチェーンとメッセージチェーンコンポーネントの定義は、`langbot_plugin.api.entities.platform.message`にあります。
+メッセージチェーンとメッセージチェーンコンポーネントの定義は、`langbot_plugin.api.entities.builtin.platform.message`にあります。
 
 ### メッセージチェーンの構築
 
-まず、`langbot_plugin.api.entities.platform.message`パッケージをインポートして、その中のメッセージコンポーネントを使用してください。
+まず、`langbot_plugin.api.entities.builtin.platform.message`パッケージをインポートして、その中のメッセージコンポーネントを使用してください。
 
 ```python
-from langbot_plugin.api.entities.platform.message import *
+from langbot_plugin.api.entities.builtin.platform.message import *
 
 # テキスト「Hello LangBot」と画像(URLから)を含むメッセージを構築
 msg_chain = MessageChain([
@@ -56,7 +56,7 @@ msg_chain = MessageChain([
     - 多くのプラットフォームでサポートされていないため、推奨されません
 - `File` - ファイルメッセージ
 
-コンポーネントを作成する際は、名前付きパラメータを使用する必要があります。具体的な使用方法については、ソースコード`langbot_plugin.api.entities.platform.message`の定義を確認してください。
+コンポーネントを作成する際は、名前付きパラメータを使用する必要があります。具体的な使用方法については、ソースコード`langbot_plugin.api.entities.builtin.platform.message`の定義を確認してください。
 
 ## その他のエンティティ
 

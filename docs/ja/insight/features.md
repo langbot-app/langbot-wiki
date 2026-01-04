@@ -6,11 +6,12 @@ LangBotは、オープンソースのLLMネイティブインスタントメッ�
 
 | プラットフォーム | ステータス | 備考 |
 | --- | --- | --- |
-| 個人QQ | ✅ |  |
-| QQ公式API | ✅ |  |
-| WeCom | ✅ |  |
-| WeComCS | ✅ |  |
-| WeComIntelligentBot | ✅ | ストリーミング出力をサポート |
+| QQ個人アカウント | ✅ | OneBot11プロトコルをサポートするサードパーティアプリケーションによりサポート、QQ個人プライベートチャットとグループチャットをサポート |
+| QQ公式ボット | ✅ | QQ公式ボット、チャンネル、プライベートチャット、グループチャットをサポート |
+| 企業微信 | ✅ |  |
+| 企業微信インテリジェントボット | ✅ | ストリーミング出力をサポート |
+| 企業微信カスタマーサービス | ✅ |  |
+| WeChat公式アカウント | ✅ |  |
 | Lark | ✅ | ストリーミング出力をサポート |
 | DingTalk | ✅ | ストリーミング出力をサポート |
 | Discord | ✅ |  |
@@ -22,6 +23,8 @@ LangBotは、オープンソースのLLMネイティブインスタントメッ�
 
 🚧: 開発中
 
+各インスタントメッセージングプラットフォームの機能サポートについては、[こちらのドキュメント](/ja/insight/platform-features)をご覧ください。
+
 ## モデルとLLMOpsプラットフォームのサポート
 
 | プロバイダー/サービス | ステータス | 備考 |
@@ -32,14 +35,14 @@ LangBotは、オープンソースのLLMネイティブインスタントメッ�
 | [Anthropic](https://www.anthropic.com/) | ✅ |  |
 | [xAI](https://x.ai/) | ✅ |  |
 | [Zhipu AI](https://open.bigmodel.cn/) | ✅ |  |
+| [ShengSuanYun](https://www.shengsuanyun.com/?from=CH_KYIPP758) | ✅ | グローバルLLM集約プラットフォーム（推奨） |
 | [CompShare](https://www.compshare.cn/?ytag=GPU_YY-gh_langbot) | ✅ | LLMおよびGPUリソースプラットフォーム |
+| [PPIO](https://ppio.com/user/register?invited_by=QJKFYD&utm_source=github_langbot) | ✅ | LLMおよびGPUリソースプラットフォーム |
+| [302.AI](https://share.302.ai/SuTG99) | ✅ | LLMゲートウェイ(MaaS) |
+| [Google Gemini](https://aistudio.google.com/prompts/new_chat) | ✅ | |
 | [Dify](https://dify.ai) | ✅ | LLMOpsプラットフォーム |
 | [n8n](https://n8n.io/) | ✅ | LLMOpsプラットフォーム |
 | [Langflow](https://langflow.org/) | ✅ | LLMOpsプラットフォーム |
-| [PPIO](https://ppio.com/user/register?invited_by=QJKFYD&utm_source=github_langbot) | ✅ | LLMおよびGPUリソースプラットフォーム |
-| [ShengSuanYun](https://www.shengsuanyun.com/login?code=7DS2QLH5) | ✅ | LLMおよびGPUリソースプラットフォーム |
-| [302.AI](https://share.302.ai/SuTG99) | ✅ | LLMゲートウェイ(MaaS) |
-| [Google Gemini](https://aistudio.google.com/prompts/new_chat) | ✅ | |
 | [Ollama](https://ollama.com/) | ✅ | ローカルLLM実行プラットフォーム |
 | [LMStudio](https://lmstudio.ai/) | ✅ | ローカルLLM実行プラットフォーム |
 | [GiteeAI](https://ai.gitee.com/) | ✅ | LLMインターフェースゲートウェイ(MaaS) |
@@ -47,7 +50,8 @@ LangBotは、オープンソースのLLMネイティブインスタントメッ�
 | [Aliyun Bailian](https://bailian.console.aliyun.com/) | ✅ | LLMゲートウェイ(MaaS)、LLMOpsプラットフォーム |
 | [Volc Engine Ark](https://console.volcengine.com/ark/region:ark+cn-beijing/model?vendor=Bytedance&view=LIST_VIEW) | ✅ | LLMゲートウェイ(MaaS)、LLMOpsプラットフォーム |
 | [ModelScope](https://modelscope.cn/docs/model-service/API-Inference/intro) | ✅ | LLMゲートウェイ(MaaS) |
-| [Coze](https://coze.com) | ✅ | LLMOpsプラットフォーム |
+| [TBox（蚂蚁百宝箱）](https://tbox.cn/) | ✅ | LLMOpsプラットフォーム |
+| [Coze](https://coze.cn) | ✅ | LLMOpsプラットフォーム |
 
 ## LLMアプリケーションパラダイムの実装
 
@@ -76,3 +80,4 @@ LangBotは、オープンソースのLLMネイティブインスタントメッ�
 ![private_chat](/assets/image/zh/insight/private_chat.png)
 
 ![group_chat](/assets/image/zh/insight/group_chat.png)
+

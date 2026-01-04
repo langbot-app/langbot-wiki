@@ -6,11 +6,12 @@ LangBot is an open-source LLM native instant messaging robot development platfor
 
 | Platform | Status | Remarks |
 | --- | --- | --- |
-| Personal QQ | ✅ |  |
-| QQ Official API | ✅ |  |
+| Personal QQ | ✅ | Supported by third-party applications that implement the OneBot11 protocol, supports QQ personal private and group chats |
+| QQ Official Bot | ✅ | QQ Official Bot, supports channels, private chats, and group chats |
 | WeCom | ✅ |  |
-| WeComCS | ✅ |  |
-| WeComIntelligentBot | ✅ | Support streaming output |
+| WeCom Intelligent Bot | ✅ | Support streaming output |
+| WeCom Customer Service | ✅ |  |
+| WeChat Official Account | ✅ |  |
 | Lark | ✅ | Support streaming output |
 | DingTalk | ✅ | Support streaming output |
 | Discord | ✅ |  |
@@ -22,6 +23,8 @@ LangBot is an open-source LLM native instant messaging robot development platfor
 
 🚧: In development
 
+For platform-specific feature support, please check [this document](/en/insight/platform-features).
+
 ## Model and LLMOps Platform Support
 
 | Provider/Service | Status | Remarks |
@@ -32,22 +35,23 @@ LangBot is an open-source LLM native instant messaging robot development platfor
 | [Anthropic](https://www.anthropic.com/) | ✅ |  |
 | [xAI](https://x.ai/) | ✅ |  |
 | [Zhipu AI](https://open.bigmodel.cn/) | ✅ |  |
+| [ShengSuanYun](https://www.shengsuanyun.com/?from=CH_KYIPP758) | ✅ | Global LLM aggregation platform (Recommended) |
 | [CompShare](https://www.compshare.cn/?ytag=GPU_YY-gh_langbot) | ✅ | LLM and GPU resource platform |
+| [PPIO](https://ppio.com/user/register?invited_by=QJKFYD&utm_source=github_langbot) | ✅ | LLM and GPU resource platform |
+| [302.AI](https://share.302.ai/SuTG99) | ✅ | LLM gateway (MaaS) |
+| [Google Gemini](https://aistudio.google.com/prompts/new_chat) | ✅ | |
 | [Dify](https://dify.ai) | ✅ | LLMOps platform |
 | [n8n](https://n8n.io/) | ✅ | LLMOps platform |
 | [Langflow](https://langflow.org/) | ✅ | LLMOps platform |
-| [PPIO](https://ppio.com/user/register?invited_by=QJKFYD&utm_source=github_langbot) | ✅ | LLM and GPU resource platform |
-| [ShengSuanYun](https://www.shengsuanyun.com/login?code=7DS2QLH5) | ✅ | LLM and GPU resource platform |
-| [302.AI](https://share.302.ai/SuTG99) | ✅ | LLM gateway(MaaS) |
-| [Google Gemini](https://aistudio.google.com/prompts/new_chat) | ✅ | |
 | [Ollama](https://ollama.com/) | ✅ | Local LLM running platform |
 | [LMStudio](https://lmstudio.ai/) | ✅ | Local LLM running platform |
-| [GiteeAI](https://ai.gitee.com/) | ✅ | LLM interface gateway(MaaS) |
-| [SiliconFlow](https://siliconflow.cn/) | ✅ | LLM gateway(MaaS) |
-| [Aliyun Bailian](https://bailian.console.aliyun.com/) | ✅ | LLM gateway(MaaS), LLMOps platform |
-| [Volc Engine Ark](https://console.volcengine.com/ark/region:ark+cn-beijing/model?vendor=Bytedance&view=LIST_VIEW) | ✅ | LLM gateway(MaaS), LLMOps platform |
-| [ModelScope](https://modelscope.cn/docs/model-service/API-Inference/intro) | ✅ | LLM gateway(MaaS) |
-| [Coze](https://coze.com) | ✅ | LLMOps platform |
+| [GiteeAI](https://ai.gitee.com/) | ✅ | LLM interface gateway (MaaS) |
+| [SiliconFlow](https://siliconflow.cn/) | ✅ | LLM gateway (MaaS) |
+| [Aliyun Bailian](https://bailian.console.aliyun.com/) | ✅ | LLM gateway (MaaS), LLMOps platform |
+| [Volc Engine Ark](https://console.volcengine.com/ark/region:ark+cn-beijing/model?vendor=Bytedance&view=LIST_VIEW) | ✅ | LLM gateway (MaaS), LLMOps platform |
+| [ModelScope](https://modelscope.cn/docs/model-service/API-Inference/intro) | ✅ | LLM gateway (MaaS) |
+| [TBox (Ant TreasureBox)](https://tbox.cn/) | ✅ | LLMOps platform |
+| [Coze](https://coze.cn) | ✅ | LLMOps platform |
 
 ## LLM Application Paradigm Implementation
 
@@ -76,3 +80,4 @@ LangBot is an open-source LLM native instant messaging robot development platfor
 ![private_chat](/assets/image/zh/insight/private_chat.png)
 
 ![group_chat](/assets/image/zh/insight/group_chat.png)
+

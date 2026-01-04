@@ -1,26 +1,35 @@
 # WeCom ボットのデプロイ
 
-WeCom（Enterprise WeChat）ボットをデプロイして LangBot に接続します。
+WeCom（企業微信）ボットをデプロイして LangBot に接続します。
 
 :::info
-この統合方法は、企業内部アプリケーション用であり、企業内で使用されます。外部カスタマーサービスが必要な場合は、[WeCom Customer Service 統合ソリューション](wecomcs.md)を確認してください。
+- この統合方法は、企業内部アプリケーション用であり、企業内で使用されます。外部カスタマーサービスが必要な場合は、[WeCom Customer Service 統合ソリューション](wecomcs.md)を確認してください。
+- WeCom コールバックアドレスにはパブリック IP とドメイン名が必要です。まず [HTTP リバースプロキシの設定](/ja/workshop/production/proxy-and-ssl)を参照して LangBot コールバックアドレスを設定することをお勧めします。
 :::
 
+## 企業 ID の記録
+
+[WeCom 管理ポータル](https://work.weixin.qq.com/)を開き、`私の企業`をクリックして、一番下の`企業 ID`を記録します。
+
+![Corp ID](/assets/image/zh/deploy/bots/wecom/wecom/03-corp-id.png)
 
 ## ボットの作成
 
-[WeCom Admin Portal](https://work.weixin.qq.com/)に入り、アカウントにログインし、メインページに入った後、「アプリ管理」、「独自の構築」、「アプリを作成」をクリックし、ボットの基本情報を入力します。作成後、次のようなページが表示されます：
-![Bot Page](/assets/image/zh/deploy/bots/wecom/wecom/wecom1.png)
+`アプリ管理`、`自社開発`、`アプリを作成`をクリックします。
 
-## コールバックアドレスの設定
+![App Management](/assets/image/zh/deploy/bots/wecom/wecom/01-wecom-apps.png)
 
-### WeCom 設定項目の取得
+ボットの基本情報を入力します:
 
-1. WeCom Admin Portal ホームページを開き、「私の企業」をクリックし、下部の Enterprise ID を記録します。
+![Create Application](/assets/image/zh/deploy/bots/wecom/wecom/02-create-app.png)
 
-![Enterprise ID](/assets/image/zh/deploy/bots/wecom/wecom/wecom2.png)
+ボットのシークレット（Secret）を確認して記録します:
 
-2. 連絡先同期権限を有効にします
+![Bot Secret](/assets/image/zh/deploy/bots/wecom/wecom/04-bot-secret.png)
+
+WeCom クライアントからプロンプトに従って取得します。
+
+## 連絡先同期権限の有効化
 
 :::info
 - この設定項目は、LangBot の一斉送信機能を実装するためのものです。具体的なコードは libs/wecom_api/api.py にあります。
@@ -28,43 +37,43 @@ WeCom（Enterprise WeChat）ボットをデプロイして LangBot に接続し�
 - この設定項目はランダムな文字で埋めることができますが、**空にすることはできません**。
 :::
 
-![Contact Permission](/assets/image/zh/deploy/bots/wecom/wecom/wecom5.png)
+`セキュリティと管理`、`管理ツール`、`連絡先同期`をクリックします。まず信頼できる IP を設定し、LangBot がデプロイされているサーバーの IP を追加します。
 
-「セキュリティと管理」、「管理ツール」、「連絡先同期」をクリックします
+`Secret を表示`をクリックして記録します。これが contacts_secret（連絡先同期 Secret）です。
 
-![Contact Sync Secret](/assets/image/zh/deploy/bots/wecom/wecom/wecom3.jpg)
+![Contact Sync Secret](/assets/image/zh/deploy/bots/wecom/wecom/08-contact-secret.png)
 
-「Secret を表示」をクリックして記録します。これが contacts_secret（連絡先同期 Secret）です。
+## LangBot でボットを作成
 
-3. 「アプリ管理」をクリックし、作成したばかりのボットを見つけ、ボットの secret を表示して記録します。
+LangBot のボットページで、`ボットを作成`をクリックし、名前を入力し、`企業微信`を選択します。このステップでは、企業 ID、ボットシークレット、連絡先同期 Secret のみを入力する必要があります。
 
-![Bot Secret](/assets/image/zh/deploy/bots/wecom/wecom/wecom4.png)
+![Create WeCom Bot](/assets/image/zh/deploy/bots/wecom/wecom/05-fill-in-corpid-secret.png)
 
-この時点で、3 つの設定項目を取得しました：corpid（Enterprise ID）、secret（Bot Secret）、contacts_secret（Contact Sync Secret）。
+送信をクリックして、ボット編集ページにジャンプし、有効化をクリックします。この時点で Webhook コールバックアドレスが表示されるので、コピーします:
 
-### コールバックアドレスの設定
+![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/06-webhook-callback-address.png)
 
-ボットページに入ります。
+## コールバックアドレスの設定
 
-下部の「企業信頼 IP」をクリックし、LangBot がデプロイされているサーバーを追加します。
+WeCom のボット管理ページに戻り、`メッセージを受信`、`API 受信を設定`をクリックし、LangBot の Webhook コールバックアドレスを`URL`に入力します:
 
-「メッセージを受信」、「API 受信を設定」をクリックし、サーバーメッセージ受信設定を開始します。
+![Set API Receiver](/assets/image/zh/deploy/bots/wecom/wecom/07-set-api-receiver.png)
 
-LangBot ホームページで、対応するボットを有効にして選択し、設定ページをクリックして入り、Webhook コールバックアドレスをコピーして URL に入力します。
+Token と EncodingAESKey の`ランダム生成`をクリックして記録し、**このページを開いたままにします**。LangBot の WeCom ボット設定ページに戻り、Token と EncodingAESKey を入力して、保存をクリックします。
 
-::: info
-まず、[HTTP リバースプロキシの設定](/en/workshop/production/proxy-and-ssl)を参照して LangBot コールバックアドレスを設定することをお勧めします。
-:::
+![Save WeCom Bot](/assets/image/zh/deploy/bots/wecom/wecom/09-save-wecom-bot.png)
 
-![Webhook Callback Address](/assets/image/zh/deploy/bots/wecom/wecom/wecom6.png)
+**先ほど Webhook コールバックアドレスを入力したページ**に戻り、保存をクリックして設定を完了します。**リクエスト URL 失敗**が表示された場合は、設定項目が正しく入力されているか再度確認してください。
 
-Token と EncodingAESKey をランダムに生成するためにクリックし、それらを記録します
+## アプリの企業信頼 IP の設定
 
-## LangBot に接続
+このアプリの管理ページに戻り、下部の`企業信頼 IP`を見つけ、LangBot がデプロイされているサーバーの IP を追加します。
 
-![Connect to LangBot](/assets/image/zh/deploy/bots/wecom/wecom/connect_to_langbot.png)
+![Corp Trusted IP](/assets/image/zh/deploy/bots/wecom/wecom/10-corp-trusted-ip.png)
 
-## コールバックアドレスの保存
-上記の 5 つの設定項目が正しく取得され、WeCom アダプターに正確に入力されたら、**LangBot を起動します**。
+保存をクリックして完了です。
 
-コールバックアドレス設定ページに戻り、保存をクリックします。上記の設定項目が正しく入力されている場合、保存は成功します。これは、WeCom と LangBot が通信できることを意味します（デプロイ成功）。**openapi request callback address failed** が表示された場合は、設定項目が正しく入力されているかどうかを 3 回確認してください。
+## よくある質問
+
+Q: WeCom でボットのチャットが見つかりませんか?
+A: WeCom 管理ページのこのアプリの詳細ページに移動し、`機能`->`メッセージを送信`->`メッセージを送信`をクリックし、自分のアカウントを選択してメッセージを送信すると、自分のチャットウィンドウでボットが表示されます。

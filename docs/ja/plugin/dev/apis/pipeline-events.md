@@ -4,7 +4,7 @@
 [[toc]]
 :::
 
-LangBotプラグインはパイプラインイベントを登録して処理できます。使用方法については、[コンポーネント: イベントリスナー](/en/plugin/dev/components/event-listener)を参照してください。
+LangBotプラグインはパイプラインイベントを登録して処理できます。使用方法については、[コンポーネント: イベントリスナー](/ja/plugin/dev/components/event-listener)を参照してください。
 
 ## イベント一覧
 
@@ -27,12 +27,16 @@ class PersonMessageReceived(BaseEventModel):
     """送信者ID"""
 
     sender_id: typing.Union[int, str]
-    """送信者ID"""
+    """送信者ID、プライベートチャットの場合はlauncher_idと同じ"""
+
+    message_event: platform_events.PersonMessage
+    """元のメッセージイベントオブジェクト。送信者情報を含みます。"""
 
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """生のメッセージチェーン"""
+    """メッセージチェーン"""
+
 
 class GroupMessageReceived(BaseEventModel):
     """グループチャットメッセージを受信したとき"""
@@ -48,10 +52,13 @@ class GroupMessageReceived(BaseEventModel):
     sender_id: typing.Union[int, str]
     """送信者ID"""
 
+    message_event: platform_events.GroupMessage
+    """元のメッセージイベントオブジェクト。グループと送信者情報を含みます。"""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """生のメッセージチェーン"""
+    """メッセージチェーン"""
 ```
 
 ### *NormalMessageReceived
@@ -65,18 +72,24 @@ class PersonNormalMessageReceived(BaseEventModel):
     event_name: str = "PersonNormalMessageReceived"
 
     launcher_type: str
+    """起動元オブジェクトタイプ(person)"""
 
     launcher_id: typing.Union[int, str]
+    """起動元オブジェクトID"""
 
     sender_id: typing.Union[int, str]
+    """送信者ID、プライベートチャットの場合はlauncher_idと同じ"""
 
     text_message: str
     """メッセージテキスト"""
 
+    message_event: platform_events.PersonMessage
+    """元のメッセージイベントオブジェクト。送信者情報を含みます。"""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """生のメッセージチェーン"""
+    """メッセージチェーン"""
 
     # ========== 設定可能な属性 ==========
 
@@ -84,7 +97,8 @@ class PersonNormalMessageReceived(BaseEventModel):
     """変更されたメッセージテキスト、langbot_plugin.api.entities.builtin.provider.message.ContentElement型"""
 
     reply_message_chain: typing.Optional[platform_message.MessageChain] = None
-    """返信メッセージコンポーネントリスト、デフォルト動作を防止した場合のみ有効"""
+    """直接返信メッセージチェーン、デフォルト動作を防止した場合のみ有効"""
+
 
 class GroupNormalMessageReceived(BaseEventModel):
     """処理すべきグループチャット通常メッセージが判定されたときにトリガーされる"""
@@ -92,18 +106,24 @@ class GroupNormalMessageReceived(BaseEventModel):
     event_name: str = "GroupNormalMessageReceived"
 
     launcher_type: str
+    """起動元オブジェクトタイプ(group)"""
 
     launcher_id: typing.Union[int, str]
+    """グループID"""
 
     sender_id: typing.Union[int, str]
+    """送信者ID"""
 
     text_message: str
     """メッセージテキスト"""
 
+    message_event: platform_events.GroupMessage
+    """元のメッセージイベントオブジェクト。グループと送信者情報を含みます。"""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """生のメッセージチェーン"""
+    """メッセージチェーン"""
 
     # ========== 設定可能な属性 ==========
 
@@ -111,13 +131,13 @@ class GroupNormalMessageReceived(BaseEventModel):
     """変更されたメッセージテキスト、langbot_plugin.api.entities.builtin.provider.message.ContentElement型"""
 
     reply_message_chain: typing.Optional[platform_message.MessageChain] = None
-    """返信メッセージコンポーネントリスト、デフォルト動作を防止した場合のみ有効"""
+    """直接返信メッセージチェーン、デフォルト動作を防止した場合のみ有効"""
 ```
 
 ### *CommandSent
 
 :::warning 注意
-使用は推奨されなくなりました。代わりに[コンポーネント: Command](/en/plugin/dev/components/command)を使用してください。
+使用は推奨されなくなりました。代わりに[コンポーネント: Command](/ja/plugin/dev/components/command)を使用してください。
 :::
 
 グループチャットまたはプライベートチャットでコマンドを受信したときにトリガーされます。
@@ -220,11 +240,12 @@ class PromptPreProcessing(BaseEventModel):
     event_name: str = "PromptPreProcessing"
 
     session_name: str
+    """セッション名、形式は person_1234567890 または group_1234567890"""
 
     # ========== 設定可能な属性 ==========
 
     default_prompt: list[typing.Union[provider_message.Message, provider_message.MessageChunk]]
-    """この会話のシナリオプリセット、変更可能、langbot_plugin.api.entities.builtin.provider.message.Messageまたはlangbot_plugin.api.entities.builtin.provider.message.MessageChunk型"""
+    """この会話のシナリオプリセット(システムプロンプト)、変更可能、langbot_plugin.api.entities.builtin.provider.message.Messageまたはlangbot_plugin.api.entities.builtin.provider.message.MessageChunk型"""
 
     prompt: list[typing.Union[provider_message.Message, provider_message.MessageChunk]]
     """この会話の既存メッセージレコード、変更可能、langbot_plugin.api.entities.builtin.provider.message.Messageまたはlangbot_plugin.api.entities.builtin.provider.message.MessageChunk型"""
@@ -239,7 +260,7 @@ class PromptPreProcessing(BaseEventModel):
             ...
 ```
 
-イベント処理メソッドには`EventContext`オブジェクトが渡され、イベントコンテキスト情報が含まれます。このオブジェクトには[リクエストAPI](/en/plugin/dev/apis/common)とイベントコンテキスト固有のAPIの両方があります。以下は、イベントコンテキスト固有のAPIのリストです:
+イベント処理メソッドには`EventContext`オブジェクトが渡され、イベントコンテキスト情報が含まれます。このオブジェクトには[リクエストAPI](/ja/plugin/dev/apis/common)とイベントコンテキスト固有のAPIの両方があります。以下は、イベントコンテキスト固有のAPIのリストです:
 
 ### 元のイベント属性の取得
 

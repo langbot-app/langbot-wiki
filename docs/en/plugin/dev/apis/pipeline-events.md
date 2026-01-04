@@ -27,12 +27,16 @@ class PersonMessageReceived(BaseEventModel):
     """Sender ID"""
 
     sender_id: typing.Union[int, str]
-    """Sender ID"""
+    """Sender ID, same as launcher_id in private chat"""
+
+    message_event: platform_events.PersonMessage
+    """Original message event object. Contains sender information."""
 
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """Raw message chain"""
+    """Message chain"""
+
 
 class GroupMessageReceived(BaseEventModel):
     """When any group chat message is received"""
@@ -48,10 +52,13 @@ class GroupMessageReceived(BaseEventModel):
     sender_id: typing.Union[int, str]
     """Sender ID"""
 
+    message_event: platform_events.GroupMessage
+    """Original message event object. Contains group and sender information."""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """Raw message chain"""
+    """Message chain"""
 ```
 
 ### *NormalMessageReceived
@@ -65,18 +72,24 @@ class PersonNormalMessageReceived(BaseEventModel):
     event_name: str = "PersonNormalMessageReceived"
 
     launcher_type: str
+    """Launcher object type (person)"""
 
     launcher_id: typing.Union[int, str]
+    """Launcher object ID"""
 
     sender_id: typing.Union[int, str]
+    """Sender ID, same as launcher_id in private chat"""
 
     text_message: str
     """Message text"""
 
+    message_event: platform_events.PersonMessage
+    """Original message event object. Contains sender information."""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """Raw message chain"""
+    """Message chain"""
 
     # ========== Settable Attributes ==========
 
@@ -84,7 +97,8 @@ class PersonNormalMessageReceived(BaseEventModel):
     """Modified message text, langbot_plugin.api.entities.builtin.provider.message.ContentElement type"""
 
     reply_message_chain: typing.Optional[platform_message.MessageChain] = None
-    """Reply message component list, only effective when preventing default behavior"""
+    """Direct reply message chain, only effective when preventing default behavior"""
+
 
 class GroupNormalMessageReceived(BaseEventModel):
     """Triggered when a group chat normal message that should be processed is determined"""
@@ -92,18 +106,24 @@ class GroupNormalMessageReceived(BaseEventModel):
     event_name: str = "GroupNormalMessageReceived"
 
     launcher_type: str
+    """Launcher object type (group)"""
 
     launcher_id: typing.Union[int, str]
+    """Group ID"""
 
     sender_id: typing.Union[int, str]
+    """Sender ID"""
 
     text_message: str
     """Message text"""
 
+    message_event: platform_events.GroupMessage
+    """Original message event object. Contains group and sender information."""
+
     message_chain: platform_message.MessageChain = pydantic.Field(
         serialization_alias="message_chain"
     )
-    """Raw message chain"""
+    """Message chain"""
 
     # ========== Settable Attributes ==========
 
@@ -111,7 +131,7 @@ class GroupNormalMessageReceived(BaseEventModel):
     """Modified message text, langbot_plugin.api.entities.builtin.provider.message.ContentElement type"""
 
     reply_message_chain: typing.Optional[platform_message.MessageChain] = None
-    """Reply message component list, only effective when preventing default behavior"""
+    """Direct reply message chain, only effective when preventing default behavior"""
 ```
 
 ### *CommandSent
@@ -220,11 +240,12 @@ class PromptPreProcessing(BaseEventModel):
     event_name: str = "PromptPreProcessing"
 
     session_name: str
+    """Session name, format is person_1234567890 or group_1234567890"""
 
     # ========== Settable Attributes ==========
 
     default_prompt: list[typing.Union[provider_message.Message, provider_message.MessageChunk]]
-    """Scenario preset for this conversation, can be modified, langbot_plugin.api.entities.builtin.provider.message.Message or langbot_plugin.api.entities.builtin.provider.message.MessageChunk type"""
+    """Scenario preset (system prompt) for this conversation, can be modified, langbot_plugin.api.entities.builtin.provider.message.Message or langbot_plugin.api.entities.builtin.provider.message.MessageChunk type"""
 
     prompt: list[typing.Union[provider_message.Message, provider_message.MessageChunk]]
     """Existing message records for this conversation, can be modified, langbot_plugin.api.entities.builtin.provider.message.Message or langbot_plugin.api.entities.builtin.provider.message.MessageChunk type"""
