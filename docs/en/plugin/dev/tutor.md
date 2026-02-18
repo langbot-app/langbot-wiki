@@ -51,9 +51,7 @@ Please continue reading this tutorial to understand the plugin development proce
 
 ## AI-Assisted Development
 
-Want AI to be your plugin development sidekick? Community contributor [@TyperBody](https://github.com/TyperBody) has created an awesome resource for you:
-
-- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - A GitHub Copilot Skills repository specially designed to help AI understand LangBot plugin development instantly! With this repository, you can supercharge your development workflow by teaching Copilot about LangBot's plugin architecture. ✨ *Community Contribution*
+- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - Skills contributed by community member [@TyperBody](https://github.com/TyperBody), use AI to quickly develop plugins, welcome to try
 
 ## Installing CLI
 

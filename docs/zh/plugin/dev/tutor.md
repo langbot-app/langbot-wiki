@@ -51,9 +51,7 @@ main.py 中的插件类是每个插件通用的代码，在插件被启动时会
 
 ## AI 辅助开发
 
-想让 AI 成为你的插件开发助手吗？来自社区成员 [@TyperBody](https://github.com/TyperBody) 为你准备了一个超实用的资源：
-
-- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - 专为 GitHub Copilot 量身打造的技能库，让 AI 秒懂 LangBot 插件开发！通过这个仓库，你可以让 Copilot 快速理解 LangBot 的插件架构，大幅提升开发效率。✨ *社区贡献*
+- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - 来自社区成员 [@TyperBody](https://github.com/TyperBody) 贡献的 Skills，使用 AI 快速开发插件，欢迎体验
 
 ## 安装 CLI
 
