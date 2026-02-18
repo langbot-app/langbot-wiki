@@ -9,3 +9,9 @@ Collected at: https://blog.thelazy.top/tags/langbot
 ## 🥰 Community 
 
 Join our community on Discord: [![Discord](https://img.shields.io/discord/1335141740050649118?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb)](https://discord.gg/wdNEHETs87)
+
+## Plugin Development Resources
+
+### AI-Assisted Development
+
+- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - A GitHub Copilot Skills repository for quickly guiding AI to develop LangBot plugins
