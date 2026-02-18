@@ -32,4 +32,4 @@
 
 ### AI 辅助开发
 
-- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - 用于快速指导 AI 开发 LangBot 插件的 GitHub Copilot Skills 仓库  
+- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - 用于快速指导 AI 开发 LangBot 插件的 GitHub Copilot Skills 仓库
