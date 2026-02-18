@@ -49,6 +49,12 @@ main.py 中的插件类是每个插件通用的代码，在插件被启动时会
 请您继续阅读本页教程，了解插件的开发流程。
 :::
 
+## AI 辅助开发
+
+如果您希望使用 AI 工具（如 GitHub Copilot）来辅助插件开发，可以参考以下资源：
+
+- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - 用于快速指导 AI 开发 LangBot 插件的 GitHub Copilot Skills 仓库
+
 ## 安装 CLI
 
 请确保您已安装 Python 3.10 或更高版本，并已安装 [uv 包管理器](https://docs.astral.sh/uv/)。

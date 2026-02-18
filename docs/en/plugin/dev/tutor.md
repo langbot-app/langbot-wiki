@@ -49,6 +49,12 @@ Each component is a core functional module of your plugin, which can be [added a
 Please continue reading this tutorial to understand the plugin development process.
 :::
 
+## AI-Assisted Development
+
+If you want to use AI tools (such as GitHub Copilot) to assist with plugin development, you can refer to the following resources:
+
+- [skills-LangBotplugin](https://github.com/TyperBody/skills-LangBotplugin) - A GitHub Copilot Skills repository for quickly guiding AI to develop LangBot plugins
+
 ## Installing CLI
 
 Please ensure you have Python 3.10 or higher installed, and have installed the [uv package manager](https://docs.astral.sh/uv/).
