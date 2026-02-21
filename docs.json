@@ -15,10 +15,22 @@
   "favicon": "/favicon.ico",
   "navbar": {
     "links": [
-      { "label": "Home", "href": "https://langbot.app" },
-      { "label": "Market", "href": "https://space.langbot.app" },
-      { "label": "Blog", "href": "https://blog.langbot.app/zh/" },
-      { "label": "Roadmap", "href": "https://langbot.featurebase.app/roadmap" }
+      {
+        "label": "Home",
+        "href": "https://langbot.app"
+      },
+      {
+        "label": "Market",
+        "href": "https://space.langbot.app"
+      },
+      {
+        "label": "Blog",
+        "href": "https://blog.langbot.app"
+      },
+      {
+        "label": "Roadmap",
+        "href": "https://langbot.featurebase.app/roadmap"
+      }
     ]
   },
   "footer": {
@@ -607,5 +619,6 @@
         ]
       }
     ]
-  }
+  },
+  "description": "Production-grade AI Bot Platform for Discord, Telegram, LINE & WeChat etc."
 }
