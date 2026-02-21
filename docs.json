@@ -200,6 +200,15 @@
                 ]
               },
               {
+                "group": "插件 SDK API",
+                "pages": [
+                  "zh/plugin/dev/apis/common",
+                  "zh/plugin/dev/apis/pipeline-events",
+                  "zh/plugin/dev/apis/messages",
+                  "zh/plugin/dev/apis/tech-details"
+                ]
+              },
+              {
                 "group": "核心开发",
                 "pages": [
                   "zh/develop/dev-config",
@@ -227,15 +236,6 @@
                 "pages": [
                   "zh/tags/readme",
                   "zh/tags/webhook"
-                ]
-              },
-              {
-                "group": "插件 SDK API",
-                "pages": [
-                  "zh/plugin/dev/apis/common",
-                  "zh/plugin/dev/apis/pipeline-events",
-                  "zh/plugin/dev/apis/messages",
-                  "zh/plugin/dev/apis/tech-details"
                 ]
               },
               {
@@ -388,6 +388,15 @@
                 ]
               },
               {
+                "group": "Plugin SDK API",
+                "pages": [
+                  "en/plugin/dev/apis/common",
+                  "en/plugin/dev/apis/pipeline-events",
+                  "en/plugin/dev/apis/messages",
+                  "en/plugin/dev/apis/tech-details"
+                ]
+              },
+              {
                 "group": "Core Development",
                 "pages": [
                   "en/develop/dev-config",
@@ -405,15 +414,6 @@
                 "pages": [
                   "en/tags/readme",
                   "en/tags/webhook"
-                ]
-              },
-              {
-                "group": "Plugin SDK API",
-                "pages": [
-                  "en/plugin/dev/apis/common",
-                  "en/plugin/dev/apis/pipeline-events",
-                  "en/plugin/dev/apis/messages",
-                  "en/plugin/dev/apis/tech-details"
                 ]
               },
               {
@@ -566,6 +566,15 @@
                 ]
               },
               {
+                "group": "プラグイン SDK API",
+                "pages": [
+                  "ja/plugin/dev/apis/common",
+                  "ja/plugin/dev/apis/pipeline-events",
+                  "ja/plugin/dev/apis/messages",
+                  "ja/plugin/dev/apis/tech-details"
+                ]
+              },
+              {
                 "group": "コア開発",
                 "pages": [
                   "ja/develop/dev-config",
@@ -583,15 +592,6 @@
                 "pages": [
                   "ja/tags/readme",
                   "ja/tags/webhook"
-                ]
-              },
-              {
-                "group": "プラグイン SDK API",
-                "pages": [
-                  "ja/plugin/dev/apis/common",
-                  "ja/plugin/dev/apis/pipeline-events",
-                  "ja/plugin/dev/apis/messages",
-                  "ja/plugin/dev/apis/tech-details"
                 ]
               },
               {
