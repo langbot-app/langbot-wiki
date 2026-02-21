@@ -2,17 +2,13 @@
 title: "流水线事件和 API"
 ---
 
-<Info title="目录">
-[[toc]]
-</Info>
-
 LangBot 插件可注册并处理流水线事件。使用方法见[组件：事件监听器](/zh/plugin/dev/components/event-listener)。
 
 ## 可监听的事件列表
 
 某些事件具有`可设置的属性`，这些属性可以被插件代码修改，并在之后被用在 LangBot 后续的处理中。
 
-### *MessageReceived
+### \*MessageReceived
 
 接收到群聊或私聊任何消息时触发。
 
@@ -63,7 +59,7 @@ class GroupMessageReceived(BaseEventModel):
     """消息链"""
 ```
 
-### *NormalMessageReceived
+### \*NormalMessageReceived
 
 接收到群聊或私聊消息，并判断为需要由 LLM 处理的消息（非命令消息）时触发。
 
@@ -136,10 +132,10 @@ class GroupNormalMessageReceived(BaseEventModel):
     """直接回复消息链，仅在阻止默认行为时生效"""
 ```
 
-### *CommandSent
+### \*CommandSent
 
-<Warning title="注意">
-不再推荐使用，请改为使用[组件：命令](/zh/plugin/dev/components/command)。
+<Warning>
+  不再推荐使用，请改为使用[组件：命令](/zh/plugin/dev/components/command)。
 </Warning>
 
 接收到群聊或私聊命令时触发。
@@ -197,7 +193,6 @@ class GroupCommandSent(BaseEventModel):
 
     is_admin: bool
     """是否为管理员"""
-
 ```
 
 ### NormalMessageResponded
@@ -262,7 +257,6 @@ class PromptPreProcessing(BaseEventModel):
 
     prompt: list[typing.Union[provider_message.Message, provider_message.MessageChunk]]
     """此对话现有消息记录，可修改，langbot_plugin.api.entities.builtin.provider.message.Message 或 langbot_plugin.api.entities.builtin.provider.message.MessageChunk 类型"""
-
 ```
 
 ## 事件上下文 API
@@ -302,16 +296,14 @@ event_context.prevent_default()
 
 调用该方法后，该事件后续默认行为将被阻止，流水线将直接结束。
 
-<Info title="仅以下事件可阻止默认行为：">
-
-- PersonMessageReceived
-- GroupMessageReceived
-- PersonNormalMessageReceived
-- GroupNormalMessageReceived
-- PersonCommandSent
-- GroupCommandSent
-- NormalMessageResponded
-
+<Info>
+  - PersonMessageReceived
+  - GroupMessageReceived
+  - PersonNormalMessageReceived
+  - GroupNormalMessageReceived
+  - PersonCommandSent
+  - GroupCommandSent
+  - NormalMessageResponded
 </Info>
 
 ### 阻止后序插件执行

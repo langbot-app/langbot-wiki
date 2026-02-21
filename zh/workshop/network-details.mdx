@@ -2,15 +2,11 @@
 title: "网络配置详解"
 ---
 
-<Info title="某些消息平台（如 QQ 个人号）需要使用独立的协议端来处理消息，如果您使用的是此类消息平台，请参考以下网络配置。">
-同时，若您的 LangBot 实例需要连接其他在容器中运行的服务（如 Ollama），也可以参考以下配置，自行替换`消息平台`为`您要连接的服务`。
+<Info>
+  若您的 LangBot 实例需要连接其他在容器中运行的服务（如 Ollama），也可以参考以下配置，自行替换`消息平台`为`您要连接的服务`。
 </Info>
 
 LangBot 和部分消息平台均可采用 Docker 部署，以下是四种情况下的网络配置详解。
-
-<Info title="目录">
-[[toc]]
-</Info>
 
 ## LangBot 和消息平台均运行在 Docker 容器中
 
@@ -41,14 +37,11 @@ networks:
 
 重启两个容器。
 
-
-
 ## 仅 LangBot 运行在 Docker 容器中
 
 当只有 LangBot 采用 Docker 部署时，默认已经映射 2280 到 2290 端口到容器外。此时 LangBot 只能作为 WebSocket 服务器，接受消息平台作为客户端连接。
 
 请把消息平台设置为 ReverseWebSocket（称为 `反向 ws` 或 `WebSocket 客户端`），端口对应 LangBot 的 aiocqhttp 适配器启用的端口，连接本地 127.0.0.1 即可。
-
 
 ## LangBot 和消息平台都不使用 Docker 部署
 
@@ -57,7 +50,7 @@ networks:
 ## 仅消息平台运行在 Docker 容器中（不建议）
 
 <Warning>
-仅支持 Linux ，或其他支持 host 模式 docker 网络的系统。
+  仅支持 Linux ，或其他支持 host 模式 docker 网络的系统。
 </Warning>
 
 目前 LangBot 的 aiocqhttp 适配器仅支持 反向 WebSocket 连接，当消息平台运行在 Docker 容器中而 LangBot 直接运行在宿主机时，必须由 消息平台作为客户端连接 LangBot。此时只能将 消息平台的 network 设置为 `host` 模式，再设置其 WS 连接地址为 127.0.0.1，端口对应 LangBot 的 aiocqhttp 适配器启用的端口。

@@ -4,10 +4,6 @@ title: "插件通用 API"
 
 LangBot 为插件提供了一系列 API ，用于操作 LangBot 各个模块、控制消息上下文等。
 
-<Info title="目录">
-[[toc]]
-</Info>
-
 ## 请求 API
 
 操作当前正在处理的用户请求（消息）。仅在`EventListener`和`Command`组件中可用。访问方式如下：
@@ -311,4 +307,4 @@ async def get_config_file(self, file_key: str) -> bytes:
 file_bytes = await self.plugin.get_config_file("key")
 ```
 
-请结合 [`file` 或 `array[file]` 类型配置项](/zh/plugin/dev/basic-info.html#type-file)使用。
+请结合 [``file 或 array[file] 类型配置项``](/zh/plugin/dev/basic-info.html#type-file)使用。
