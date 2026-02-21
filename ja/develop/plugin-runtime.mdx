@@ -2,9 +2,8 @@
 title: "プラグインランタイム、CLI、SDKのデバッグ"
 ---
 
-<Info title="まず[プラグインチュートリアル](/en/plugin/plugin-intro)を読んで、プラグインシステムを理解してください。">
-
-- プラグインランタイム、CLI、SDKはこちらでオープンソース化されています: https://github.com/langbot-app/langbot-plugin-sdk
+<Info>
+  プラグインランタイム、CLI、SDKはこちらでオープンソース化されています: https://github.com/langbot-app/langbot-plugin-sdk
 </Info>
 
 プラグインランタイムのソースコードをクローンします:
@@ -53,8 +52,7 @@ plugin:
   runtime_ws_url: ws://localhost:5400/control/ws
 ```
 
-そして、LangBotメインプログラムの起動時に起動パラメーター`--standalone-runtime`を追加します(例: `uv run main.py --standalone-runtime`)。
-LangBotを再起動すると、WebSocketを使用してこのランタイムに接続されます。
+そして、LangBotメインプログラムの起動時に起動パラメーター`--standalone-runtime`を追加します(例: `uv run main.py --standalone-runtime`)。 LangBotを再起動すると、WebSocketを使用してこのランタイムに接続されます。
 
 ## langbot-plugin-sdkアーキテクチャ
 

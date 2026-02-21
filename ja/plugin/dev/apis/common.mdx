@@ -4,10 +4,6 @@ title: "プラグイン共通API"
 
 LangBotは、プラグインがさまざまなLangBotモジュールを操作し、メッセージコンテキストを制御するための一連のAPIを提供します。
 
-<Info title="目次">
-[[toc]]
-</Info>
-
 ## リクエストAPI
 
 現在処理中のユーザーリクエスト(メッセージ)に対する操作です。`EventListener`と`Command`コンポーネントでのみ使用可能です。アクセス方法:
@@ -311,4 +307,4 @@ async def get_config_file(self, file_key: str) -> bytes:
 file_bytes = await self.plugin.get_config_file("key")
 ```
 
-これは[`file`または`array[file`](/en/plugin/dev/basic-info.html#type-file)型の設定フィールドと組み合わせて使用します。
+これは[``fileまたはarray[file``](/en/plugin/dev/basic-info.html#type-file)型の設定フィールドと組み合わせて使用します。

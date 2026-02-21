@@ -2,17 +2,13 @@
 title: "パイプラインイベントとAPI"
 ---
 
-<Info title="目次">
-[[toc]]
-</Info>
-
 LangBotプラグインはパイプラインイベントを登録して処理できます。使用方法については、[コンポーネント: イベントリスナー](/ja/plugin/dev/components/event-listener)を参照してください。
 
 ## イベント一覧
 
 一部のイベントには`設定可能な属性`があり、プラグインコードで変更して、その後のLangBot処理で使用できます。
 
-### *MessageReceived
+### \*MessageReceived
 
 グループチャットまたはプライベートチャットでメッセージを受信したときにトリガーされます。
 
@@ -63,7 +59,7 @@ class GroupMessageReceived(BaseEventModel):
     """メッセージチェーン"""
 ```
 
-### *NormalMessageReceived
+### \*NormalMessageReceived
 
 グループチャットまたはプライベートチャットメッセージを受信し、LLMで処理する必要があるメッセージ(コマンドでないメッセージ)であると判定されたときにトリガーされます。
 
@@ -136,10 +132,10 @@ class GroupNormalMessageReceived(BaseEventModel):
     """直接返信メッセージチェーン、デフォルト動作を防止した場合のみ有効"""
 ```
 
-### *CommandSent
+### \*CommandSent
 
-<Warning title="注意">
-使用は推奨されなくなりました。代わりに[コンポーネント: Command](/ja/plugin/dev/components/command)を使用してください。
+<Warning>
+  使用は推奨されなくなりました。代わりに[コンポーネント: Command](/ja/plugin/dev/components/command)を使用してください。
 </Warning>
 
 グループチャットまたはプライベートチャットでコマンドを受信したときにトリガーされます。
@@ -191,7 +187,6 @@ class GroupCommandSent(BaseEventModel):
 
     is_admin: bool
     """管理者かどうか"""
-
 ```
 
 ### NormalMessageResponded
@@ -290,16 +285,14 @@ event_context.prevent_default()
 
 このメソッドを呼び出すと、このイベントのデフォルトの後続動作が防止され、パイプラインは直接終了します。
 
-<Info title="次のイベントのみがデフォルト動作を防止できます:">
-
-- PersonMessageReceived
-- GroupMessageReceived
-- PersonNormalMessageReceived
-- GroupNormalMessageReceived
-- PersonCommandSent
-- GroupCommandSent
-- NormalMessageResponded
-
+<Info>
+  - PersonMessageReceived
+  - GroupMessageReceived
+  - PersonNormalMessageReceived
+  - GroupNormalMessageReceived
+  - PersonCommandSent
+  - GroupCommandSent
+  - NormalMessageResponded
 </Info>
 
 ### 後続実行を防止
