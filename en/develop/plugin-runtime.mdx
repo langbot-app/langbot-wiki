@@ -2,9 +2,8 @@
 title: "Debugging Plugin Runtime, CLI, SDK"
 ---
 
-<Info title="Please read the [Plugin Tutorial](/en/plugin/plugin-intro) first to understand the plugin system.">
-
-- Plugin Runtime, CLI, SDK are open sourced at: https://github.com/langbot-app/langbot-plugin-sdk
+<Info>
+  Plugin Runtime, CLI, SDK are open sourced at: https://github.com/langbot-app/langbot-plugin-sdk
 </Info>
 
 Clone the plugin runtime source code:
@@ -53,7 +52,7 @@ plugin:
   runtime_ws_url: ws://localhost:5400/control/ws
 ```
 
-And add the startup parameter `--standalone-runtime` when starting the LangBot main program (e.g., `uv run main.py --standalone-runtime`).  
+And add the startup parameter `--standalone-runtime` when starting the LangBot main program (e.g., `uv run main.py --standalone-runtime`).\
 Restart LangBot, and it will connect to this runtime using WebSocket.
 
 ## langbot-plugin-sdk Architecture

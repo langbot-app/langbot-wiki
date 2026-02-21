@@ -2,17 +2,13 @@
 title: "Pipeline Events and APIs"
 ---
 
-<Info title="Table of Contents">
-[[toc]]
-</Info>
-
 LangBot plugins can register and handle pipeline events. For usage instructions, see [Component: Event Listener](/en/plugin/dev/components/event-listener).
 
 ## List of Events
 
 Some events have `settable attributes`, which can be modified by plugin code and used in subsequent LangBot processing.
 
-### *MessageReceived
+### \*MessageReceived
 
 Triggered when any message is received in group chat or private chat.
 
@@ -63,7 +59,7 @@ class GroupMessageReceived(BaseEventModel):
     """Message chain"""
 ```
 
-### *NormalMessageReceived
+### \*NormalMessageReceived
 
 Triggered when a group chat or private chat message is received and determined to be a message that needs to be processed by LLM (non-command message).
 
@@ -136,10 +132,10 @@ class GroupNormalMessageReceived(BaseEventModel):
     """Direct reply message chain, only effective when preventing default behavior"""
 ```
 
-### *CommandSent
+### \*CommandSent
 
-<Warning title="Note">
-No longer recommended for use, please use [Component: Command](/en/plugin/dev/components/command) instead.
+<Warning>
+  No longer recommended for use, please use [Component: Command](/en/plugin/dev/components/command) instead.
 </Warning>
 
 Triggered when a group chat or private chat command is received.
@@ -191,7 +187,6 @@ class GroupCommandSent(BaseEventModel):
 
     is_admin: bool
     """Whether it's an administrator"""
-
 ```
 
 ### NormalMessageResponded
@@ -290,16 +285,14 @@ event_context.prevent_default()
 
 Calling this method will prevent the default subsequent behavior of this event, and the pipeline will end directly.
 
-<Info title="Only the following events can prevent default behavior:">
-
-- PersonMessageReceived
-- GroupMessageReceived
-- PersonNormalMessageReceived
-- GroupNormalMessageReceived
-- PersonCommandSent
-- GroupCommandSent
-- NormalMessageResponded
-
+<Info>
+  - PersonMessageReceived
+  - GroupMessageReceived
+  - PersonNormalMessageReceived
+  - GroupNormalMessageReceived
+  - PersonCommandSent
+  - GroupCommandSent
+  - NormalMessageResponded
 </Info>
 
 ### Prevent Postorder Execution

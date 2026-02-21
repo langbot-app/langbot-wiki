@@ -150,6 +150,7 @@
                   },
                   {
                     "group": "规模使用",
+                    "hidden": true,
                     "pages": [
                       "zh/tob/index",
                       "zh/tob/platform",

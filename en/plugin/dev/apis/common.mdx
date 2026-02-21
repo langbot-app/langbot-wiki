@@ -4,10 +4,6 @@ title: "Plugin Common APIs"
 
 LangBot provides a series of APIs for plugins to operate various LangBot modules and control message contexts.
 
-<Info title="Table of Contents">
-[[toc]]
-</Info>
-
 ## Request API
 
 Operations for the currently processing user request (message). Only available in `EventListener` and `Command` components. Access methods:
@@ -311,4 +307,4 @@ async def get_config_file(self, file_key: str) -> bytes:
 file_bytes = await self.plugin.get_config_file("key")
 ```
 
-Use this in conjunction with configuration fields of type [`file` or `array[file`](/en/plugin/dev/basic-info.html#type-file).
+Use this in conjunction with configuration fields of type [``file or array[file``](/en/plugin/dev/basic-info.html#type-file).

@@ -2,10 +2,6 @@
 title: "Plugin Directory Structure"
 ---
 
-<Info title="Table of Contents">
-[[toc]]
-</Info>
-
 This document introduces the standard directory structure and file organization specifications for LangBot plugins, helping developers create compliant plugins.
 
 ## Basic Directory Structure
@@ -40,12 +36,11 @@ LangBot plugins support multilingual README documentation to provide localized p
 
 **Important Specifications:**
 
-1. **Root `README.md` (Required)**
+1. **`Root README.md (Required)`**
    - Must be written in **English**
    - Serves as the plugin's default documentation
    - Used as fallback when requested language version doesn't exist
-
-2. **`readme/` Directory (Optional)**
+2. **`readme/ Directory (Optional)`**
    - Used to store **non-English** README documents
    - File naming format: `README_{language_code}.md`
 
@@ -53,12 +48,12 @@ LangBot plugins support multilingual README documentation to provide localized p
 
 According to [RFC 4646](https://datatracker.ietf.org/doc/html/rfc4646) standard, LangBot currently supports the following language codes:
 
-| Language | Language Code | Filename | Location |
-|----------|---------------|----------|----------|
-| English | `en` or `en_US` | `README.md` | **Plugin root directory** |
-| Simplified Chinese | `zh_Hans` | `README_zh_Hans.md` | `readme/` directory |
-| Traditional Chinese | `zh_Hant` | `README_zh_Hant.md` | `readme/` directory |
-| Japanese | `ja_JP` | `README_ja_JP.md` | `readme/` directory |
+| Language            | Language Code   | Filename            | Location                  |
+| ------------------- | --------------- | ------------------- | ------------------------- |
+| English             | `en` or `en_US` | `README.md`         | **Plugin root directory** |
+| Simplified Chinese  | `zh_Hans`       | `README_zh_Hans.md` | `readme/` directory       |
+| Traditional Chinese | `zh_Hant`       | `README_zh_Hant.md` | `readme/` directory       |
+| Japanese            | `ja_JP`         | `README_ja_JP.md`   | `readme/` directory       |
 
 ### Example Directory Structure
 
@@ -104,7 +99,6 @@ When a user requests a README in a specific language, LangBot will search in the
 - User requests Simplified Chinese (`zh_Hans`)
   - → Look for `readme/README_zh_Hans.md`
   - → If not found, return `README.md` (English version)
-
 - User requests Japanese (`ja_JP`)
   - → Look for `readme/README_ja_JP.md`
   - → If not found, return `README.md` (English version)

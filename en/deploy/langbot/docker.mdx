@@ -2,14 +2,15 @@
 title: "Docker Deployment"
 ---
 
-<Warning title="It is recommended that you first learn the following:">
+<Warning>
+  Before you start, you may learn about in advanced:
 
- - Usage of `Docker` and `Docker Compose`  
- - Docker container network communication configuration methods  
-</Warning> 
+  - Usage of `Docker` and `Docker Compose`
+  - Docker container network communication configuration methods
+</Warning>
 
 <Info>
-- Please ensure Git, Docker, and Docker Compose are installed
+  - Please ensure Git, Docker, and Docker Compose are installed
 </Info>
 
 Clone the project:
@@ -25,7 +26,7 @@ Start the container:
 docker compose up
 ```
 
-The container maps port `5300` for WebUI access. You can visit `http://127.0.0.1:5300` to view the WebUI.  
+The container maps port `5300` for WebUI access. You can visit `http://127.0.0.1:5300` to view the WebUI.\
 It also maps ports `2280-2290` for reserved for message platform adapters.
 
 After completing the LangBot deployment, please continue reading:
