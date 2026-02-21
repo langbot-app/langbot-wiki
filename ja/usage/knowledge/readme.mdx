@@ -1,0 +1,37 @@
+---
+title: "ナレッジベースの使用"
+---
+
+LangBotはRAG(Retrieval-Augmented Generation)をネイティブサポートしています。組み込みナレッジベースを作成してパイプラインにバインドすることで、ナレッジベースの内容に基づいて質問に答えることができます。LangBotは外部のナレッジ検索サービス(例: Dify、RAGFlow)への接続もサポートしています。
+
+## 組み込みナレッジベースの構築
+
+<Info>
+組み込みナレッジベースの作成と使用には、まず埋め込みモデルの設定が必要です。[モデルの設定](/ja/usage/models/readme)をお読みください。
+</Info>
+
+`ナレッジベースを作成`ボタンをクリックし、名前を入力し、既に設定済みの埋め込みモデルを選択してから`作成`をクリックします。
+
+作成後、ナレッジベースの「ドキュメント」タブに移動してドキュメントをアップロードします。LangBotはバックグラウンドで自動的に解析とインデックス化を行います。
+
+<img width="400px" src="/images/zh/deploy/knowledge/upload_docs.png" alt="create_kb" />
+
+## 外部ナレッジベースの接続
+
+ナレッジベースページで「外部ナレッジベース」タブに切り替え、外部リトリーバーを追加します。ダイアログで使用するナレッジリトリーバープラグインを選択します(関連プラグインをプラグイン管理で事前にインストールしてください)。サポートされているリトリーバーは[プラグインマーケットプレイス](https://space.langbot.app/market?category=KnowledgeRetriever)で確認できます。
+
+## ナレッジベースの使用
+
+パイプライン設定に移動し、「AI」タブで`Local Agent`をランナーとして選択してから、先ほど作成したナレッジベースを選択します。
+
+<img width="400px" src="/images/zh/deploy/knowledge/use_local_agent.png" alt="use_kb" />
+
+<img width="400px" src="/images/zh/deploy/knowledge/use_kb.png" alt="use_kb" />
+
+<Info>
+LangBotの組み込みナレッジベースは、ランナーが`Local Agent`に設定されている場合にのみ使用できます。他のランナーについては、それぞれのドキュメントを参照してください。
+</Info>
+
+これで`チャットデバッグ`でナレッジベースを使用したり、このパイプラインにリンクされたボットを通じて使用できます:
+
+<img width="400px" src="/images/zh/deploy/knowledge/use_kb_in_chat.png" alt="use_kb_in_chat" />

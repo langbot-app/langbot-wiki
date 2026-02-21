@@ -1,6 +1,0 @@
-/* .vitepress/theme/custom.css */
-:root {
-    /* 自定义主页的hero部分的 name 的字体颜色 */
-    --vp-home-hero-name-color: transparent;
-    --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #bd34fe, #41d1ff);
-}

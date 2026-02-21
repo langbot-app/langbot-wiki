@@ -1,5 +1,0 @@
-# コマンド
-
-LangBotは`!`で始まるメッセージをコマンドとして認識します。公式では[`EssentialCommands`プラグイン](https://space.langbot.app/market?author=langbot-team&plugin=EssentialCommands)を提供しており、よく使用されるコマンドが含まれています。
-
-独自のコマンドプラグインを開発することもできます。詳細は[コマンドプラグイン開発](/en/plugin/dev/components/command.md)を参照してください。

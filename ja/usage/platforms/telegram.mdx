@@ -1,0 +1,31 @@
+---
+title: "Telegram ボットに接続"
+---
+
+## ボットの作成
+
+[Telegram Bot Creation Page](https://t.me/botfather)にアクセスし、プロンプトに従ってボットを作成します。
+
+![Telegram Bot Creation](/images/zh/deploy/bots/telegram/telegram_01.png)
+
+![Telegram Bot Creation](/images/zh/deploy/bots/telegram/telegram_02.png)
+
+作成後、BotFather は API Token を返しますので、安全に保管してください。次に、グループチャットで使用するために「Privacy Mode」をオフにします。
+
+![Telegram Bot API Token](/images/zh/deploy/bots/telegram/telegram_03.png)
+
+## LangBot に接続
+
+LangBot Webui ページを開き、新しいボットを作成します
+
+![Connect to LangBot](/images/zh/deploy/bots/telegram/connect_to_langbot.png)
+
+入力後、LangBot を起動します。設定が成功した場合、ログに `[02-02 16:48:15.263] manager.py (68) - [INFO] : Initializing platform adapter 1: telegram` と表示されます。LangBot を実行し続けてください。
+
+## ボットの使用
+
+グループまたはプライベートメッセージでボットを通常どおり使用できるようになりました。
+
+![Telegram Bot Usage](/images/zh/deploy/bots/telegram/telegram_04.png)
+
+![Telegram Bot Usage](/images/zh/deploy/bots/telegram/telegram_05.png)

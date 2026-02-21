@@ -1,0 +1,55 @@
+---
+title: "Slack ボットに接続"
+---
+
+## ボットの作成
+
+[Slack App Platform](https://api.slack.com/apps)にアクセスします。
+
+![Slack Platform](/images/zh/deploy/bots/slack/slack_01.jpg)
+
+右上の「Create New App」をクリックし、「from a manifest」を選択し、ボットをデプロイするワークスペースを選択し、next を選択して、ボットを作成します。
+
+左側の「Basic Information」オプションに入り、`signing_secret` を記録します。
+
+左側の「OAuth & Permissions」に入り、「Scopes」までスクロールダウンし、次のボット権限を追加します：
+
+![Bot Permissions 1](/images/zh/deploy/bots/slack/slack_02.jpg)
+
+
+![Bot Permissions 2](/images/zh/deploy/bots/slack/slack_03.jpg)
+
+上記の権限を追加した後、「Install to your workspace」をクリックし、`xoxb-xxxxx` で始まるトークンを記録します。<br />
+
+**注意：**
+**すべての権限を一度に追加しなかった場合は、後で App を再インストールする必要があります。**<br />
+
+左側の「App Home」タブに入り、一番下までスクロールして「Message Tab」を見つけ、オンにして
+「Allow users to send Slash commands and messages from the messages tab」をチェックします。
+
+## LangBot に接続
+
+左側の「Event Subscriptions」に入り、スイッチをオンにし、「Subscribe to bot events」をクリックし、
+次の権限を追加します：
+![Event Permissions](/images/zh/deploy/bots/slack/slack_04.jpg)
+
+上記のすべての操作を完了した後、LangBot Webui 設定ページを開き、新しいボットを追加します
+
+![Event Permissions](/images/zh/deploy/bots/slack/connect_to_langbot.png)
+
+## ボットの起動
+
+<Info>
+Slack 公式が https を要求しているため、まずドキュメント [HTTP リバースプロキシと SSL の設定](/en/workshop/production/proxy-and-ssl)に従ってリバースプロキシを設定してください。
+</Info>
+
+Slack 設定項目を入力した後、**LangBot を起動します**。
+LangBot ホームページで Slack ボットを有効にして開き、ボット設定ページから WebHook URL をコピーし、先ほど設定した Event Subscriptions の「Request URL」に WebHook URL を入力します。
+
+
+上記のすべての設定項目を入力した後、リンクを保存をクリックします。緑色の **Verified** が表示されれば、デプロイは成功です。
+それ以外の場合は、上記の設定項目が正しく入力されているかどうかを確認してください。
+
+## 効果のデモンストレーション
+
+![Effect Demonstration](/images/zh/deploy/bots/slack/slack_05.jpg)

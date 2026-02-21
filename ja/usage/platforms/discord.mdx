@@ -1,0 +1,55 @@
+---
+title: "Discord ボットに接続"
+---
+
+## ボットの作成
+
+[Discord Developer Portal](https://discord.com/developers/applications)にアクセスし、ログインしてアプリケーションを作成します。
+
+![alt text](/images/zh/deploy/bots/discord/discord_01.png)
+
+基本情報を変更し、「Save Changes」をクリックして保存します。
+
+![alt text](/images/zh/deploy/bots/discord/discord_02.png)
+
+左側の「Bot」をクリックし、「Reset Token」をクリックして、生成された Token をコピーします。
+
+![alt text](/images/zh/deploy/bots/discord/discord_03.png)
+
+そして、このページの「Privileged Gateway Intents」のすべてのオプションをチェックし、「Save Changes」をクリックして保存します。
+
+![alt text](/images/zh/deploy/bots/discord/discord_05.png)
+
+**最後に、左側の「OAuth2」をクリックし、ページの「Client ID」をコピーします。**
+
+## LangBot に接続
+
+新しいボットを追加するためにクリックし、前の手順で取得した「Client ID」と「Token」を設定に入力します。
+
+![alt text](/images/zh/deploy/bots/discord/connect_to_langbot.png)
+
+<Warning title="中国本土内でこのアダプターを使用している場合、ネットワークプロキシを設定する必要がある場合があります。">
+
+</Warning>
+
+入力後、LangBot を起動します。設定が成功した場合、ログに `[02-02 16:48:15.263] manager.py (68) - [INFO] : Initializing platform adapter 1: discord` と表示されます。LangBot を実行し続けてください。
+
+## ボットをサーバーに招待
+
+まずサーバーを作成し、次にボットをサーバーに招待する必要があります。
+
+「OAuth2」ページに移動し、「URL Generator」を選択し、「bot」を選択して、画像に示されている権限をチェックします。
+
+![alt text](/images/zh/deploy/bots/discord/discord_06.png)
+
+![alt text](/images/zh/deploy/bots/discord/discord_07.png)
+
+「Copy」をクリックし、生成された URL をブラウザに貼り付けて開き、ボットをサーバーに招待します。
+
+![alt text](/images/zh/deploy/bots/discord/discord_08.png)
+
+## ボットの使用
+
+グループまたはプライベートメッセージでボットを通常どおり使用できるようになりました。
+
+![alt text](/images/zh/deploy/bots/discord/discord_09.png)

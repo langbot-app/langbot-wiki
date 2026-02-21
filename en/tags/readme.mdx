@@ -1,0 +1,23 @@
+---
+title: "Service API Overview"
+---
+
+LangBot provides a set of APIs for external services to integrate. These APIs are authenticated with API keys, which are a subset of the HTTP API. To view the API documentation for frontend-backend communication, please go to the [Development](/en/develop/dev-config) section.
+
+<Warning>
+Service API is currently in Beta and some APIs may change frequently.
+</Warning>
+
+## Get API Key
+
+Click the `API Keys` button in the sidebar of the WebUI to create an API Key.
+
+![create_api_key](/images/zh/api/create_api_key.png)
+
+After creation, copy the API Key and save it.
+
+![copy_api_key](/images/zh/api/copy_api_key.png)
+
+## Use API
+
+The left sidebar lists all available APIs. You can fill in your instance address (the port address exposed by the backend, default is `http://localhost:5300`) and API Key, then click the `Try it out` button to call the API.

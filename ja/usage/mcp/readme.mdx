@@ -1,0 +1,38 @@
+---
+title: "MCPサーバーの使用"
+---
+
+
+LangBotはMCPサーバーをサポートしています。MCPサーバーを追加して、大規模言語モデルのツール呼び出し機能を活用し、LLMリクエストをより適切に処理できます。
+
+<Info title="- MCP サービスは HTTP Streamable、SSE および stdio モードをサポートしています。">
+- MCPサーバーの推奨取得チャネル: [Composio MCP](https://mcp.composio.dev/)
+</Info>
+
+## モデルのFunction Callingを有効化
+
+画像に示すように、モデルの`Function Calling`機能を有効にします。
+
+<img width="400px" src="/images/zh/deploy/mcp/mcp_01.png" alt="enable function call" />
+
+## MCPサーバーの作成
+
+`プラグイン管理`をクリックしてから`MCP管理`をクリックします:
+
+<img width="1000px" src="/images/zh/deploy/mcp/mcp02.png" alt="server page" />
+
+右上の`追加`をクリックしてから`MCPサーバーを作成`をクリックします。
+
+<img width="400px" src="/images/zh/deploy/mcp/mcp03.png" alt="create new mcp server" />
+
+例えば、Fetch HTMLサーバーを使用するには、対応するURLを入力し、`テスト`をクリックしてMCPサーバーをテストし、`送信`をクリックしてサーバーを追加します。
+
+追加後、カードのスイッチをクリックしてMCPサーバーに接続します。カードをクリックしてMCPサーバーの詳細を表示します:
+
+<img width="400px" src="/images/zh/deploy/mcp/mcp05.png" alt="detailed server" />
+
+## 効果
+
+パイプライン設定で`Local Agent`をランナーとして選択し、function callingをサポートするモデルを使用する必要があります。
+
+<img width="1000px" src="/images/zh/deploy/mcp/mcp04.png" alt="dialog with mcp" />

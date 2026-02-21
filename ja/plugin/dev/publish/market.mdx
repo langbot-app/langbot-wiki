@@ -1,0 +1,67 @@
+---
+title: "プラグインマーケットプレイスに公開"
+---
+
+CLI経由で[LangBotプラグインマーケットプレイス](https://space.langbot.app/market)にプラグインを公開します。
+
+## LangBot Spaceでアカウントを作成
+
+LangBot SpaceはLangBotの集中サービスプラットフォームです。[LangBot Space](https://space.langbot.app)にアクセスし、右上隅をクリックしてGitHubでログインし、アカウントを作成してください。
+
+<img width="600" src="/images/zh/plugin/dev/login_space.png" />
+
+GitHubの認証ページにリダイレクトされますので、プロンプトに従って認証を完了してください。
+
+## CLIを使用してLangBot Spaceにログイン
+
+任意のディレクトリでコマンド`lbp login`を実行します:
+
+```bash
+➜  HelloPlugin > lbp login
+Starting LangBot CLI login process...
+Generating device code...
+
+==================================================
+Please copy the user code and complete verification in your browser:
+User Code: 6CD64D56
+Verification URL: https://space.langbot.app/auth/device
+Device code expires in: 120 seconds
+==================================================
+
+Waiting for verification...
+```
+
+`Verification URL`をクリックしてLangBot Spaceにリダイレクトし、`User Code`を入力してログインを完了してください。
+
+<img width="600" src="/images/zh/plugin/dev/space_device_flow.png" />
+
+```bash
+==================================================
+✅ Login successful!
+Access token saved to: ~/.langbot/cli/config.json
+Token type: Bearer
+Expires in: 21600 seconds
+==================================================
+```
+
+ログインが成功したら、CLIを使用してプラグインをアップロードできます。
+
+## プラグインのアップロード
+
+プラグインディレクトリで`lbp publish`を実行してください:
+
+```bash
+➜  HelloPlugin > lbp publish
+Building plugin to dist/tmp...
+  - Skipping ignored directory: dist
+  - Skipping ignored directory: __pycache__
+  ...
+Plugin built successfully: dist/tmp/RockChinQ-HelloPlugin-0.1.0.lbpkg
+✅ Plugin published successfully. You can check it on https://https://space.langbot.app/market
+```
+
+[LangBotプラグインマーケットプレイス](https://space.langbot.app/market)でプラグイン提出タスクを確認できます。承認をお待ちください。承認後、マーケットプレイスでプラグインを表示できます。
+
+<img width="600" src="/images/zh/plugin/dev/plugin_submission.png" />
+
+ご質問がある場合は、`hello@langbot.app`にメールを送信するか、[コミュニティ](/en/insight/community)を通じてお問い合わせください。

@@ -1,0 +1,610 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "LangBot",
+  "colors": {
+    "primary": "#4692dd",
+    "light": "#4692dd",
+    "dark": "#4692dd"
+  },
+  "logo": {
+    "light": "/logo/langbot-logo-0.5x.png",
+    "dark": "/logo/langbot-logo-0.5x.png",
+    "href": "https://langbot.app"
+  },
+  "favicon": "/favicon.ico",
+  "navbar": {
+    "links": [
+      { "label": "Home", "href": "https://langbot.app" },
+      { "label": "Market", "href": "https://space.langbot.app" },
+      { "label": "Blog", "href": "https://blog.langbot.app/zh/" },
+      { "label": "Roadmap", "href": "https://langbot.featurebase.app/roadmap" }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/langbot-app/LangBot"
+    }
+  },
+  "redirects": [
+    { "source": "/zh/deploy/models/readme", "destination": "/zh/usage/models/readme" },
+    { "source": "/zh/deploy/platforms/readme", "destination": "/zh/usage/platforms/readme" },
+    { "source": "/zh/deploy/pipelines/readme", "destination": "/zh/usage/pipelines/readme" },
+    { "source": "/zh/deploy/knowledge/readme", "destination": "/zh/usage/knowledge/readme" },
+    { "source": "/en/deploy/models/readme", "destination": "/en/usage/models/readme" },
+    { "source": "/en/deploy/platforms/readme", "destination": "/en/usage/platforms/readme" },
+    { "source": "/en/deploy/pipelines/readme", "destination": "/en/usage/pipelines/readme" },
+    { "source": "/en/deploy/knowledge/readme", "destination": "/en/usage/knowledge/readme" },
+    { "source": "/ja/deploy/models/readme", "destination": "/ja/usage/models/readme" },
+    { "source": "/ja/deploy/platforms/readme", "destination": "/ja/usage/platforms/readme" },
+    { "source": "/ja/deploy/pipelines/readme", "destination": "/ja/usage/pipelines/readme" },
+    { "source": "/ja/deploy/knowledge/readme", "destination": "/ja/usage/knowledge/readme" }
+  ],
+  "navigation": {
+    "languages": [
+      {
+        "language": "cn",
+        "tabs": [
+          {
+            "tab": "指南",
+            "groups": [
+              {
+                "group": "快速开始",
+                "pages": [
+                  "zh/insight/guide",
+                  "zh/insight/features",
+                  "zh/insight/community"
+                ]
+              },
+              {
+                "group": "安装部署",
+                "pages": [
+                  "zh/deploy/langbot/package",
+                  "zh/deploy/langbot/docker",
+                  "zh/deploy/langbot/one-click/1panel",
+                  "zh/deploy/langbot/one-click/bt",
+                  "zh/deploy/langbot/manual",
+                  "zh/deploy/settings",
+                  "zh/deploy/update",
+                  "zh/deploy/command"
+                ]
+              },
+              {
+                "group": "配置机器人",
+                "pages": [
+                  "zh/usage/platforms/readme",
+                  "zh/usage/platforms/discord",
+                  "zh/usage/platforms/telegram",
+                  "zh/usage/platforms/slack",
+                  "zh/usage/platforms/line",
+                  "zh/usage/platforms/kook",
+                  "zh/usage/platforms/lark",
+                  "zh/usage/platforms/dingtalk",
+                  "zh/usage/platforms/wxoa",
+                  {
+                    "group": "QQ (OneBot v11)",
+                    "pages": [
+                      "zh/usage/platforms/qq/aiocqhttp/napcat",
+                      "zh/usage/platforms/qq/aiocqhttp/lagrange",
+                      "zh/usage/platforms/qq/aiocqhttp/llonebot"
+                    ]
+                  },
+                  {
+                    "group": "QQ 官方机器人",
+                    "pages": [
+                      "zh/usage/platforms/qq/official_webhook",
+                      "zh/usage/platforms/qq/official"
+                    ]
+                  },
+                  {
+                    "group": "企业微信",
+                    "pages": [
+                      "zh/usage/platforms/wecom/wecom",
+                      "zh/usage/platforms/wecom/wecomcs",
+                      "zh/usage/platforms/wecom/wecombot"
+                    ]
+                  },
+                  {
+                    "group": "微信",
+                    "pages": [
+                      "zh/usage/platforms/wechat/wechatpad"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "配置 AI 能力",
+                "pages": [
+                  "zh/usage/models/readme",
+                  "zh/usage/pipelines/readme",
+                  {
+                    "group": "接入 LLMOps 平台",
+                    "pages": [
+                      "zh/usage/pipelines/dify",
+                      "zh/usage/pipelines/n8n",
+                      "zh/usage/pipelines/langflow",
+                      "zh/usage/pipelines/tbox",
+                      "zh/usage/pipelines/coze"
+                    ]
+                  },
+                  "zh/usage/knowledge/readme",
+                  "zh/usage/mcp/readme"
+                ]
+              },
+              {
+                "group": "进阶运维",
+                "pages": [
+                  "zh/workshop/production/proxy-and-ssl",
+                  "zh/workshop/network-details",
+                  "zh/workshop/mcp-details",
+                  "zh/insight/platform-features",
+                  {
+                    "group": "第三方模型接入",
+                    "pages": [
+                      "zh/workshop/newapi-integration",
+                      "zh/workshop/shengsuanyun-integration",
+                      "zh/workshop/tokenpony-integration",
+                      "zh/workshop/ppio-integration",
+                      "zh/workshop/302ai-integration"
+                    ]
+                  },
+                  {
+                    "group": "规模使用",
+                    "pages": [
+                      "zh/tob/index",
+                      "zh/tob/platform",
+                      "zh/tob/provider",
+                      "zh/tob/contact"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "插件使用",
+                "pages": [
+                  "zh/plugin/plugin-intro",
+                  "zh/plugin/compatibility"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "开发者",
+            "groups": [
+              {
+                "group": "插件开发",
+                "pages": [
+                  "zh/plugin/dev/tutor",
+                  "zh/plugin/dev/basic-info",
+                  "zh/plugin/dev/directory-structure",
+                  {
+                    "group": "组件开发",
+                    "pages": [
+                      "zh/plugin/dev/components/add",
+                      "zh/plugin/dev/components/event-listener",
+                      "zh/plugin/dev/components/command",
+                      "zh/plugin/dev/components/tool",
+                      "zh/plugin/dev/components/knowledge-retriever"
+                    ]
+                  },
+                  "zh/plugin/dev/style",
+                  "zh/plugin/dev/migration",
+                  {
+                    "group": "发布插件",
+                    "pages": [
+                      "zh/plugin/dev/publish/market",
+                      "zh/plugin/dev/publish/github"
+                    ]
+                  },
+                  "zh/develop/plugin-runtime"
+                ]
+              },
+              {
+                "group": "核心开发",
+                "pages": [
+                  "zh/develop/dev-config",
+                  "zh/develop/comp-arch",
+                  "zh/workshop/impl-platform-adapter",
+                  {
+                    "group": "Discord 适配器",
+                    "pages": [
+                      "zh/develop/adapter/discord/README",
+                      "zh/develop/adapter/discord/quick_start",
+                      "zh/develop/adapter/discord/design",
+                      "zh/develop/adapter/discord/api_reference",
+                      "zh/develop/adapter/discord/troubleshooting"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API 参考",
+            "groups": [
+              {
+                "group": "Service API",
+                "pages": [
+                  "zh/tags/readme",
+                  "zh/tags/webhook"
+                ]
+              },
+              {
+                "group": "插件 SDK API",
+                "pages": [
+                  "zh/plugin/dev/apis/common",
+                  "zh/plugin/dev/apis/pipeline-events",
+                  "zh/plugin/dev/apis/messages",
+                  "zh/plugin/dev/apis/tech-details"
+                ]
+              },
+              {
+                "group": "HTTP API Reference",
+                "openapi": {
+                  "source": "openapi/service-api-zh.json",
+                  "directory": "zh/api-reference"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "en",
+        "tabs": [
+          {
+            "tab": "Guides",
+            "groups": [
+              {
+                "group": "Quick Start",
+                "pages": [
+                  "en/insight/guide",
+                  "en/insight/features",
+                  "en/insight/community"
+                ]
+              },
+              {
+                "group": "Installation",
+                "pages": [
+                  "en/deploy/langbot/package",
+                  "en/deploy/langbot/docker",
+                  "en/deploy/langbot/one-click/1panel",
+                  "en/deploy/langbot/one-click/bt",
+                  "en/deploy/langbot/manual",
+                  "en/deploy/settings",
+                  "en/deploy/update",
+                  "en/deploy/command"
+                ]
+              },
+              {
+                "group": "Configure Bots",
+                "pages": [
+                  "en/usage/platforms/readme",
+                  "en/usage/platforms/discord",
+                  "en/usage/platforms/telegram",
+                  "en/usage/platforms/slack",
+                  "en/usage/platforms/line",
+                  "en/usage/platforms/kook",
+                  "en/usage/platforms/lark",
+                  "en/usage/platforms/dingtalk",
+                  "en/usage/platforms/wxoa",
+                  {
+                    "group": "QQ (OneBot v11)",
+                    "pages": [
+                      "en/usage/platforms/qq/aiocqhttp/napcat",
+                      "en/usage/platforms/qq/aiocqhttp/lagrange",
+                      "en/usage/platforms/qq/aiocqhttp/llonebot"
+                    ]
+                  },
+                  {
+                    "group": "QQ Official Bot",
+                    "pages": [
+                      "en/usage/platforms/qq/official_webhook"
+                    ]
+                  },
+                  {
+                    "group": "WeCom (Enterprise WeChat)",
+                    "pages": [
+                      "en/usage/platforms/wecom/wecom",
+                      "en/usage/platforms/wecom/wecomcs",
+                      "en/usage/platforms/wecom/wecombot"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "AI Configuration",
+                "pages": [
+                  "en/usage/models/readme",
+                  "en/usage/pipelines/readme",
+                  {
+                    "group": "LLMOps Integrations",
+                    "pages": [
+                      "en/usage/pipelines/dify",
+                      "en/usage/pipelines/n8n",
+                      "en/usage/pipelines/langflow",
+                      "en/usage/pipelines/coze"
+                    ]
+                  },
+                  "en/usage/knowledge/readme",
+                  "en/usage/mcp/readme"
+                ]
+              },
+              {
+                "group": "Advanced Operations",
+                "pages": [
+                  "en/workshop/production/proxy-and-ssl",
+                  "en/workshop/network-details",
+                  "en/workshop/mcp-details",
+                  "en/insight/platform-features",
+                  {
+                    "group": "Third-Party Model Providers",
+                    "pages": [
+                      "en/workshop/newapi-integration",
+                      "en/workshop/ppio-integration",
+                      "en/workshop/302ai-integration"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Using Plugins",
+                "pages": [
+                  "en/plugin/plugin-intro",
+                  "en/plugin/compatibility"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Developers",
+            "groups": [
+              {
+                "group": "Plugin Development",
+                "pages": [
+                  "en/plugin/dev/tutor",
+                  "en/plugin/dev/basic-info",
+                  "en/plugin/dev/directory-structure",
+                  {
+                    "group": "Component Development",
+                    "pages": [
+                      "en/plugin/dev/components/add",
+                      "en/plugin/dev/components/event-listener",
+                      "en/plugin/dev/components/command",
+                      "en/plugin/dev/components/tool",
+                      "en/plugin/dev/components/knowledge-retriever"
+                    ]
+                  },
+                  "en/plugin/dev/style",
+                  "en/plugin/dev/migration",
+                  {
+                    "group": "Publish Plugin",
+                    "pages": [
+                      "en/plugin/dev/publish/market",
+                      "en/plugin/dev/publish/github"
+                    ]
+                  },
+                  "en/develop/plugin-runtime"
+                ]
+              },
+              {
+                "group": "Core Development",
+                "pages": [
+                  "en/develop/dev-config",
+                  "en/develop/comp-arch",
+                  "en/workshop/impl-platform-adapter"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "Service API",
+                "pages": [
+                  "en/tags/readme",
+                  "en/tags/webhook"
+                ]
+              },
+              {
+                "group": "Plugin SDK API",
+                "pages": [
+                  "en/plugin/dev/apis/common",
+                  "en/plugin/dev/apis/pipeline-events",
+                  "en/plugin/dev/apis/messages",
+                  "en/plugin/dev/apis/tech-details"
+                ]
+              },
+              {
+                "group": "HTTP API Reference",
+                "openapi": {
+                  "source": "openapi/service-api-en.json",
+                  "directory": "en/api-reference"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "jp",
+        "tabs": [
+          {
+            "tab": "ガイド",
+            "groups": [
+              {
+                "group": "クイックスタート",
+                "pages": [
+                  "ja/insight/guide",
+                  "ja/insight/features",
+                  "ja/insight/community"
+                ]
+              },
+              {
+                "group": "インストール",
+                "pages": [
+                  "ja/deploy/langbot/package",
+                  "ja/deploy/langbot/docker",
+                  "ja/deploy/langbot/one-click/1panel",
+                  "ja/deploy/langbot/one-click/bt",
+                  "ja/deploy/langbot/manual",
+                  "ja/deploy/settings",
+                  "ja/deploy/update",
+                  "ja/deploy/command"
+                ]
+              },
+              {
+                "group": "ボットを設定",
+                "pages": [
+                  "ja/usage/platforms/readme",
+                  "ja/usage/platforms/discord",
+                  "ja/usage/platforms/telegram",
+                  "ja/usage/platforms/slack",
+                  "ja/usage/platforms/line",
+                  "ja/usage/platforms/kook",
+                  "ja/usage/platforms/lark",
+                  "ja/usage/platforms/dingtalk",
+                  "ja/usage/platforms/wxoa",
+                  {
+                    "group": "QQ (OneBot v11)",
+                    "pages": [
+                      "ja/usage/platforms/qq/aiocqhttp/napcat",
+                      "ja/usage/platforms/qq/aiocqhttp/lagrange",
+                      "ja/usage/platforms/qq/aiocqhttp/llonebot"
+                    ]
+                  },
+                  {
+                    "group": "QQ 公式ボット",
+                    "pages": [
+                      "ja/usage/platforms/qq/official_webhook"
+                    ]
+                  },
+                  {
+                    "group": "WeCom（企業微信）",
+                    "pages": [
+                      "ja/usage/platforms/wecom/wecom",
+                      "ja/usage/platforms/wecom/wecomcs",
+                      "ja/usage/platforms/wecom/wecombot"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "AI 設定",
+                "pages": [
+                  "ja/usage/models/readme",
+                  "ja/usage/pipelines/readme",
+                  {
+                    "group": "LLMOps プラットフォーム連携",
+                    "pages": [
+                      "ja/usage/pipelines/dify",
+                      "ja/usage/pipelines/n8n",
+                      "ja/usage/pipelines/langflow",
+                      "ja/usage/pipelines/coze"
+                    ]
+                  },
+                  "ja/usage/knowledge/readme",
+                  "ja/usage/mcp/readme"
+                ]
+              },
+              {
+                "group": "運用ガイド",
+                "pages": [
+                  "ja/workshop/production/proxy-and-ssl",
+                  "ja/workshop/network-details",
+                  "ja/workshop/mcp-details",
+                  "ja/insight/platform-features",
+                  {
+                    "group": "サードパーティモデル接続",
+                    "pages": [
+                      "ja/workshop/newapi-integration",
+                      "ja/workshop/ppio-integration",
+                      "ja/workshop/302ai-integration"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "プラグインの利用",
+                "pages": [
+                  "ja/plugin/plugin-intro",
+                  "ja/plugin/compatibility"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "開発者",
+            "groups": [
+              {
+                "group": "プラグイン開発",
+                "pages": [
+                  "ja/plugin/dev/tutor",
+                  "ja/plugin/dev/basic-info",
+                  "ja/plugin/dev/directory-structure",
+                  {
+                    "group": "コンポーネント開発",
+                    "pages": [
+                      "ja/plugin/dev/components/add",
+                      "ja/plugin/dev/components/event-listener",
+                      "ja/plugin/dev/components/command",
+                      "ja/plugin/dev/components/tool",
+                      "ja/plugin/dev/components/knowledge-retriever"
+                    ]
+                  },
+                  "ja/plugin/dev/style",
+                  "ja/plugin/dev/migration",
+                  {
+                    "group": "プラグインを配布",
+                    "pages": [
+                      "ja/plugin/dev/publish/market",
+                      "ja/plugin/dev/publish/github"
+                    ]
+                  },
+                  "ja/develop/plugin-runtime"
+                ]
+              },
+              {
+                "group": "コア開発",
+                "pages": [
+                  "ja/develop/dev-config",
+                  "ja/develop/comp-arch",
+                  "ja/workshop/impl-platform-adapter"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API リファレンス",
+            "groups": [
+              {
+                "group": "Service API",
+                "pages": [
+                  "ja/tags/readme",
+                  "ja/tags/webhook"
+                ]
+              },
+              {
+                "group": "プラグイン SDK API",
+                "pages": [
+                  "ja/plugin/dev/apis/common",
+                  "ja/plugin/dev/apis/pipeline-events",
+                  "ja/plugin/dev/apis/messages",
+                  "ja/plugin/dev/apis/tech-details"
+                ]
+              },
+              {
+                "group": "HTTP API Reference",
+                "openapi": {
+                  "source": "openapi/service-api-ja.json",
+                  "directory": "ja/api-reference"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
