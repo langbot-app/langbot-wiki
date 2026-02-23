@@ -103,12 +103,6 @@
                     ]
                   },
                   {
-                    "group": "Satori (QQ 等多平台)",
-                    "pages": [
-                      "zh/usage/platforms/satori/llonebot"
-                    ]
-                  },
-                  {
                     "group": "QQ 官方机器人",
                     "pages": [
                       "zh/usage/platforms/qq/official_webhook",
@@ -317,12 +311,6 @@
                     ]
                   },
                   {
-                    "group": "Satori (QQ & Multi-Platform)",
-                    "pages": [
-                      "en/usage/platforms/satori/llonebot"
-                    ]
-                  },
-                  {
                     "group": "QQ Official Bot",
                     "pages": [
                       "en/usage/platforms/qq/official_webhook"
@@ -498,12 +486,6 @@
                       "ja/usage/platforms/qq/aiocqhttp/napcat",
                       "ja/usage/platforms/qq/aiocqhttp/lagrange",
                       "ja/usage/platforms/qq/aiocqhttp/llonebot"
-                    ]
-                  },
-                  {
-                    "group": "Satori（QQ等マルチプラットフォーム）",
-                    "pages": [
-                      "ja/usage/platforms/satori/llonebot"
                     ]
                   },
                   {
