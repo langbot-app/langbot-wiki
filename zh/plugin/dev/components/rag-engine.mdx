@@ -90,7 +90,7 @@ execution:
 RAGEngine 可以声明自身支持的能力，LangBot 会根据能力声明决定 UI 展示和可用操作：
 
 ```python
-from langbot_plugin.api.entities.builtin.rag.enums import RAGEngineCapability
+from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
 
 class SimpleRag(RAGEngine):
 
@@ -98,9 +98,6 @@ class SimpleRag(RAGEngine):
     def get_capabilities(cls) -> list[str]:
         return [
             RAGEngineCapability.DOC_INGESTION,    # 支持文档上传和处理
-            RAGEngineCapability.CHUNKING_CONFIG,   # 支持自定义分块参数
-            RAGEngineCapability.RERANK,            # 支持结果重排序
-            RAGEngineCapability.HYBRID_SEARCH,     # 支持混合搜索（向量+关键词）
         ]
 ```
 
@@ -109,25 +106,28 @@ class SimpleRag(RAGEngine):
 | 能力 | 说明 |
 |------|------|
 | `DOC_INGESTION` | 支持文档上传和处理。声明此能力后，LangBot 将在知识库详情中显示"文档"标签页 |
-| `CHUNKING_CONFIG` | 支持自定义分块参数 |
-| `RERANK` | 支持检索结果重排序 |
-| `HYBRID_SEARCH` | 支持混合搜索（向量搜索+全文搜索） |
+
+<Info>
+其他检索行为（如重排序、混合搜索等）由插件的 `retrieval_schema` 控制，不需要能力标志。
+</Info>
 
 ## 插件处理
 
 默认会生成如下代码（`components/rag_engine/<引擎名称>.py`），您需要实现 `ingest`、`retrieve`、`delete_document` 三个核心方法。完整代码可在 [langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo) 的 `SimpleRAGEngine` 中找到。
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine
-from langbot_plugin.api.entities.builtin.rag.context import (
+from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
+from langbot_plugin.api.entities.builtin.rag.models import (
     IngestionContext,
     IngestionResult,
+)
+from langbot_plugin.api.entities.builtin.rag.context import (
     RetrievalContext,
     RetrievalResponse,
     RetrievalResultEntry,
 )
-from langbot_plugin.api.entities.builtin.rag.enums import RAGEngineCapability
-from langbot_plugin.api.entities.builtin.rag.models import DocumentStatus, ContentElement
+from langbot_plugin.api.entities.builtin.rag.enums import DocumentStatus
+from langbot_plugin.api.entities.builtin.provider.message import ContentElement
 
 
 class SimpleRag(RAGEngine):
@@ -182,7 +182,7 @@ class SimpleRag(RAGEngine):
 
         # 2. 向量搜索
         collection_id = context.get_collection_id()
-        results = await self.plugin.vector_search(collection_id, query_vector, top_k=context.top_k)
+        results = await self.plugin.vector_search(collection_id, query_vector, top_k=context.retrieval_settings.get('top_k', 5))
 
         # 3. 转换为检索结果
         entries = []
@@ -251,7 +251,7 @@ class IngestionContext(pydantic.BaseModel):
 
 ```python
 class FileObject(pydantic.BaseModel):
-    metadata: FileMetadata    # 包含 filename, file_size, mime_type, document_id
+    metadata: FileMetadata    # 包含 filename, file_size, mime_type, document_id, knowledge_base_id 等
     storage_path: str         # 文件在存储系统中的路径
 ```
 
@@ -279,7 +279,6 @@ async def retrieve(self, context: RetrievalContext) -> RetrievalResponse:
 ```python
 class RetrievalContext(pydantic.BaseModel):
     query: str                           # 查询文本
-    top_k: int = 5                       # 返回结果数量
     knowledge_base_id: str | None        # 知识库 ID
     collection_id: str | None            # 向量集合 ID
     retrieval_settings: dict             # 检索时的配置参数（retrieval_schema 中的字段）

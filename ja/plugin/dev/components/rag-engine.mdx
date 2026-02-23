@@ -90,7 +90,7 @@ execution:
 RAGEngineはサポートする能力を宣言でき、LangBotはこれらの能力宣言に基づいてUIの表示と利用可能な操作を決定します:
 
 ```python
-from langbot_plugin.api.entities.builtin.rag.enums import RAGEngineCapability
+from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
 
 class SimpleRag(RAGEngine):
 
@@ -98,9 +98,6 @@ class SimpleRag(RAGEngine):
     def get_capabilities(cls) -> list[str]:
         return [
             RAGEngineCapability.DOC_INGESTION,    # ドキュメントのアップロードと処理をサポート
-            RAGEngineCapability.CHUNKING_CONFIG,   # カスタムチャンキングパラメータをサポート
-            RAGEngineCapability.RERANK,            # 結果のリランキングをサポート
-            RAGEngineCapability.HYBRID_SEARCH,     # ハイブリッド検索をサポート（ベクトル+キーワード）
         ]
 ```
 
@@ -109,25 +106,28 @@ class SimpleRag(RAGEngine):
 | 能力 | 説明 |
 |------|------|
 | `DOC_INGESTION` | ドキュメントのアップロードと処理をサポート。宣言すると、LangBotはナレッジベースの詳細に「ドキュメント」タブを表示します |
-| `CHUNKING_CONFIG` | カスタムチャンキングパラメータをサポート |
-| `RERANK` | 検索結果のリランキングをサポート |
-| `HYBRID_SEARCH` | ハイブリッド検索をサポート（ベクトル検索+全文検索） |
+
+<Info>
+その他の検索動作（リランキング、ハイブリッド検索など）はプラグインの`retrieval_schema`で制御され、能力フラグは不要です。
+</Info>
 
 ## プラグインハンドラ
 
 以下のコードがデフォルトで生成されます（`components/rag_engine/<エンジン名>.py`）。`ingest`、`retrieve`、`delete_document`の3つのコアメソッドを実装する必要があります。完全なコードは[langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo)の`SimpleRAGEngine`で見つけることができます。
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine
-from langbot_plugin.api.entities.builtin.rag.context import (
+from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
+from langbot_plugin.api.entities.builtin.rag.models import (
     IngestionContext,
     IngestionResult,
+)
+from langbot_plugin.api.entities.builtin.rag.context import (
     RetrievalContext,
     RetrievalResponse,
     RetrievalResultEntry,
 )
-from langbot_plugin.api.entities.builtin.rag.enums import RAGEngineCapability
-from langbot_plugin.api.entities.builtin.rag.models import DocumentStatus, ContentElement
+from langbot_plugin.api.entities.builtin.rag.enums import DocumentStatus
+from langbot_plugin.api.entities.builtin.provider.message import ContentElement
 
 
 class SimpleRag(RAGEngine):
@@ -182,7 +182,7 @@ class SimpleRag(RAGEngine):
 
         # 2. ベクトル検索
         collection_id = context.get_collection_id()
-        results = await self.plugin.vector_search(collection_id, query_vector, top_k=context.top_k)
+        results = await self.plugin.vector_search(collection_id, query_vector, top_k=context.retrieval_settings.get('top_k', 5))
 
         # 3. 検索結果に変換
         entries = []
@@ -251,7 +251,7 @@ class IngestionContext(pydantic.BaseModel):
 
 ```python
 class FileObject(pydantic.BaseModel):
-    metadata: FileMetadata    # filename, file_size, mime_type, document_idを含む
+    metadata: FileMetadata    # filename, file_size, mime_type, document_id, knowledge_base_id等を含む
     storage_path: str         # ストレージシステム内のファイルパス
 ```
 
@@ -279,7 +279,6 @@ async def retrieve(self, context: RetrievalContext) -> RetrievalResponse:
 ```python
 class RetrievalContext(pydantic.BaseModel):
     query: str                           # クエリテキスト
-    top_k: int = 5                       # 返す結果の数
     knowledge_base_id: str | None        # ナレッジベースID
     collection_id: str | None            # ベクトルコレクションID
     retrieval_settings: dict             # 検索時の設定パラメータ（retrieval_schemaのフィールド）
