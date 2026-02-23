@@ -204,7 +204,7 @@
                       "zh/plugin/dev/components/event-listener",
                       "zh/plugin/dev/components/command",
                       "zh/plugin/dev/components/tool",
-                      "zh/plugin/dev/components/knowledge-retriever"
+                      "zh/plugin/dev/components/rag-engine"
                     ]
                   },
                   "zh/plugin/dev/style",
@@ -398,7 +398,7 @@
                       "en/plugin/dev/components/event-listener",
                       "en/plugin/dev/components/command",
                       "en/plugin/dev/components/tool",
-                      "en/plugin/dev/components/knowledge-retriever"
+                      "en/plugin/dev/components/rag-engine"
                     ]
                   },
                   "en/plugin/dev/style",
@@ -582,7 +582,7 @@
                       "ja/plugin/dev/components/event-listener",
                       "ja/plugin/dev/components/command",
                       "ja/plugin/dev/components/tool",
-                      "ja/plugin/dev/components/knowledge-retriever"
+                      "ja/plugin/dev/components/rag-engine"
                     ]
                   },
                   "ja/plugin/dev/style",
