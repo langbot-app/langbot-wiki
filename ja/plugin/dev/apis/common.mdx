@@ -308,3 +308,191 @@ file_bytes = await self.plugin.get_config_file("key")
 ```
 
 これは[``fileまたはarray[file``](/en/plugin/dev/basic-info.html#type-file)型の設定フィールドと組み合わせて使用します。
+
+## RAG API
+
+これらのAPIは`RAGEngine`コンポーネントがLangBotホストの埋め込みモデル、ベクトルデータベース、ファイルストレージにアクセスするために使用できます。アクセス方法:
+
+- `RAGEngine`コンポーネントクラス内: `self.plugin`オブジェクトの内部メソッド。
+
+### 埋め込みモデルの呼び出し
+
+ホストに設定された埋め込みモデルを使用してテキストのベクトルを生成します。
+
+```python
+async def invoke_embedding(
+    self,
+    embedding_model_uuid: str,
+    texts: list[str],
+) -> list[list[float]]:
+    """埋め込みモデルを使用してベクトルを生成
+
+    Args:
+        embedding_model_uuid: 埋め込みモデルUUID
+        texts: 埋め込むテキストのリスト
+
+    Returns:
+        ベクトルのリスト、入力テキストごとに1つ
+    """
+
+# 使用例
+vectors = await self.plugin.invoke_embedding("model_uuid", ["Hello", "World"])
+```
+
+### ベクトルの書き込み
+
+ホストのベクトルデータベースにベクトルを書き込みます。
+
+```python
+async def vector_upsert(
+    self,
+    collection_id: str,
+    vectors: list[list[float]],
+    ids: list[str],
+    metadata: list[dict[str, Any]] | None = None,
+    documents: list[str] | None = None,
+) -> None:
+    """ベクトルの書き込み
+
+    Args:
+        collection_id: ターゲットコレクションID
+        vectors: ベクトルのリスト
+        ids: ベクトルの一意識別子リスト
+        metadata: オプションのメタデータリスト
+        documents: オプションの生テキストドキュメントリスト。全文検索や
+            混合検索をサポートするバックエンドで必要です。
+    """
+
+# 使用例
+await self.plugin.vector_upsert(
+    collection_id="kb_uuid",
+    vectors=[[0.1, 0.2, ...], [0.3, 0.4, ...]],
+    ids=["chunk_0", "chunk_1"],
+    metadata=[{"document_id": "doc1"}, {"document_id": "doc1"}],
+    documents=["チャンクテキスト 0", "チャンクテキスト 1"],
+)
+```
+
+### ベクトル検索
+
+ホストのベクトルデータベースで類似ベクトルを検索します。
+
+```python
+async def vector_search(
+    self,
+    collection_id: str,
+    query_vector: list[float],
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+    search_type: str = "vector",
+    query_text: str = "",
+) -> list[dict[str, Any]]:
+    """ベクトル検索
+
+    Args:
+        collection_id: ターゲットコレクションID
+        query_vector: 類似性検索のクエリベクトル
+        top_k: 返す結果の数
+        filters: オプションのメタデータフィルター
+        search_type: 検索方式、'vector'、'full_text'、'hybrid' のいずれか
+        query_text: 生のクエリテキスト、全文検索と混合検索で使用
+
+    Returns:
+        検索結果のリスト（id, score, metadataなどを含むdict）
+    """
+
+# 使用例
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    top_k=5,
+    search_type="hybrid",
+    query_text="検索クエリ",
+)
+# 返却フォーマット: [{"id": "chunk_0", "score": 0.123, "metadata": {"document_id": "doc1", ...}}, ...]
+```
+
+<Info>
+`vector_search`が返す各結果はdictで、`id`（ベクトルID）、`score`（距離スコア）、`metadata`（upsert時に提供したメタデータ）の3つのフィールドを含みます。検索結果にテキスト内容が必要な場合は、取り込み時にmetadataにテキストを保存してください。
+</Info>
+
+### ベクトルの削除
+
+ホストのベクトルデータベースからベクトルを削除します。
+
+```python
+async def vector_delete(
+    self,
+    collection_id: str,
+    file_ids: list[str] | None = None,
+    filters: dict[str, Any] | None = None,
+) -> int:
+    """ベクトルの削除
+
+    Args:
+        collection_id: ターゲットコレクションID
+        file_ids: 削除するファイルIDのリスト
+        filters: オプションのメタデータフィルター
+
+    Returns:
+        削除されたアイテム数
+    """
+
+# 使用例
+deleted = await self.plugin.vector_delete(
+    collection_id="kb_uuid",
+    file_ids=["doc_001"],
+)
+```
+
+<Info>
+`filters`パラメータはChromaスタイルの`where`構文によるメタデータフィルタリングをサポートしています。複数のトップレベルキーはAND条件として結合されます。サポートされる演算子：`$eq`、`$ne`、`$gt`、`$gte`、`$lt`、`$lte`、`$in`、`$nin`。
+
+```python
+# 暗黙的な $eq
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"file_id": "abc"},
+)
+
+# 比較演算子
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"created_at": {"$gte": 1700000000}},
+)
+
+# リスト演算子
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"file_type": {"$in": ["pdf", "docx"]}},
+)
+
+# フィルターによる削除
+deleted = await self.plugin.vector_delete(
+    collection_id="kb_uuid",
+    filters={"file_type": {"$eq": "pdf"}},
+)
+```
+
+**注意：** Chroma、Qdrant、SeekDBは完全なメタデータを保存し、任意のフィールドでフィルタリングできます。MilvusとpgvectorはDB側に`text`、`file_id`、`chunk_uuid`のみ保存しており、それ以外のフィールドでのフィルタリングは無視されます。
+</Info>
+
+ホストストレージからアップロードされたファイルの内容を取得します。
+
+```python
+async def get_rag_file_stream(self, storage_path: str) -> bytes:
+    """ファイル内容を取得
+
+    Args:
+        storage_path: ファイルのストレージパス（FileObject.storage_pathから取得）
+
+    Returns:
+        ファイル内容のバイトデータ
+    """
+
+# 使用例
+file_bytes = await self.plugin.get_rag_file_stream(context.file_object.storage_path)
+```

@@ -7,7 +7,7 @@ Plugins consist of one or more components that provide different functionalities
 - Event Listeners (EventListener): Listen to events during pipeline execution and modify context or pipelines.
 - Commands (Command): Triggered by user command messages starting with `!` (or other configured prefixes).
 - Tools (Tool): Called by LLMs during execution of LangBot's built-in Local Agent.
-- Knowledge Retrievers (KnowledgeRetriever): Provide external knowledge base retrieval capabilities for LangBot, supporting integration with various RAG systems.
+- RAG Engines (RAGEngine): Provide knowledge base indexing and retrieval capabilities for LangBot, managing document ingestion, retrieval, and deletion.
 
 ## Adding Components
 
@@ -71,4 +71,4 @@ For detailed usage of each component, please refer to:
 - [EventListener](./event-listener)
 - [Command](./command)
 - [Tool](./tool)
-- [KnowledgeRetriever](./knowledge-retriever)
+- [RAGEngine](./rag-engine)
