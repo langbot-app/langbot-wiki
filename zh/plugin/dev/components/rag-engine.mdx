@@ -2,7 +2,7 @@
 title: "组件：RAG 引擎"
 ---
 
-RAG 引擎（RAGEngine）组件允许插件为 LangBot 提供完整的知识库索引与检索能力。用户在 LangBot 中创建知识库时，可以选择由插件提供的 RAG 引擎来管理文档的摄取、检索和删除。
+RAG 引擎（RAGEngine）组件允许插件为 LangBot 提供完整的知识库索引与检索能力。用户在 LangBot 中创建知识库时，可以选择由插件提供的 RAG 引擎来管理文档的摄取、检索和删除。或通过插件桥接来自 Dify、RAGFlow、FastGPT 等业内先进知识库服务。
 
 ## 添加 RAG 引擎组件
 
@@ -105,7 +105,7 @@ class SimpleRag(RAGEngine):
 
 | 能力 | 说明 |
 |------|------|
-| `DOC_INGESTION` | 支持文档上传和处理。声明此能力后，LangBot 将在知识库详情中显示"文档"标签页 |
+| `DOC_INGESTION` | 支持文档上传和处理。声明此能力后，LangBot 将在知识库详情中显示"文档"标签页；若该插件是用于桥接其他的知识库服务或不需要用户上传文档，则可不提供该能力声明。 |
 
 <Info>
 其他检索行为（如重排序、混合搜索等）由插件的 `retrieval_schema` 控制，不需要能力标志。

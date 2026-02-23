@@ -2,7 +2,7 @@
 title: "Component: RAG Engine"
 ---
 
-The RAG Engine component allows plugins to provide full knowledge base indexing and retrieval capabilities for LangBot. When users create a knowledge base in LangBot, they can choose a RAG engine provided by a plugin to manage document ingestion, retrieval, and deletion.
+The RAG Engine component allows plugins to provide full knowledge base indexing and retrieval capabilities for LangBot. When users create a knowledge base in LangBot, they can choose a RAG engine provided by a plugin to manage document ingestion, retrieval, and deletion. Plugins can also bridge advanced knowledge base services such as Dify, RAGFlow, FastGPT, and more.
 
 ## Adding a RAG Engine Component
 
@@ -104,7 +104,7 @@ Available capability constants:
 
 | Capability | Description |
 |-----------|-------------|
-| `DOC_INGESTION` | Supports document upload and processing. When declared, LangBot shows a "Documents" tab in the knowledge base details |
+| `DOC_INGESTION` | Supports document upload and processing. When declared, LangBot shows a "Documents" tab in the knowledge base details. If the plugin is used to bridge other knowledge base services or does not require users to upload documents, this capability declaration can be omitted. |
 
 <Info>
 Other retrieval behaviors (such as reranking, hybrid search, etc.) are controlled by the plugin's `retrieval_schema` and do not need capability flags.
