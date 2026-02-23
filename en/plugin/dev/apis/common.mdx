@@ -350,6 +350,7 @@ async def vector_upsert(
     vectors: list[list[float]],
     ids: list[str],
     metadata: list[dict[str, Any]] | None = None,
+    documents: list[str] | None = None,
 ) -> None:
     """Upsert vectors
 
@@ -358,6 +359,8 @@ async def vector_upsert(
         vectors: List of vectors
         ids: List of unique IDs for vectors
         metadata: Optional list of metadata dicts
+        documents: Optional raw text documents. Required for full-text
+            and hybrid search in backends that support them.
     """
 
 # Usage example
@@ -366,6 +369,7 @@ await self.plugin.vector_upsert(
     vectors=[[0.1, 0.2, ...], [0.3, 0.4, ...]],
     ids=["chunk_0", "chunk_1"],
     metadata=[{"document_id": "doc1"}, {"document_id": "doc1"}],
+    documents=["chunk text 0", "chunk text 1"],
 )
 ```
 
@@ -380,6 +384,8 @@ async def vector_search(
     query_vector: list[float],
     top_k: int = 5,
     filters: dict[str, Any] | None = None,
+    search_type: str = "vector",
+    query_text: str = "",
 ) -> list[dict[str, Any]]:
     """Vector search
 
@@ -388,6 +394,8 @@ async def vector_search(
         query_vector: Query vector for similarity search
         top_k: Number of results to return
         filters: Optional metadata filters
+        search_type: One of 'vector', 'full_text', 'hybrid'
+        query_text: Raw query text, used for full_text and hybrid search
 
     Returns:
         List of search results (dict with id, score, metadata, etc.)
@@ -398,8 +406,15 @@ results = await self.plugin.vector_search(
     collection_id="kb_uuid",
     query_vector=[0.1, 0.2, ...],
     top_k=5,
+    search_type="hybrid",
+    query_text="search query",
 )
+# Return format: [{"id": "chunk_0", "score": 0.123, "metadata": {"document_id": "doc1", ...}}, ...]
 ```
+
+<Info>
+Each result returned by `vector_search` is a dict containing `id` (vector ID), `score` (distance score), and `metadata` (metadata provided during upsert). If you need text content in retrieval results, store the text in metadata during ingestion.
+</Info>
 
 ### Vector Delete
 
@@ -430,7 +445,40 @@ deleted = await self.plugin.vector_delete(
 )
 ```
 
-### Get RAG File Content
+<Info>
+The `filters` parameter supports Chroma-style `where` syntax for metadata filtering. Multiple top-level keys are AND-ed. Supported operators: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`.
+
+```python
+# Implicit $eq
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"file_id": "abc"},
+)
+
+# Comparison operator
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"created_at": {"$gte": 1700000000}},
+)
+
+# In-list operator
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"file_type": {"$in": ["pdf", "docx"]}},
+)
+
+# Delete by filter
+deleted = await self.plugin.vector_delete(
+    collection_id="kb_uuid",
+    filters={"file_type": {"$eq": "pdf"}},
+)
+```
+
+**Note:** Chroma, Qdrant, and SeekDB store full metadata and can filter on any field. Milvus and pgvector only store `text`, `file_id`, and `chunk_uuid` — filters on other fields will be silently ignored.
+</Info>
 
 Get uploaded file content from the host's storage.
 

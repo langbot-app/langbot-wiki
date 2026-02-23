@@ -350,6 +350,7 @@ async def vector_upsert(
     vectors: list[list[float]],
     ids: list[str],
     metadata: list[dict[str, Any]] | None = None,
+    documents: list[str] | None = None,
 ) -> None:
     """向量写入
 
@@ -358,6 +359,8 @@ async def vector_upsert(
         vectors: 向量列表
         ids: 向量唯一标识列表
         metadata: 可选的元数据列表
+        documents: 可选的原始文本文档列表。在支持全文/混合检索的
+            后端中，需要传入此参数以启用全文和混合检索。
     """
 
 # 调用示例
@@ -366,6 +369,7 @@ await self.plugin.vector_upsert(
     vectors=[[0.1, 0.2, ...], [0.3, 0.4, ...]],
     ids=["chunk_0", "chunk_1"],
     metadata=[{"document_id": "doc1"}, {"document_id": "doc1"}],
+    documents=["分块文本 0", "分块文本 1"],
 )
 ```
 
@@ -380,6 +384,8 @@ async def vector_search(
     query_vector: list[float],
     top_k: int = 5,
     filters: dict[str, Any] | None = None,
+    search_type: str = "vector",
+    query_text: str = "",
 ) -> list[dict[str, Any]]:
     """向量搜索
 
@@ -388,6 +394,8 @@ async def vector_search(
         query_vector: 查询向量
         top_k: 返回结果数量
         filters: 可选的元数据过滤条件
+        search_type: 检索方式，可选 'vector'、'full_text'、'hybrid'
+        query_text: 原始查询文本，用于全文检索和混合检索
 
     Returns:
         搜索结果列表（包含 id, score, metadata 等字段）
@@ -398,8 +406,15 @@ results = await self.plugin.vector_search(
     collection_id="kb_uuid",
     query_vector=[0.1, 0.2, ...],
     top_k=5,
+    search_type="hybrid",
+    query_text="搜索查询",
 )
+# 返回格式: [{"id": "chunk_0", "score": 0.123, "metadata": {"document_id": "doc1", ...}}, ...]
 ```
+
+<Info>
+`vector_search` 返回的每个结果为 dict，包含 `id`（向量 ID）、`score`（距离分数）和 `metadata`（写入时附带的元数据）三个字段。如果需要在检索结果中返回文本内容，请在摄取阶段将文本存入 metadata 中。
+</Info>
 
 ### 向量删除
 
@@ -430,7 +445,40 @@ deleted = await self.plugin.vector_delete(
 )
 ```
 
-### 获取 RAG 文件内容
+<Info>
+`filters` 参数支持 Chroma 风格的 `where` 语法进行元数据过滤。多个顶层键之间为 AND 关系。支持的运算符：`$eq`、`$ne`、`$gt`、`$gte`、`$lt`、`$lte`、`$in`、`$nin`。
+
+```python
+# 隐式 $eq
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"file_id": "abc"},
+)
+
+# 比较运算符
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"created_at": {"$gte": 1700000000}},
+)
+
+# 列表运算符
+results = await self.plugin.vector_search(
+    collection_id="kb_uuid",
+    query_vector=[0.1, 0.2, ...],
+    filters={"file_type": {"$in": ["pdf", "docx"]}},
+)
+
+# 按过滤条件删除
+deleted = await self.plugin.vector_delete(
+    collection_id="kb_uuid",
+    filters={"file_type": {"$eq": "pdf"}},
+)
+```
+
+**注意：** Chroma、Qdrant 和 SeekDB 存储完整的元数据，可以对任意字段进行过滤。Milvus 和 pgvector 仅存储 `text`、`file_id` 和 `chunk_uuid`，对其他字段的过滤将被静默忽略。
+</Info>
 
 从宿主存储中获取上传文件的内容。
 

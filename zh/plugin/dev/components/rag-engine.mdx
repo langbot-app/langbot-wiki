@@ -163,7 +163,7 @@ class SimpleRag(RAGEngine):
         # 4. 写入宿主向量数据库
         collection_id = context.get_collection_id()
         ids = [f"{context.file_object.metadata.document_id}_{i}" for i in range(len(chunks))]
-        metadata = [{"document_id": context.file_object.metadata.document_id, "chunk_index": i} for i in range(len(chunks))]
+        metadata = [{"document_id": context.file_object.metadata.document_id, "chunk_index": i, "text": chunks[i]} for i in range(len(chunks))]
         await self.plugin.vector_upsert(collection_id, vectors, ids, metadata)
 
         return IngestionResult(
@@ -189,9 +189,9 @@ class SimpleRag(RAGEngine):
         for r in results:
             entry = RetrievalResultEntry(
                 id=r.get('id', ''),
-                content=[ContentElement.from_text(r.get('text', ''))],
+                content=[ContentElement.from_text(r.get('metadata', {}).get('text', ''))],
                 metadata=r.get('metadata', {}),
-                distance=r.get('distance', 0.0),
+                distance=r.get('score', 0.0),
             )
             entries.append(entry)
 
@@ -283,8 +283,14 @@ class RetrievalContext(pydantic.BaseModel):
     collection_id: str | None            # 向量集合 ID
     retrieval_settings: dict             # 检索时的配置参数（retrieval_schema 中的字段）
     creation_settings: dict              # 知识库创建时的配置参数
-    filters: dict                        # 元数据过滤条件
+    filters: dict                        # 元数据过滤条件（Chroma 风格 where 语法）
 ```
+
+<Info>
+LangBot 宿主会在传入 `retrieval_settings` 前自动注入 `top_k` 默认值（默认为 5），插件可通过 `context.retrieval_settings.get('top_k', 5)` 获取。
+
+`filters` 字段包含从 `retrieval_settings` 中提取的 Chroma 风格 `where` 过滤条件。当调用方在检索设置中提供 `filters`（例如按时间范围、文件类型或自定义元数据字段过滤文档）时，宿主会填充此字段，插件可据此在检索时进行过滤。如果未提供过滤条件，此字段为空 dict。
+</Info>
 
 **RetrievalResponse** 应返回检索结果：
 
@@ -405,7 +411,12 @@ results = await self.plugin.vector_search(
     query_vector=[0.1, 0.2, ...],
     top_k=5,
 )
+# 返回格式: [{"id": "chunk_0", "score": 0.123, "metadata": {"document_id": "doc1", ...}}, ...]
 ```
+
+<Info>
+`vector_search` 返回的每个结果为 dict，包含 `id`（向量 ID）、`score`（距离分数）和 `metadata`（写入时附带的元数据）三个字段。如果需要在检索结果中返回文本内容，请在摄取阶段将文本存入 metadata 中。
+</Info>
 
 ### 向量删除
 
@@ -434,7 +445,11 @@ deleted = await self.plugin.vector_delete(
 )
 ```
 
-### 获取文件内容
+<Info>
+`filters` 参数支持 Chroma 风格的 `where` 语法进行元数据过滤。多个顶层键之间为 AND 关系。支持的运算符：`$eq`、`$ne`、`$gt`、`$gte`、`$lt`、`$lte`、`$in`、`$nin`。示例：`{"file_id": {"$eq": "abc"}}`。
+
+**注意：** Chroma、Qdrant 和 SeekDB 存储完整的元数据，可以对任意字段进行过滤。Milvus 和 pgvector 仅存储 `text`、`file_id` 和 `chunk_uuid`，对其他字段的过滤将被静默忽略。
+</Info>
 
 ```python
 async def get_rag_file_stream(self, storage_path: str) -> bytes:

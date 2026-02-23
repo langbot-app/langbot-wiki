@@ -163,7 +163,7 @@ class SimpleRag(RAGEngine):
         # 4. ホストのベクトルデータベースに書き込み
         collection_id = context.get_collection_id()
         ids = [f"{context.file_object.metadata.document_id}_{i}" for i in range(len(chunks))]
-        metadata = [{"document_id": context.file_object.metadata.document_id, "chunk_index": i} for i in range(len(chunks))]
+        metadata = [{"document_id": context.file_object.metadata.document_id, "chunk_index": i, "text": chunks[i]} for i in range(len(chunks))]
         await self.plugin.vector_upsert(collection_id, vectors, ids, metadata)
 
         return IngestionResult(
@@ -189,9 +189,9 @@ class SimpleRag(RAGEngine):
         for r in results:
             entry = RetrievalResultEntry(
                 id=r.get('id', ''),
-                content=[ContentElement.from_text(r.get('text', ''))],
+                content=[ContentElement.from_text(r.get('metadata', {}).get('text', ''))],
                 metadata=r.get('metadata', {}),
-                distance=r.get('distance', 0.0),
+                distance=r.get('score', 0.0),
             )
             entries.append(entry)
 
@@ -283,8 +283,14 @@ class RetrievalContext(pydantic.BaseModel):
     collection_id: str | None            # ベクトルコレクションID
     retrieval_settings: dict             # 検索時の設定パラメータ（retrieval_schemaのフィールド）
     creation_settings: dict              # ナレッジベース作成時の設定パラメータ
-    filters: dict                        # メタデータフィルター条件
+    filters: dict                        # メタデータフィルター条件（Chromaスタイルwhere構文）
 ```
+
+<Info>
+LangBotホストは`retrieval_settings`をプラグインに渡す前にデフォルトの`top_k`値（デフォルト5）を自動的に注入します。プラグインは`context.retrieval_settings.get('top_k', 5)`でアクセスできます。
+
+`filters`フィールドには`retrieval_settings`から抽出されたChromaスタイルの`where`フィルター条件が含まれます。呼び出し元が検索設定で`filters`を指定した場合（例：時間範囲、ファイルタイプ、カスタムメタデータフィールドによるドキュメントフィルタリング）、ホストがこのフィールドを設定し、プラグインは検索時にフィルタリングを適用できます。フィルターが指定されていない場合、このフィールドは空のdictです。
+</Info>
 
 **RetrievalResponse**は検索結果を返す必要があります:
 
@@ -405,7 +411,12 @@ results = await self.plugin.vector_search(
     query_vector=[0.1, 0.2, ...],
     top_k=5,
 )
+# 返却フォーマット: [{"id": "chunk_0", "score": 0.123, "metadata": {"document_id": "doc1", ...}}, ...]
 ```
+
+<Info>
+`vector_search`が返す各結果はdictで、`id`（ベクトルID）、`score`（距離スコア）、`metadata`（upsert時に提供したメタデータ）の3つのフィールドを含みます。検索結果にテキスト内容が必要な場合は、取り込み時にmetadataにテキストを保存してください。
+</Info>
 
 ### ベクトルの削除
 
@@ -434,7 +445,11 @@ deleted = await self.plugin.vector_delete(
 )
 ```
 
-### ファイル内容の取得
+<Info>
+`filters`パラメータはChromaスタイルの`where`構文によるメタデータフィルタリングをサポートしています。複数のトップレベルキーはAND条件として結合されます。サポートされる演算子：`$eq`、`$ne`、`$gt`、`$gte`、`$lt`、`$lte`、`$in`、`$nin`。例：`{"file_id": {"$eq": "abc"}}`。
+
+**注意：** Chroma、Qdrant、SeekDBは完全なメタデータを保存し、任意のフィールドでフィルタリングできます。MilvusとpgvectorはDB側に`text`、`file_id`、`chunk_uuid`のみ保存しており、それ以外のフィールドでのフィルタリングは無視されます。
+</Info>
 
 ```python
 async def get_rag_file_stream(self, storage_path: str) -> bytes:

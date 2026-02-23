@@ -162,7 +162,7 @@ class SimpleRag(RAGEngine):
         # 4. Write to host vector database
         collection_id = context.get_collection_id()
         ids = [f"{context.file_object.metadata.document_id}_{i}" for i in range(len(chunks))]
-        metadata = [{"document_id": context.file_object.metadata.document_id, "chunk_index": i} for i in range(len(chunks))]
+        metadata = [{"document_id": context.file_object.metadata.document_id, "chunk_index": i, "text": chunks[i]} for i in range(len(chunks))]
         await self.plugin.vector_upsert(collection_id, vectors, ids, metadata)
 
         return IngestionResult(
@@ -188,9 +188,9 @@ class SimpleRag(RAGEngine):
         for r in results:
             entry = RetrievalResultEntry(
                 id=r.get('id', ''),
-                content=[ContentElement.from_text(r.get('text', ''))],
+                content=[ContentElement.from_text(r.get('metadata', {}).get('text', ''))],
                 metadata=r.get('metadata', {}),
-                distance=r.get('distance', 0.0),
+                distance=r.get('score', 0.0),
             )
             entries.append(entry)
 
@@ -282,8 +282,14 @@ class RetrievalContext(pydantic.BaseModel):
     collection_id: str | None            # Vector collection ID
     retrieval_settings: dict             # Retrieval configuration (fields from retrieval_schema)
     creation_settings: dict              # Knowledge base creation configuration
-    filters: dict                        # Metadata filter conditions
+    filters: dict                        # Metadata filter conditions (Chroma-style where syntax)
 ```
+
+<Info>
+The LangBot host automatically injects a default `top_k` value (default 5) into `retrieval_settings` before passing it to the plugin. Plugins can access it via `context.retrieval_settings.get('top_k', 5)`.
+
+The `filters` field contains Chroma-style `where` filter conditions extracted from `retrieval_settings`. When the caller provides `filters` in the retrieval settings (e.g., filtering by time range, file type, or custom metadata fields), the host populates this field so plugins can apply them during retrieval. If no filters are provided, this field is an empty dict.
+</Info>
 
 **RetrievalResponse** should return the retrieval results:
 
@@ -404,7 +410,12 @@ results = await self.plugin.vector_search(
     query_vector=[0.1, 0.2, ...],
     top_k=5,
 )
+# Return format: [{"id": "chunk_0", "score": 0.123, "metadata": {"document_id": "doc1", ...}}, ...]
 ```
+
+<Info>
+Each result returned by `vector_search` is a dict containing `id` (vector ID), `score` (distance score), and `metadata` (metadata provided during upsert). If you need text content in retrieval results, store the text in metadata during ingestion.
+</Info>
 
 ### Vector Delete
 
@@ -433,7 +444,11 @@ deleted = await self.plugin.vector_delete(
 )
 ```
 
-### Get File Content
+<Info>
+The `filters` parameter supports Chroma-style `where` syntax for metadata filtering. Multiple top-level keys are AND-ed. Supported operators: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`. Example: `{"file_id": {"$eq": "abc"}}`.
+
+**Note:** Chroma, Qdrant, and SeekDB store full metadata and can filter on any field. Milvus and pgvector only store `text`, `file_id`, and `chunk_uuid` — filters on other fields will be silently ignored.
+</Info>
 
 ```python
 async def get_rag_file_stream(self, storage_path: str) -> bytes:
