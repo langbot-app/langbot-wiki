@@ -56,12 +56,31 @@ spec:
         zh_Hans: 如果不填的话，图片可能会下载失败
       default: ''  # Configuration item default value, optional.
       required: false  # Whether the configuration item is required, optional.
+      show_if:  # Conditional rendering (shows when conditions are met), optional.
+        field: mode
+        operator: eq
+        value: mode1
     - name: mode
       type: select
       ...
 ```
 
 The supported types and fields for configuration items are as follows:
+
+### Conditional Rendering (`show_if`)
+
+All types of configuration items support conditional rendering using the `show_if` field. You can decide whether the current field is rendered based on the value of another field in the same (or an associated) form.
+
+```yaml
+- name: advanced_setting
+  type: string
+  show_if:
+    field: mode          # The name of the dependent field
+    operator: eq         # The operator, supports 'eq' (equals), 'neq' (not equals), 'in' (in a list)
+    value: advanced      # The value to check against
+```
+
+> **Note:** Cross-form cascading relationships (e.g. `creation_schema` values reading from `retrieval_schema` values and vice versa in a RAG Engine) are supported in the latest LangBot frontend.
 
 ### type: string
 
