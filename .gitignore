@@ -2,4 +2,4 @@ node_modules/
 .mintlify/
 .DS_Store
 /.omc
-.mintlify-last/
+.mintlify-last/package-lock.json
