@@ -106,6 +106,7 @@ class SimpleRag(RAGEngine):
 | 能力 | 说明 |
 |------|------|
 | `DOC_INGESTION` | 支持文档上传和处理。声明此能力后，LangBot 将在知识库详情中显示"文档"标签页；若该插件是用于桥接其他的知识库服务或不需要用户上传文档，则可不提供该能力声明。 |
+| `DOC_PARSING` | 支持原生文档解析（文件到文本的提取）。声明此能力后，用户上传文档时可以选择使用 RAG 引擎内置的解析能力，而不需要外部 [Parser 插件](./parser)。若未声明此能力，则必须安装外部 Parser 插件才能上传文档。 |
 
 <Info>
 其他检索行为（如重排序、混合搜索等）由插件的 `retrieval_schema` 控制，不需要能力标志。
@@ -245,6 +246,7 @@ class IngestionContext(pydantic.BaseModel):
     knowledge_base_id: str         # 目标知识库 ID
     collection_id: str | None      # 向量集合 ID（默认回退到 knowledge_base_id）
     creation_settings: dict        # 知识库创建时的配置参数
+    parsed_content: ParseResult | None  # 外部 Parser 插件的预解析内容（若有）
 ```
 
 **FileObject** 包含文件元信息：

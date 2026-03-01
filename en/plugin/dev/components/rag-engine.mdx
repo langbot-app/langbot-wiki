@@ -105,6 +105,7 @@ Available capability constants:
 | Capability | Description |
 |-----------|-------------|
 | `DOC_INGESTION` | Supports document upload and processing. When declared, LangBot shows a "Documents" tab in the knowledge base details. If the plugin is used to bridge other knowledge base services or does not require users to upload documents, this capability declaration can be omitted. |
+| `DOC_PARSING` | Supports native document parsing (file-to-text extraction). When declared, users can choose to use the RAG engine's built-in parsing when uploading documents, without needing an external [Parser plugin](./parser). If not declared, an external Parser plugin must be installed to upload documents. |
 
 <Info>
 Other retrieval behaviors (such as reranking, hybrid search, etc.) are controlled by the plugin's `retrieval_schema` and do not need capability flags.
@@ -244,6 +245,7 @@ class IngestionContext(pydantic.BaseModel):
     knowledge_base_id: str         # Target knowledge base ID
     collection_id: str | None      # Vector collection ID (falls back to knowledge_base_id)
     creation_settings: dict        # Configuration from knowledge base creation
+    parsed_content: ParseResult | None  # Pre-parsed content from external Parser plugin (if any)
 ```
 
 **FileObject** contains file metadata:
