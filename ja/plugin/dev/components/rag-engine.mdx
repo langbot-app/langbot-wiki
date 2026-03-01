@@ -106,6 +106,7 @@ class SimpleRag(RAGEngine):
 | 能力 | 説明 |
 |------|------|
 | `DOC_INGESTION` | ドキュメントのアップロードと処理をサポート。宣言すると、LangBotはナレッジベースの詳細に「ドキュメント」タブを表示します。プラグインが他のナレッジベースサービスとのブリッジ用である場合や、ユーザーによるドキュメントのアップロードが不要な場合は、この能力宣言を省略できます。 |
+| `DOC_PARSING` | ネイティブドキュメント解析（ファイルからテキストへの抽出）をサポート。宣言すると、ユーザーはドキュメントアップロード時にRAGエンジンの内蔵解析機能を選択でき、外部[Parserプラグイン](./parser)が不要になります。未宣言の場合、ドキュメントをアップロードするには外部Parserプラグインのインストールが必要です。 |
 
 <Info>
 その他の検索動作（リランキング、ハイブリッド検索など）はプラグインの`retrieval_schema`で制御され、能力フラグは不要です。
@@ -245,6 +246,7 @@ class IngestionContext(pydantic.BaseModel):
     knowledge_base_id: str         # ターゲットのナレッジベースID
     collection_id: str | None      # ベクトルコレクションID（デフォルトはknowledge_base_idにフォールバック）
     creation_settings: dict        # ナレッジベース作成時の設定パラメータ
+    parsed_content: ParseResult | None  # 外部Parserプラグインの事前解析コンテンツ（存在する場合）
 ```
 
 **FileObject**にはファイルのメタ情報が含まれます:
