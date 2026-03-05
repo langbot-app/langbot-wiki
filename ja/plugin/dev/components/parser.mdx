@@ -4,9 +4,9 @@ title: "コンポーネント: パーサー"
 
 パーサー（Parser）コンポーネントにより、プラグインはLangBotにドキュメント解析機能を提供できます。ユーザーがナレッジベースにドキュメントをアップロードする際、LangBotはRAGエンジンの`ingest`ステップの前にパーサーを呼び出し、PDF、Word、Markdownなどのバイナリファイルから構造化テキストを抽出します。
 
-ParserとRAGEngineの関係:
+ParserとKnowledgeEngineの関係:
 - **Parser** はファイルをテキストに変換する役割（file → text）
-- **RAGEngine** はテキストのインデックス作成と検索を行う役割（text → chunks → vectors）
+- **KnowledgeEngine** はテキストのインデックス作成と検索を行う役割（text → chunks → vectors）
 
 RAGエンジン自体がドキュメント解析機能を持っている場合（`DOC_PARSING`能力を宣言）、ユーザーはRAGエンジンの内蔵解析機能を使用するか、外部Parserプラグインを使用するかを選択できます。
 
@@ -153,14 +153,14 @@ class TextSection(pydantic.BaseModel):
     metadata: dict[str, Any] = {}  # 追加セクションメタデータ
 ```
 
-## RAGEngineとの連携
+## KnowledgeEngineとの連携
 
 ユーザーがドキュメントをアップロードする際、LangBotは以下のロジックで解析フローを決定します:
 
 - ユーザーが外部Parserプラグインを選択した場合、LangBotはまずParserの`parse`メソッドを呼び出し、その結果を`IngestionContext.parsed_content`を通じてRAGエンジンの`ingest`メソッドに渡します。
 - RAGエンジンが`DOC_PARSING`能力を宣言しており、ユーザーが外部パーサーを選択していない場合、RAGエンジンが自身でドキュメント解析を処理します。
 
-RAGEngineは`IngestionContext.parsed_content`をチェックして、事前解析されたコンテンツが利用可能かどうかを判断できます:
+KnowledgeEngineは`IngestionContext.parsed_content`をチェックして、事前解析されたコンテンツが利用可能かどうかを判断できます:
 
 ```python
 async def ingest(self, context: IngestionContext) -> IngestionResult:
@@ -177,7 +177,7 @@ async def ingest(self, context: IngestionContext) -> IngestionResult:
 
 ## クロスプラグインパーサー呼び出し
 
-RAGEngineプラグインは`self.plugin.invoke_parser`を通じて、他のプラグインが提供するパーサーを呼び出すことができます:
+KnowledgeEngineプラグインは`self.plugin.invoke_parser`を通じて、他のプラグインが提供するパーサーを呼び出すことができます:
 
 ```python
 result = await self.plugin.invoke_parser(

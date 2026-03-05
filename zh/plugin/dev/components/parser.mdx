@@ -4,9 +4,9 @@ title: "组件：解析器"
 
 解析器（Parser）组件允许插件为 LangBot 提供文档解析能力。在用户上传文档到知识库时，LangBot 会在 RAG 引擎摄取（`ingest`）之前调用解析器，将 PDF、Word、Markdown 等二进制文件提取为结构化文本。
 
-Parser 与 RAGEngine 的关系：
+Parser 与 KnowledgeEngine 的关系：
 - **Parser** 负责将文件转换为文本（file → text）
-- **RAGEngine** 负责将文本索引和检索（text → chunks → vectors）
+- **KnowledgeEngine** 负责将文本索引和检索（text → chunks → vectors）
 
 如果 RAG 引擎自身已具备文档解析能力（声明了 `DOC_PARSING` 能力），用户可以选择使用 RAG 引擎内置的解析能力，也可以选择使用外部 Parser 插件。
 
@@ -153,14 +153,14 @@ class TextSection(pydantic.BaseModel):
     metadata: dict[str, Any] = {}  # 额外分节元数据
 ```
 
-## 与 RAGEngine 的协作
+## 与 KnowledgeEngine 的协作
 
 当用户上传文档时，LangBot 会根据以下逻辑决定解析流程：
 
 - 若用户选择了外部 Parser 插件，LangBot 会先调用 Parser 的 `parse` 方法，然后将解析结果通过 `IngestionContext.parsed_content` 传递给 RAG 引擎的 `ingest` 方法。
 - 若 RAG 引擎声明了 `DOC_PARSING` 能力且用户未选择外部解析器，则由 RAG 引擎自行处理文档解析。
 
-RAGEngine 可通过检查 `IngestionContext.parsed_content` 来判断是否存在预解析内容：
+KnowledgeEngine 可通过检查 `IngestionContext.parsed_content` 来判断是否存在预解析内容：
 
 ```python
 async def ingest(self, context: IngestionContext) -> IngestionResult:
@@ -177,7 +177,7 @@ async def ingest(self, context: IngestionContext) -> IngestionResult:
 
 ## 跨插件调用解析器
 
-RAGEngine 插件可以通过 `self.plugin.invoke_parser` 方法调用其他插件提供的解析器：
+KnowledgeEngine 插件可以通过 `self.plugin.invoke_parser` 方法调用其他插件提供的解析器：
 
 ```python
 result = await self.plugin.invoke_parser(

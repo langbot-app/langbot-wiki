@@ -1,20 +1,20 @@
 ---
-title: "コンポーネント: RAGエンジン"
+title: "コンポーネント: 知識エンジン"
 ---
 
-RAGエンジン（RAGEngine）コンポーネントにより、プラグインはLangBotにナレッジベースの完全なインデックス作成と検索機能を提供できます。ユーザーがLangBotでナレッジベースを作成する際、プラグインが提供するRAGエンジンを選択して、ドキュメントの取り込み、検索、削除を管理できます。また、プラグインを通じてDify、RAGFlow、FastGPTなどの業界先進のナレッジベースサービスとブリッジすることも可能です。
+RAGエンジン（KnowledgeEngine）コンポーネントにより、プラグインはLangBotにナレッジベースの完全なインデックス作成と検索機能を提供できます。ユーザーがLangBotでナレッジベースを作成する際、プラグインが提供するRAGエンジンを選択して、ドキュメントの取り込み、検索、削除を管理できます。また、プラグインを通じてDify、RAGFlow、FastGPTなどの業界先進のナレッジベースサービスとブリッジすることも可能です。
 
 ## RAGエンジンコンポーネントの追加
 
-1つのプラグインには任意の数のRAGエンジンを追加できます。プラグインディレクトリでコマンド`lbp comp RAGEngine`を実行し、プロンプトに従ってRAGエンジンの設定を入力します。
+1つのプラグインには任意の数のRAGエンジンを追加できます。プラグインディレクトリでコマンド`lbp comp KnowledgeEngine`を実行し、プロンプトに従ってRAGエンジンの設定を入力します。
 
 ```bash
-➜  MyRAGPlugin > lbp comp RAGEngine
-Generating component RAGEngine...
+➜  MyRAGPlugin > lbp comp KnowledgeEngine
+Generating component KnowledgeEngine...
 RAG Engine name: simple_rag
 RAG Engine description: A simple RAG engine with built-in chunking and retrieval
-Component RAGEngine generated successfully.
-組件 RAGEngine 生成成功。
+Component KnowledgeEngine generated successfully.
+組件 KnowledgeEngine 生成成功。
 ```
 
 これにより、`components/rag_engine/`ディレクトリに`simple_rag.yaml`と`simple_rag.py`ファイルが生成されます。`.yaml`ファイルはRAGエンジンの基本情報と設定スキーマを定義し、`.py`ファイルはこのエンジンのハンドラです:
@@ -35,7 +35,7 @@ Component RAGEngine generated successfully.
 
 ```yaml
 apiVersion: v1  # 変更しないでください
-kind: RAGEngine  # 変更しないでください
+kind: KnowledgeEngine  # 変更しないでください
 metadata:
   name: simple_rag  # RAGエンジン名、このエンジンを識別するために使用
   label:
@@ -80,24 +80,24 @@ execution:
 
 ### creation_schema と retrieval_schema
 
-旧バージョンの`KnowledgeRetriever`コンポーネントが単一の`spec.config`を使用していたのとは異なり、RAGEngineは2つの独立したスキーマを使用します:
+旧バージョンの`KnowledgeRetriever`コンポーネントが単一の`spec.config`を使用していたのとは異なり、KnowledgeEngineは2つの独立したスキーマを使用します:
 
 - **creation_schema**: ナレッジベース作成時にユーザーが入力するパラメータ。取り込みと検索時に`creation_settings`を通じてプラグインに渡されます。
 - **retrieval_schema**: ナレッジベースのクエリ時にユーザーが調整できるパラメータ。`retrieval_settings`を通じてプラグインに渡されます。
 
 ## 能力宣言
 
-RAGEngineはサポートする能力を宣言でき、LangBotはこれらの能力宣言に基づいてUIの表示と利用可能な操作を決定します:
+KnowledgeEngineはサポートする能力を宣言でき、LangBotはこれらの能力宣言に基づいてUIの表示と利用可能な操作を決定します:
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
+from langbot_plugin.api.definition.components.rag_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
 
-class SimpleRag(RAGEngine):
+class SimpleRag(KnowledgeEngine):
 
     @classmethod
     def get_capabilities(cls) -> list[str]:
         return [
-            RAGEngineCapability.DOC_INGESTION,    # ドキュメントのアップロードと処理をサポート
+            KnowledgeEngineCapability.DOC_INGESTION,    # ドキュメントのアップロードと処理をサポート
         ]
 ```
 
@@ -114,10 +114,10 @@ class SimpleRag(RAGEngine):
 
 ## プラグインハンドラ
 
-以下のコードがデフォルトで生成されます（`components/rag_engine/<エンジン名>.py`）。`ingest`、`retrieve`、`delete_document`の3つのコアメソッドを実装する必要があります。完全なコードは[langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo)の`SimpleRAGEngine`で見つけることができます。
+以下のコードがデフォルトで生成されます（`components/rag_engine/<エンジン名>.py`）。`ingest`、`retrieve`、`delete_document`の3つのコアメソッドを実装する必要があります。完全なコードは[langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo)の`SimpleKnowledgeEngine`で見つけることができます。
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
+from langbot_plugin.api.definition.components.rag_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
 from langbot_plugin.api.entities.builtin.rag.models import (
     IngestionContext,
     IngestionResult,
@@ -131,11 +131,11 @@ from langbot_plugin.api.entities.builtin.rag.enums import DocumentStatus
 from langbot_plugin.api.entities.builtin.provider.message import ContentElement
 
 
-class SimpleRag(RAGEngine):
+class SimpleRag(KnowledgeEngine):
 
     @classmethod
     def get_capabilities(cls) -> list[str]:
-        return [RAGEngineCapability.DOC_INGESTION]
+        return [KnowledgeEngineCapability.DOC_INGESTION]
 
     async def on_knowledge_base_create(self, kb_id: str, config: dict) -> None:
         """ナレッジベース作成時のコールバック、リソースの初期化に使用できます"""
@@ -211,7 +211,7 @@ class SimpleRag(RAGEngine):
 
 ### ライフサイクルフック
 
-RAGEngineは、ナレッジベースの作成・削除時に呼び出される2つのライフサイクルフックを提供します:
+KnowledgeEngineは、ナレッジベースの作成・削除時に呼び出される2つのライフサイクルフックを提供します:
 
 ```python
 async def on_knowledge_base_create(self, kb_id: str, config: dict) -> None:
@@ -333,7 +333,7 @@ async def delete_document(self, kb_id: str, document_id: str) -> bool:
 
 ## ホストRAG API
 
-RAGEngineコンポーネントは`self.plugin`を通じて、LangBotホストが提供する埋め込みモデル呼び出し、ベクトルデータベース操作、ファイル読み取りなどのRAG関連APIを呼び出すことができます。
+KnowledgeEngineコンポーネントは`self.plugin`を通じて、LangBotホストが提供する埋め込みモデル呼び出し、ベクトルデータベース操作、ファイル読み取りなどのRAG関連APIを呼び出すことができます。
 
 ### 埋め込みモデルの呼び出し
 

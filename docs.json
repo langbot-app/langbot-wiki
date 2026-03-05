@@ -40,18 +40,54 @@
     }
   },
   "redirects": [
-    { "source": "/zh/deploy/models/readme", "destination": "/zh/usage/models/readme" },
-    { "source": "/zh/deploy/platforms/readme", "destination": "/zh/usage/platforms/readme" },
-    { "source": "/zh/deploy/pipelines/readme", "destination": "/zh/usage/pipelines/readme" },
-    { "source": "/zh/deploy/knowledge/readme", "destination": "/zh/usage/knowledge/readme" },
-    { "source": "/en/deploy/models/readme", "destination": "/en/usage/models/readme" },
-    { "source": "/en/deploy/platforms/readme", "destination": "/en/usage/platforms/readme" },
-    { "source": "/en/deploy/pipelines/readme", "destination": "/en/usage/pipelines/readme" },
-    { "source": "/en/deploy/knowledge/readme", "destination": "/en/usage/knowledge/readme" },
-    { "source": "/ja/deploy/models/readme", "destination": "/ja/usage/models/readme" },
-    { "source": "/ja/deploy/platforms/readme", "destination": "/ja/usage/platforms/readme" },
-    { "source": "/ja/deploy/pipelines/readme", "destination": "/ja/usage/pipelines/readme" },
-    { "source": "/ja/deploy/knowledge/readme", "destination": "/ja/usage/knowledge/readme" }
+    {
+      "source": "/zh/deploy/models/readme",
+      "destination": "/zh/usage/models/readme"
+    },
+    {
+      "source": "/zh/deploy/platforms/readme",
+      "destination": "/zh/usage/platforms/readme"
+    },
+    {
+      "source": "/zh/deploy/pipelines/readme",
+      "destination": "/zh/usage/pipelines/readme"
+    },
+    {
+      "source": "/zh/deploy/knowledge/readme",
+      "destination": "/zh/usage/knowledge/readme"
+    },
+    {
+      "source": "/en/deploy/models/readme",
+      "destination": "/en/usage/models/readme"
+    },
+    {
+      "source": "/en/deploy/platforms/readme",
+      "destination": "/en/usage/platforms/readme"
+    },
+    {
+      "source": "/en/deploy/pipelines/readme",
+      "destination": "/en/usage/pipelines/readme"
+    },
+    {
+      "source": "/en/deploy/knowledge/readme",
+      "destination": "/en/usage/knowledge/readme"
+    },
+    {
+      "source": "/ja/deploy/models/readme",
+      "destination": "/ja/usage/models/readme"
+    },
+    {
+      "source": "/ja/deploy/platforms/readme",
+      "destination": "/ja/usage/platforms/readme"
+    },
+    {
+      "source": "/ja/deploy/pipelines/readme",
+      "destination": "/ja/usage/pipelines/readme"
+    },
+    {
+      "source": "/ja/deploy/knowledge/readme",
+      "destination": "/ja/usage/knowledge/readme"
+    }
   ],
   "navigation": {
     "languages": [
@@ -204,7 +240,7 @@
                       "zh/plugin/dev/components/event-listener",
                       "zh/plugin/dev/components/command",
                       "zh/plugin/dev/components/tool",
-                      "zh/plugin/dev/components/rag-engine",
+                      "zh/plugin/dev/components/knowledge-engine",
                       "zh/plugin/dev/components/parser"
                     ]
                   },
@@ -399,7 +435,7 @@
                       "en/plugin/dev/components/event-listener",
                       "en/plugin/dev/components/command",
                       "en/plugin/dev/components/tool",
-                      "en/plugin/dev/components/rag-engine",
+                      "en/plugin/dev/components/knowledge-engine",
                       "en/plugin/dev/components/parser"
                     ]
                   },
@@ -584,7 +620,7 @@
                       "ja/plugin/dev/components/event-listener",
                       "ja/plugin/dev/components/command",
                       "ja/plugin/dev/components/tool",
-                      "ja/plugin/dev/components/rag-engine",
+                      "ja/plugin/dev/components/knowledge-engine",
                       "ja/plugin/dev/components/parser"
                     ]
                   },

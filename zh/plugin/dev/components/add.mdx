@@ -7,7 +7,7 @@ title: "添加组件"
 - 事件监听器（EventListener）：监听流水线执行期间的事件，对上下文或流水线进行修改。
 - 命令（Command）：由用户通过`!`（或其他已设置的前缀）开头的命令消息触发。
 - 工具（Tool）：供 LangBot 内置的 Local Agent 在执行期间由 LLM 调用。
-- RAG 引擎（RAGEngine）：为 LangBot 提供知识库的索引和检索能力，管理文档摄取、检索和删除。
+- RAG 引擎（KnowledgeEngine）：为 LangBot 提供知识库的索引和检索能力，管理文档摄取、检索和删除。
 - 解析器（Parser）：在文档摄取前将 PDF、Word 等二进制文件解析为结构化文本，供 RAG 引擎使用。
 
 ## 添加组件
@@ -73,5 +73,5 @@ components:
 - [EventListener](./event-listener)
 - [Command](./command)
 - [Tool](./tool)
-- [RAGEngine](./rag-engine)
+- [KnowledgeEngine](./knowledge-engine)
 - [Parser](./parser)

@@ -4,9 +4,9 @@ title: "Component: Parser"
 
 The Parser component allows plugins to provide document parsing capabilities for LangBot. When a user uploads a document to a knowledge base, LangBot invokes the parser before the RAG engine's `ingest` step, extracting structured text from binary files such as PDF, Word, Markdown, etc.
 
-Relationship between Parser and RAGEngine:
+Relationship between Parser and KnowledgeEngine:
 - **Parser** is responsible for converting files to text (file → text)
-- **RAGEngine** is responsible for indexing and retrieving text (text → chunks → vectors)
+- **KnowledgeEngine** is responsible for indexing and retrieving text (text → chunks → vectors)
 
 If the RAG engine already has native document parsing capabilities (declared `DOC_PARSING` capability), users can choose to use the RAG engine's built-in parsing or an external Parser plugin.
 
@@ -152,14 +152,14 @@ class TextSection(pydantic.BaseModel):
     metadata: dict[str, Any] = {}  # Additional section metadata
 ```
 
-## Integration with RAGEngine
+## Integration with KnowledgeEngine
 
 When a user uploads a document, LangBot determines the parsing flow as follows:
 
 - If the user selects an external Parser plugin, LangBot first calls the Parser's `parse` method, then passes the result to the RAG engine's `ingest` method via `IngestionContext.parsed_content`.
 - If the RAG engine declares `DOC_PARSING` capability and the user does not select an external parser, the RAG engine handles document parsing on its own.
 
-RAGEngine can check `IngestionContext.parsed_content` to determine whether pre-parsed content is available:
+KnowledgeEngine can check `IngestionContext.parsed_content` to determine whether pre-parsed content is available:
 
 ```python
 async def ingest(self, context: IngestionContext) -> IngestionResult:
@@ -176,7 +176,7 @@ async def ingest(self, context: IngestionContext) -> IngestionResult:
 
 ## Cross-Plugin Parser Invocation
 
-RAGEngine plugins can invoke parsers provided by other plugins via `self.plugin.invoke_parser`:
+KnowledgeEngine plugins can invoke parsers provided by other plugins via `self.plugin.invoke_parser`:
 
 ```python
 result = await self.plugin.invoke_parser(

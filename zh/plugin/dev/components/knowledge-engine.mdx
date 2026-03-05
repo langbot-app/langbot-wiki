@@ -1,20 +1,20 @@
 ---
-title: "组件：RAG 引擎"
+title: "组件：知识引擎"
 ---
 
-RAG 引擎（RAGEngine）组件允许插件为 LangBot 提供完整的知识库索引与检索能力。用户在 LangBot 中创建知识库时，可以选择由插件提供的 RAG 引擎来管理文档的摄取、检索和删除。或通过插件桥接来自 Dify、RAGFlow、FastGPT 等业内先进知识库服务。
+RAG 引擎（KnowledgeEngine）组件允许插件为 LangBot 提供完整的知识库索引与检索能力。用户在 LangBot 中创建知识库时，可以选择由插件提供的 RAG 引擎来管理文档的摄取、检索和删除。或通过插件桥接来自 Dify、RAGFlow、FastGPT 等业内先进知识库服务。
 
 ## 添加 RAG 引擎组件
 
-单个插件中能添加任意数量的 RAG 引擎，请在插件目录执行命令 `lbp comp RAGEngine`，并根据提示输入 RAG 引擎的配置。
+单个插件中能添加任意数量的 RAG 引擎，请在插件目录执行命令 `lbp comp KnowledgeEngine`，并根据提示输入 RAG 引擎的配置。
 
 ```bash
-➜  MyRAGPlugin > lbp comp RAGEngine
-Generating component RAGEngine...
+➜  MyRAGPlugin > lbp comp KnowledgeEngine
+Generating component KnowledgeEngine...
 RAG Engine name: simple_rag
 RAG Engine description: A simple RAG engine with built-in chunking and retrieval
-Component RAGEngine generated successfully.
-组件 RAGEngine 生成成功。
+Component KnowledgeEngine generated successfully.
+组件 KnowledgeEngine 生成成功。
 ```
 
 现在即会在 `components/rag_engine/` 目录下生成 `simple_rag.yaml` 和 `simple_rag.py` 文件，`.yaml` 定义了 RAG 引擎的基础信息和配置 Schema，`.py` 是该引擎的处理程序：
@@ -35,7 +35,7 @@ Component RAGEngine generated successfully.
 
 ```yaml
 apiVersion: v1  # 请勿修改
-kind: RAGEngine  # 请勿修改
+kind: KnowledgeEngine  # 请勿修改
 metadata:
   name: simple_rag  # RAG 引擎名称，用于标识该引擎
   label:
@@ -80,24 +80,24 @@ execution:
 
 ### creation_schema 与 retrieval_schema
 
-与旧版 `KnowledgeRetriever` 组件使用单一 `spec.config` 不同，RAGEngine 使用两个独立的 Schema：
+与旧版 `KnowledgeRetriever` 组件使用单一 `spec.config` 不同，KnowledgeEngine 使用两个独立的 Schema：
 
 - **creation_schema**：用户创建知识库时填写的参数，会在摄取和检索时通过 `creation_settings` 传入插件。
 - **retrieval_schema**：用户在检索知识库时可调整的参数，通过 `retrieval_settings` 传入插件。
 
 ## 能力声明
 
-RAGEngine 可以声明自身支持的能力，LangBot 会根据能力声明决定 UI 展示和可用操作：
+KnowledgeEngine 可以声明自身支持的能力，LangBot 会根据能力声明决定 UI 展示和可用操作：
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
+from langbot_plugin.api.definition.components.rag_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
 
-class SimpleRag(RAGEngine):
+class SimpleRag(KnowledgeEngine):
 
     @classmethod
     def get_capabilities(cls) -> list[str]:
         return [
-            RAGEngineCapability.DOC_INGESTION,    # 支持文档上传和处理
+            KnowledgeEngineCapability.DOC_INGESTION,    # 支持文档上传和处理
         ]
 ```
 
@@ -114,10 +114,10 @@ class SimpleRag(RAGEngine):
 
 ## 插件处理
 
-默认会生成如下代码（`components/rag_engine/<引擎名称>.py`），您需要实现 `ingest`、`retrieve`、`delete_document` 三个核心方法。完整代码可在 [langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo) 的 `SimpleRAGEngine` 中找到。
+默认会生成如下代码（`components/rag_engine/<引擎名称>.py`），您需要实现 `ingest`、`retrieve`、`delete_document` 三个核心方法。完整代码可在 [langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo) 的 `SimpleKnowledgeEngine` 中找到。
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import RAGEngine, RAGEngineCapability
+from langbot_plugin.api.definition.components.rag_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
 from langbot_plugin.api.entities.builtin.rag.models import (
     IngestionContext,
     IngestionResult,
@@ -131,11 +131,11 @@ from langbot_plugin.api.entities.builtin.rag.enums import DocumentStatus
 from langbot_plugin.api.entities.builtin.provider.message import ContentElement
 
 
-class SimpleRag(RAGEngine):
+class SimpleRag(KnowledgeEngine):
 
     @classmethod
     def get_capabilities(cls) -> list[str]:
-        return [RAGEngineCapability.DOC_INGESTION]
+        return [KnowledgeEngineCapability.DOC_INGESTION]
 
     async def on_knowledge_base_create(self, kb_id: str, config: dict) -> None:
         """知识库创建时的回调，可用于初始化资源"""
@@ -211,7 +211,7 @@ class SimpleRag(RAGEngine):
 
 ### 生命周期钩子
 
-RAGEngine 提供两个生命周期钩子，会在知识库创建和删除时被调用：
+KnowledgeEngine 提供两个生命周期钩子，会在知识库创建和删除时被调用：
 
 ```python
 async def on_knowledge_base_create(self, kb_id: str, config: dict) -> None:
@@ -333,7 +333,7 @@ async def delete_document(self, kb_id: str, document_id: str) -> bool:
 
 ## 宿主 RAG API
 
-RAGEngine 组件可以通过 `self.plugin` 调用 LangBot 宿主提供的 RAG 相关 API，包括嵌入模型调用、向量数据库操作和文件读取。
+KnowledgeEngine 组件可以通过 `self.plugin` 调用 LangBot 宿主提供的 RAG 相关 API，包括嵌入模型调用、向量数据库操作和文件读取。
 
 ### 调用嵌入模型
 

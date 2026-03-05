@@ -311,9 +311,9 @@ file_bytes = await self.plugin.get_config_file("key")
 
 ## RAG API
 
-这些 API 供 `RAGEngine` 组件调用，用于访问 LangBot 宿主的嵌入模型、向量数据库和文件存储。访问方式：
+这些 API 供 `KnowledgeEngine` 组件调用，用于访问 LangBot 宿主的嵌入模型、向量数据库和文件存储。访问方式：
 
-- 在 `RAGEngine` 组件类中：`self.plugin` 对象内部方法。
+- 在 `KnowledgeEngine` 组件类中：`self.plugin` 对象内部方法。
 
 ### 调用嵌入模型
 
