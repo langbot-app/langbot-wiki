@@ -483,7 +483,7 @@ deleted = await self.plugin.vector_delete(
 Get uploaded file content from the host's storage.
 
 ```python
-async def get_rag_file_stream(self, storage_path: str) -> bytes:
+async def get_knowledge_file_stream(self, storage_path: str) -> bytes:
     """Get file content
 
     Args:
@@ -494,5 +494,5 @@ async def get_rag_file_stream(self, storage_path: str) -> bytes:
     """
 
 # Usage example
-file_bytes = await self.plugin.get_rag_file_stream(context.file_object.storage_path)
+file_bytes = await self.plugin.get_knowledge_file_stream(context.file_object.storage_path)
 ```

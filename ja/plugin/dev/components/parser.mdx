@@ -170,7 +170,7 @@ async def ingest(self, context: IngestionContext) -> IngestionResult:
         sections = context.parsed_content.sections
     else:
         # ドキュメントを内部で解析
-        file_bytes = await self.plugin.get_rag_file_stream(context.file_object.storage_path)
+        file_bytes = await self.plugin.get_knowledge_file_stream(context.file_object.storage_path)
         text = file_bytes.decode('utf-8')
     ...
 ```

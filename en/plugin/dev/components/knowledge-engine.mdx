@@ -2,47 +2,47 @@
 title: "Component: Knowledge Engine"
 ---
 
-The RAG Engine component allows plugins to provide full knowledge base indexing and retrieval capabilities for LangBot. When users create a knowledge base in LangBot, they can choose a RAG engine provided by a plugin to manage document ingestion, retrieval, and deletion. Plugins can also bridge advanced knowledge base services such as Dify, RAGFlow, FastGPT, and more.
+The Knowledge Engine component allows plugins to provide full knowledge base indexing and retrieval capabilities for LangBot. When users create a knowledge base in LangBot, they can choose a Knowledge Engine provided by a plugin to manage document ingestion, retrieval, and deletion. Plugins can also bridge advanced knowledge base services such as Dify, RAGFlow, FastGPT, and more.
 
-## Adding a RAG Engine Component
+## Adding a Knowledge Engine Component
 
-A single plugin can add any number of RAG engines. Execute the command `lbp comp KnowledgeEngine` in the plugin directory and follow the prompts to enter the RAG engine configuration.
+A single plugin can add any number of Knowledge Engines. Execute the command `lbp comp KnowledgeEngine` in the plugin directory and follow the prompts to enter the Knowledge Engine configuration.
 
 ```bash
 ➜  MyRAGPlugin > lbp comp KnowledgeEngine
 Generating component KnowledgeEngine...
-RAG Engine name: simple_rag
-RAG Engine description: A simple RAG engine with built-in chunking and retrieval
+Knowledge Engine name: simple_rag
+Knowledge Engine description: A simple Knowledge Engine with built-in chunking and retrieval
 Component KnowledgeEngine generated successfully.
 ```
 
-This will generate `simple_rag.yaml` and `simple_rag.py` files in the `components/rag_engine/` directory. The `.yaml` file defines the RAG engine's basic information and configuration schemas, and the `.py` file is the handler for this engine:
+This will generate `simple_rag.yaml` and `simple_rag.py` files in the `components/knowledge_engine/` directory. The `.yaml` file defines the Knowledge Engine's basic information and configuration schemas, and the `.py` file is the handler for this engine:
 
 ```bash
 ➜  MyRAGPlugin > tree
 ...
 ├── components
 │   ├── __init__.py
-│   └── rag_engine
+│   └── knowledge_engine
 │       ├── __init__.py
 │       ├── simple_rag.py
 │       └── simple_rag.yaml
 ...
 ```
 
-## Manifest File: RAG Engine
+## Manifest File: Knowledge Engine
 
 ```yaml
 apiVersion: v1  # Do not modify
 kind: KnowledgeEngine  # Do not modify
 metadata:
-  name: simple_rag  # RAG engine name, used to identify this engine
+  name: simple_rag  # Knowledge Engine name, used to identify this engine
   label:
-    en_US: Simple RAG Engine  # Engine display name, shown in LangBot's UI, supports multiple languages
+    en_US: Simple Knowledge Engine  # Engine display name, shown in LangBot's UI, supports multiple languages
     zh_Hans: 简易 RAG 引擎
     ja_JP: シンプル RAG エンジン
   description:
-    en_US: 'A simple RAG engine with built-in chunking and retrieval'
+    en_US: 'A simple Knowledge Engine with built-in chunking and retrieval'
     zh_Hans: '内置分块和检索能力的简易 RAG 引擎'
     ja_JP: 'チャンキングと検索を内蔵したシンプルなRAGエンジン'
 spec:
@@ -89,7 +89,7 @@ Unlike the old `KnowledgeRetriever` component which used a single `spec.config`,
 KnowledgeEngine can declare its supported capabilities. LangBot uses these capability declarations to determine UI behavior and available operations:
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
+from langbot_plugin.api.definition.components.knowledge_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
 
 class SimpleRag(KnowledgeEngine):
 
@@ -105,7 +105,7 @@ Available capability constants:
 | Capability | Description |
 |-----------|-------------|
 | `DOC_INGESTION` | Supports document upload and processing. When declared, LangBot shows a "Documents" tab in the knowledge base details. If the plugin is used to bridge other knowledge base services or does not require users to upload documents, this capability declaration can be omitted. |
-| `DOC_PARSING` | Supports native document parsing (file-to-text extraction). When declared, users can choose to use the RAG engine's built-in parsing when uploading documents, without needing an external [Parser plugin](./parser). If not declared, an external Parser plugin must be installed to upload documents. |
+| `DOC_PARSING` | Supports native document parsing (file-to-text extraction). When declared, users can choose to use the Knowledge Engine's built-in parsing when uploading documents, without needing an external [Parser plugin](./parser). If not declared, an external Parser plugin must be installed to upload documents. |
 
 <Info>
 Other retrieval behaviors (such as reranking, hybrid search, etc.) are controlled by the plugin's `retrieval_schema` and do not need capability flags.
@@ -113,10 +113,10 @@ Other retrieval behaviors (such as reranking, hybrid search, etc.) are controlle
 
 ## Plugin Handler
 
-The following code will be generated by default (`components/rag_engine/<engine_name>.py`). You need to implement the three core methods: `ingest`, `retrieve`, and `delete_document`. Complete code can be found in the `SimpleKnowledgeEngine` example in [langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo).
+The following code will be generated by default (`components/knowledge_engine/<engine_name>.py`). You need to implement the three core methods: `ingest`, `retrieve`, and `delete_document`. Complete code can be found in the `SimpleKnowledgeEngine` example in [langbot-plugin-demo](https://github.com/langbot-app/langbot-plugin-demo).
 
 ```python
-from langbot_plugin.api.definition.components.rag_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
+from langbot_plugin.api.definition.components.knowledge_engine.engine import KnowledgeEngine, KnowledgeEngineCapability
 from langbot_plugin.api.entities.builtin.rag.models import (
     IngestionContext,
     IngestionResult,
@@ -148,7 +148,7 @@ class SimpleRag(KnowledgeEngine):
         """Ingest a document into the knowledge base"""
 
         # 1. Get file content
-        file_bytes = await self.plugin.get_rag_file_stream(context.file_object.storage_path)
+        file_bytes = await self.plugin.get_knowledge_file_stream(context.file_object.storage_path)
 
         # 2. Parse document and split into chunks
         text = file_bytes.decode('utf-8')
@@ -453,7 +453,7 @@ The `filters` parameter supports Chroma-style `where` syntax for metadata filter
 </Info>
 
 ```python
-async def get_rag_file_stream(self, storage_path: str) -> bytes:
+async def get_knowledge_file_stream(self, storage_path: str) -> bytes:
     """Get file content from host storage
 
     Args:
@@ -464,15 +464,15 @@ async def get_rag_file_stream(self, storage_path: str) -> bytes:
     """
 
 # Usage example
-file_bytes = await self.plugin.get_rag_file_stream(context.file_object.storage_path)
+file_bytes = await self.plugin.get_knowledge_file_stream(context.file_object.storage_path)
 ```
 
-## Testing the RAG Engine
+## Testing the Knowledge Engine
 
 After creation, execute the command `lbp run` in the plugin directory to start debugging. Then in LangBot:
 
 1. Go to the "Knowledge Base" page
 2. Click "Create Knowledge Base"
-3. Select the RAG engine provided by your plugin and fill in the configuration based on the engine's `creation_schema`
+3. Select the Knowledge Engine provided by your plugin and fill in the configuration based on the engine's `creation_schema`
 4. After creation, upload documents to test ingestion capabilities (if the engine declares `DOC_INGESTION` capability)
 5. Bind the knowledge base to a pipeline and test retrieval capabilities
