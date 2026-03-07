@@ -1,25 +1,31 @@
 ---
-title: "WeCom Customer Service のデプロイ"
+title: "企業微信カスタマーサービスのデプロイ"
 ---
 
-<Info title="この記事では、LangBot を WeCom カスタマーサービスアカウントにデプロイするプロセスについて詳しく説明します。これにより、カスタマーサービスアカウントと通常の WeChat との間の会話が可能になります。WeCom 内でのみ使用する必要がある場合は、[WeCom 内部アプリケーションの実装](wecom)を参照してください。">
+<Info title="この記事では、LangBot を企業微信カスタマーサービスアカウントにデプロイするプロセスについて詳しく説明します。これにより、カスタマーサービスアカウントと通常の WeChat との間の会話が可能になります。企業微信内でのみ使用する必要がある場合は、[企業微信内部アプリケーションの実装](wecom)を参照してください。">
 
-**WeCom カスタマーサービスアカウントのデプロイには企業資格が必要です**。[WeCom Customer Service 統合ガイド](https://developer.work.weixin.qq.com/document/path/94638)を確認し、このドキュメントに従って対応する企業資格証明書を提供してください。
+**企業微信カスタマーサービスアカウントのデプロイには企業資格が必要です**。[企業微信カスタマーサービス統合ガイド](https://developer.work.weixin.qq.com/document/path/94638)を確認し、このドキュメントに従って対応する企業資格証明書を提供してください。
 
 </Info>
 
 ## 効果のデモンストレーション
 
-![Effect Demonstration](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_01.jpg)
+![効果のデモンストレーション](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_01.jpg)
 
-## LangBot に接続
+## 企業微信カスタマーサービスをデプロイする
 
-![Connect to LangBot](/images/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+#### 企業微信カスタマーサービスページの構成
 
-後続の設定方法と設定項目は [WeCom 内部アプリケーション](wecom)と同じですが、`contacts_secret` は必要ありません。
+[企業微信カスタマーサービス管理画面](https://kf.weixin.qq.com/kf)を開き、ログイン後、「企業情報」をクリックし、「企業ID」を取得します。
 
-## 注意事項
+![ホーム画面](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_03.png)
 
-1. 上記の WeCom 公式ドキュメントの手順に必ず従い、カスタマーサービスアカウントを「API 管理」に追加してください。
-2. 手順は WeCom 内部アプリケーションと同じです。何も見逃さないでください。基本的には WeCom 内部アプリケーションに他の権限を追加するだけなので、コールバックアドレスも保存する必要があります。
-3. LangBot は、チャット記録や企業資格コンテンツなどの機密情報を読み取りません。
+企業IDを保存したら、「開発構成」をクリックし、「開始使用」をクリックして、Token と EncodingAESKey をランダムに生成します。この3つの項目を LangBot 設定ページに入力します。Secret は適当に填写如下图所示：
+
+![connect](/images/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+
+LangBot 設定ページの提交をクリックして 로봇を有効化し、Webhook コールバックアドレスをコピーし、企業微信カスタマーサービス管理画面の URL に入力します（自分の IP またはドメインに変更することを忘れないでください）。保存をクリックし、成功すれば正常に接続できることを意味します。
+
+ページの Secret をコピーし、新しく作成した LangBot 企業微信カスタマーサービス 로봇を開き、新しい Secret を入力して再起動します。
+
+企業微信カスタマーサービス設定画面に戻り、カスタマーサービスアカウントをクリックしてカスタマーサービスアカウントを作成すれば、使用できます。
