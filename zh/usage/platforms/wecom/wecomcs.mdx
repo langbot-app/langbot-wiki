@@ -12,14 +12,21 @@ title: "部署企业微信客服"
 
 ![效果图](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_01.jpg)
 
-## 对接 LangBot
+## 部署企业微信客服
 
-![对接 LangBot](/images/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+#### 配置企业微信客服页面
 
-后续的配置方式和配置项和[企业微信内部应用](wecom)一样，只是不需要 `contacts_secret`。
+打开[企业微信客服后台](https://kf.weixin.qq.com/kf)，登录之后进入，点击`企业信息`，获取`企业ID`。
 
-## 注意事项
+![主页](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_03.png)
 
-1. 一定要按照上文的企业微信官方文档步骤走，将客服账号添加入 `api 管理`中。
-2. 步骤与企业微信内部应用一样，不要漏看，同样需要保存回调地址，因为本质上只是在企业微信内部应用上增加了其他的权限。
-3. LangBot 不会读取敏感信息如聊天记录和企业资质内容。
+保存企业ID，然后点击`开发配置`，点击`开始使用`，进入之后随机获取 Token，EncodingAESKey，随后将此三项填写入 LangBot 配置页中，Secret 随便填写,如图：
+
+![connect](/images/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+
+点击 LangBot 配置页中的提交，启用机器人，复制 WebHook回调地址，填写入企业微信客服后台中的 URl （记得改成自己的 ip 或者域名），点击保存，如果可以保存成功，那么说明可以正常连接。
+
+复制页面中的 Secret，然后打开新建好的 LangBot 企业微信客服机器人，填写入新的 Secret，重新启动。
+
+回到企业微信客服配置页面，点击客服账号，创建客服账号，即可使用。
+
