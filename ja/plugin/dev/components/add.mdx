@@ -7,7 +7,8 @@ title: "コンポーネントの追加"
 - イベントリスナー(EventListener): パイプライン実行中のイベントをリッスンし、コンテキストやパイプラインを変更します。
 - コマンド(Command): `!`(または他の設定されたプレフィックス)で始まるユーザーコマンドメッセージによってトリガーされます。
 - ツール(Tool): LangBotの組み込みLocal Agentの実行中にLLMによって呼び出されます。
-- ナレッジリトリーバー(KnowledgeRetriever): LangBotに外部ナレッジベース検索機能を提供し、さまざまなRAGシステムとの統合をサポートします。
+- RAGエンジン(KnowledgeEngine): LangBotにナレッジベースのインデックス作成と検索機能を提供し、ドキュメントの取り込み、検索、削除を管理します。
+- パーサー(Parser): ドキュメント取り込みの前にPDF、Wordなどのバイナリファイルを構造化テキストに解析し、RAGエンジンで使用できるようにします。
 
 ## コンポーネントの追加
 
@@ -71,4 +72,5 @@ components:
 - [EventListener](./event-listener)
 - [Command](./command)
 - [Tool](./tool)
-- [KnowledgeRetriever](./knowledge-retriever)
+- [KnowledgeEngine](./knowledge-engine)
+- [Parser](./parser)

@@ -56,12 +56,31 @@ spec:
         zh_Hans: 如果不填的話、图片可能會下載失败
       default: ''  # 設定項目のデフォルト値、オプション。
       required: false  # 設定項目が必須かどうか、オプション。
+      show_if:  # 条件付きレンダリング（条件を満たす場合にのみ表示）、オプション。
+        field: mode
+        operator: eq
+        value: mode1
     - name: mode
       type: select
       ...
 ```
 
 設定項目でサポートされるタイプとフィールドは次のとおりです:
+
+### 条件付きレンダリング (`show_if`)
+
+すべてのタイプの設定項目は、`show_if` フィールドを使用した条件付きレンダリングをサポートしています。同じ（または関連する）フォーム内の他のフィールドの値に基づいて、現在のフィールドをレンダリングして表示するかどうかを決定できます。
+
+```yaml
+- name: advanced_setting
+  type: string
+  show_if:
+    field: mode          # 依存するフィールドの名前
+    operator: eq         # 判定演算子。'eq' (等しい)、'neq' (等しくない)、'in' (リストに含まれる) をサポートします
+    value: advanced      # 判断の基準値
+```
+
+> **注意：** クロスフォームのカスケード関係（例：RAG エンジンの `creation_schema` 設定が `retrieval_schema` の値を読み取る、またはその逆）は、LangBot の最新フロントエンドでサポートされています。
 
 ### type: string
 

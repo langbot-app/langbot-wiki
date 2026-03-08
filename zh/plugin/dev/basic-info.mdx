@@ -56,12 +56,31 @@ spec:
         zh_Hans: 如果不填的话，图片可能会下载失败
       default: ''  # 配置项默认值，可选。
       required: false  # 配置项是否必填，可选。
+      show_if:  # 配置项条件渲染（满足条件时才显示），可选。
+        field: mode
+        operator: eq
+        value: mode1
     - name: mode
       type: select
       ...
 ```
 
 配置项支持的各个类型及字段如下：
+
+### 条件渲染 (`show_if`)
+
+所有类型的配置项都支持通过 `show_if` 字段实现条件渲染。您可以根据同一个表单（或关联表单）中其他字段的值，来决定当前字段是否在界面上渲染显示。
+
+```yaml
+- name: advanced_setting
+  type: string
+  show_if:
+    field: mode          # 依赖的字段名称
+    operator: eq         # 判断操作符，支持 'eq' (等于), 'neq' (不等于), 'in' (包含于列表)
+    value: advanced      # 判断的标准值
+```
+
+> **注意：** 跨表单的级联关系（如 RAG 引擎中 `creation_schema` 的配置去读取 `retrieval_schema` 的值，反之亦然）在 LangBot 最新前端中已经受支持。
 
 ### type: string
 
