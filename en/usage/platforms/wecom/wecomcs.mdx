@@ -12,14 +12,20 @@ title: "Deploy WeCom Customer Service"
 
 ![Effect Demonstration](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_01.jpg)
 
-## Connect to LangBot
+## Deploy WeCom Customer Service
 
-![Connect to LangBot](/images/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+#### Configure WeCom Customer Service Page
 
-The subsequent configuration method and configuration items are the same as [WeCom Internal Application](wecom), except that `contacts_secret` is not required.
+Open the [WeCom Customer Service Admin](https://kf.weixin.qq.com/kf), log in, click on `Enterprise Information`, and obtain the `Enterprise ID`.
 
-## Notes
+![Home Page](/images/zh/deploy/bots/wecom/wecomcs/wecomcs_03.png)
 
-1. Be sure to follow the steps in the official WeCom documentation above and add the customer service account to `API Management`.
-2. The steps are the same as for WeCom internal applications, don't miss anything. You also need to save the callback address, because essentially it's just adding other permissions to the WeCom internal application.
-3. LangBot will not read sensitive information such as chat records and enterprise qualification content.
+Save the Enterprise ID, then click on `Developer Settings`, click on `Start Using`, and randomly generate a Token and EncodingAESKey. Fill these three items into the LangBot configuration page. The Secret can be filled in arbitrarily, as shown below:
+
+![connect](/images/zh/deploy/bots/wecom/wecomcs/connect_to_langbot.png)
+
+Click Submit on the LangBot configuration page to enable the robot, copy the Webhook callback address, and fill it into the URL in the WeCom Customer Service admin backend (remember to change it to your own IP or domain name), then click Save. If it saves successfully, it means the connection is working.
+
+Copy the Secret from the page, then open the newly created LangBot WeCom Customer Service robot, fill in the new Secret, and restart.
+
+Go back to the WeCom Customer Service configuration page, click on Customer Service Accounts, create a customer service account, and you can start using it.

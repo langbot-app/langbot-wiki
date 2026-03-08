@@ -6,34 +6,46 @@ title: "Debugging Plugin Runtime, CLI, SDK"
   Plugin Runtime, CLI, SDK are open sourced at: https://github.com/langbot-app/langbot-plugin-sdk
 </Info>
 
-Clone the plugin runtime source code:
+Since LangBot depends on entities defined in langbot-plugin-sdk, we recommend opening VS Code in a new directory, placing both LangBot and langbot-plugin-sdk (git clone https://github.com/langbot-app/langbot-plugin-sdk) as subdirectories within it. The directory structure should look like:
 
 ```bash
-git clone https://github.com/langbot-app/langbot-plugin-sdk
+langbot-projects
+├── LangBot
+├── langbot-plugin-sdk
 ```
 
-Enter the plugin runtime directory and install dependencies:
+Enter the LangBot directory and install dependencies:
 
 ```bash
-cd langbot-plugin-sdk
+cd LangBot
 uv sync --dev
 ```
 
 At this point, uv will automatically create a virtual environment (.venv) for you. If your editor asks whether to use this virtual environment, please select `Yes`.
 
+<img
+  width="600"
+  src="/images/zh/develop/confirm_venv.png"
+/>
+
+If the prompt does not appear, please manually set the Python interpreter path to the interpreter in the venv from the bottom-right corner.
+
+Then open the terminal at the bottom of VS Code, which will automatically activate the venv.
+
 Or you can manually activate this virtual environment:
 
 ```bash
+# Please modify the command according to your .venv path
 source .venv/bin/activate
 ```
 
 ## Start Plugin Runtime
 
 ```bash
-lbp rt
+uv run --no-sync lbp rt
 ```
 
-Please ensure that the `lbp` command is the `lbp` executable in the virtual environment of this directory, or start it via `python -m langbot_plugin.cli.__init__ rt`.
+Or start it via `python -m langbot_plugin.cli.__init__ rt`.
 
 Plugin Runtime accepts the following parameters:
 
@@ -42,6 +54,18 @@ Plugin Runtime accepts the following parameters:
 - `--ws-control-port`: Control port to listen on (for LangBot main program connection), default is `5400`.
 - `-s`: Use `stdio` to accept control connections. **Use only in production environment**.
 - `--skip-deps-check`: To ensure that all plugin dependencies are installed, the Runtime will check and install all installed plugin dependencies on every startup. Use this parameter to disable this check.
+
+### Make LangBot Use Your Locally Modified langbot-plugin-sdk
+
+If you have modified things like message entities or plugin data definitions, you need to update them in the LangBot environment to ensure data format compatibility during runtime.
+
+In a **terminal with the LangBot directory's virtual environment (.venv) activated**, switch to the langbot-plugin-sdk directory and run:
+
+```bash
+uv pip install .
+```
+
+This will install your modified langbot-plugin-sdk into LangBot's environment.
 
 ### Make LangBot Connect to This Runtime
 
@@ -52,7 +76,7 @@ plugin:
   runtime_ws_url: ws://localhost:5400/control/ws
 ```
 
-And add the startup parameter `--standalone-runtime` when starting the LangBot main program (e.g., `uv run main.py --standalone-runtime`).\
+And add the startup parameter `--standalone-runtime` when starting the LangBot main program (e.g., `uv run --no-sync main.py --standalone-runtime`). Make sure to include the `--no-sync` parameter in this command, which ensures that the local langbot-plugin-sdk you just synced will not be overwritten by the remote version.\
 Restart LangBot, and it will connect to this runtime using WebSocket.
 
 ## langbot-plugin-sdk Architecture
