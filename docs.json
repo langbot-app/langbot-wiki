@@ -106,7 +106,8 @@
                 "pages": [
                   "en/insight/guide",
                   "en/insight/features",
-                  "en/insight/community"
+                  "en/insight/community",
+                  "en/insight/data-collection-policy"
                 ]
               },
               {
@@ -291,7 +292,8 @@
                 "pages": [
                   "zh/insight/guide",
                   "zh/insight/features",
-                  "zh/insight/community"
+                  "zh/insight/community",
+                  "zh/insight/data-collection-policy"
                 ]
               },
               {
@@ -506,7 +508,8 @@
                 "pages": [
                   "ja/insight/guide",
                   "ja/insight/features",
-                  "ja/insight/community"
+                  "ja/insight/community",
+                  "ja/insight/data-collection-policy"
                 ]
               },
               {
