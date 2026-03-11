@@ -176,12 +176,22 @@ async def ingest(self, context: IngestionContext) -> IngestionResult:
 
 ## Cross-Plugin Parser Invocation
 
-KnowledgeEngine plugins can invoke parsers provided by other plugins via `self.plugin.invoke_parser`:
+Before invoking a parser from another plugin, you can use `self.plugin.list_parsers` to discover the parsers currently available on the host:
 
 ```python
+parsers = await self.plugin.list_parsers(mime_type="application/pdf")
+# Each item includes plugin_id, plugin_author, plugin_name, name, description, supported_mime_types
+```
+
+If the list is empty, no connected Parser plugin currently supports that MIME type.
+
+After obtaining `plugin_author` and `plugin_name`, you can call `self.plugin.invoke_parser`:
+
+```python
+parser = parsers[0]
 result = await self.plugin.invoke_parser(
-    plugin_author="author_name",
-    plugin_name="plugin_name",
+    plugin_author=parser["plugin_author"],
+    plugin_name=parser["plugin_name"],
     storage_path=context.file_object.storage_path,
     mime_type=context.file_object.metadata.mime_type,
     filename=context.file_object.metadata.filename,
