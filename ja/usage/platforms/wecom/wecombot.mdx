@@ -15,15 +15,48 @@ title: "WeCom インテリジェントボットのデプロイ"
 
 ![Intelligent Bot](/images/zh/deploy/bots/wecom/wecombot/wecombot_2.png)
 
-「ボットを作成」をクリックし、ページの一番下までスクロールして「API モードで作成」をクリックし、ページに入ります：
+「ボットを作成」をクリックし、「手動作成」を選択して、ページの一番下までスクロールして「API モードで作成」をクリックし、ページに入ります：
 
 ![Create via API Mode](/images/zh/deploy/bots/wecom/wecombot/wecombot_3.png)
 
+## ロングコネクション設定
+
+### ロングコネクション API モードの有効化
+WeCom 管理コンソールで、インテリジェントボットの設定ページに移動し、「API モード」を有効にして「ロングコネクション」を選択します：
+
+![ロングコネクションモード](/images/zh/deploy/bots/wecom/wecombot/wecombot_9.png)
+
+### 認証情報の取得
+ロングコネクション API モードを有効にした後、接続を確立するために以下の認証情報を取得する必要があります：
+
+| 認証情報 | 説明 |
+|----------|------|
+| BotID | インテリジェントボットの一意の識別子で、ボットの識別に使用されます |
+| Secret | ロングコネクション専用の秘密鍵で、本人確認に使用されます |
+
+<Warning>
+注意：
+- Secret はロングコネクション専用の秘密鍵であり、コールバック URL モードで使用される Token/EncodingAESKey とは異なります
+- Secret を安全に保管し、漏洩を避けてください
+- モード切り替えの影響：API モードは一つの方式のみ使用できます（ロングコネクションまたはコールバック URL）。「コールバック URL」モードに切り替えると、既存のロングコネクションが無効になります。逆に、「コールバック URL」から「ロングコネクション」モードに切り替えると、元のコールバック URL は無効になります
+</Warning>
+
+### ボットの設定
+LangBot メインプログラムを起動し、アダプター「WeCom Intelligent Bot」を選択し、設定項目を入力します。
+ロングコネクションの BotID と Secret を入力し、保存して有効化をクリックします。
+
+![ロングコネクション設定](/images/zh/deploy/bots/wecom/wecombot/wecombot_10.png)
+
+
+## URL コールバック設定
+
 Token と EncodingAESKey をランダムに生成するためにクリックし、次に上部に基本的なボット情報を入力します。**表示範囲の設定に注意してください**。
+
+![パラメータ取得](/images/zh/deploy/bots/wecom/wecombot/wecombot_11.png)
 
 左側のサイドバーの「私の会社」をクリックし、下部の会社 ID を保存します。
 
-## コールバック URL の設定
+### コールバック URL の設定
 
 LangBot メインプログラムを起動し、アダプター「WeCom Intelligent Bot」を選択し、設定項目を入力します。
 その中で、token は Token、Encoding-AESKey は EncodingAESKey、Bot ID は xxx として入力できます（またはランダムに入力でき、後で変更されます）。入力後、
@@ -34,7 +67,7 @@ LangBot メインプログラムを起動し、アダプター「WeCom Intellige
 LangBot ホームページで、対応するボットを有効にして選択し、設定ページをクリックして入り、Webhook コールバックアドレスをコピーします
 
 <Info>
-まず、[HTTP リバースプロキシの設定](/en/workshop/production/proxy-and-ssl)を参照して LangBot コールバックアドレスを設定することをお勧めします。
+まず、[HTTP リバースプロキシの設定](/ja/workshop/production/proxy-and-ssl)を参照して LangBot コールバックアドレスを設定することをお勧めします。
 </Info>
 
 ![Webhook Callback Address](/images/zh/deploy/bots/wecom/wecombot/wecombot_8.png)

@@ -15,15 +15,48 @@ As shown:
 
 ![Intelligent Bot](/images/zh/deploy/bots/wecom/wecombot/wecombot_2.png)
 
-Click `Create Bot`, scroll to the bottom of the page, click `Create via API Mode`, and enter the page:
+Click `Create Bot` and select `Manual Creation`, scroll to the bottom of the page, click `Create via API Mode`, and enter the page:
 
 ![Create via API Mode](/images/zh/deploy/bots/wecom/wecombot/wecombot_3.png)
 
+## Long Connection Configuration
+
+### Enable Long Connection API Mode
+In the WeCom Admin Console, go to the Intelligent Bot configuration page, enable "API Mode" and select "Long Connection":
+
+![Long Connection Mode](/images/zh/deploy/bots/wecom/wecombot/wecombot_9.png)
+
+### Obtaining Credentials
+After enabling the Long Connection API mode, you need to obtain the following credentials to establish the connection:
+
+| Credential | Description |
+|------------|-------------|
+| BotID | The unique identifier of the intelligent bot, used to identify the bot |
+| Secret | The dedicated key for long connections, used for identity verification |
+
+<Warning>
+Note:
+- The Secret is a dedicated key for long connections, which is different from the Token/EncodingAESKey used in the callback URL mode
+- Please keep the Secret safe and avoid leaking it
+- Mode switching impact: API mode can only use one method (long connection or callback URL). Switching to "Callback URL" mode will invalidate existing long connections; conversely, switching from "Callback URL" to "Long Connection" mode will make the original callback URL no longer effective
+</Warning>
+
+### Configuring the Bot
+Start the LangBot main program, select the adapter `WeCom Intelligent Bot`, and fill in the configuration items.
+Enter the BotID and Secret from the long connection into the fields, click save and enable.
+
+![Long Connection Configuration](/images/zh/deploy/bots/wecom/wecombot/wecombot_10.png)
+
+
+## URL Callback Configuration
+
 Click to randomly generate Token and EncodingAESKey, then fill in the basic bot information above. **Pay attention to setting the visibility scope**.
+
+![Parameter Retrieval](/images/zh/deploy/bots/wecom/wecombot/wecombot_11.png)
 
 Click `My Company` in the left sidebar and save the Company ID at the bottom.
 
-## Configuring Callback URL
+### Configuring Callback URL
 
 Start the LangBot main program, select the adapter `WeCom Intelligent Bot`, and fill in the configuration items.  
 Among them, the token is Token, the Encoding-AESKey is EncodingAESKey, and the Bot ID can be filled in as xxx (or filled in randomly, it will be changed later). After filling in, click  
