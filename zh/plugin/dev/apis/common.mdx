@@ -82,6 +82,66 @@ async def get_query_vars(self) -> dict[str, Any]:
 query_vars = await event_context.get_query_vars()
 ```
 
+### 获取当前流水线配置的知识库列表
+
+获取当前请求所使用流水线中配置的知识库列表。
+
+```python
+async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
+    """List knowledge bases configured for the current pipeline"""
+
+# 调用示例
+knowledge_bases = await event_context.list_pipeline_knowledge_bases()
+
+# 返回示例
+[
+    {
+        "uuid": "kb_uuid",
+        "name": "Product Docs",
+        "description": "内部产品文档",
+    }
+]
+```
+
+仅返回当前请求对应流水线在 `Local Agent` 配置中绑定的知识库。若当前流水线未配置知识库，或未使用 `Local Agent`，则返回空列表。
+
+### 检索当前流水线内的知识库
+
+在当前请求所属流水线允许访问的知识库范围内执行检索。
+
+```python
+async def retrieve_knowledge(
+    self,
+    kb_id: str,
+    query_text: str,
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Retrieve relevant documents from a knowledge base"""
+
+# 调用示例
+knowledge_bases = await event_context.list_pipeline_knowledge_bases()
+results = await event_context.retrieve_knowledge(
+    kb_id=knowledge_bases[0]["uuid"],
+    query_text="如何配置企业知识库？",
+    top_k=3,
+    filters={"document_type": {"$eq": "manual"}},
+)
+
+# 返回示例
+[
+    {
+        "id": "chunk_0",
+        "content": [{"type": "text", "text": "知识库配置说明"}],
+        "metadata": {"document_id": "doc_001"},
+        "distance": 0.12,
+        "score": 0.88,
+    }
+]
+```
+
+`kb_id` 必须来自 `list_pipeline_knowledge_bases` 的返回结果，且必须属于当前流水线已配置的知识库，否则 LangBot 会返回错误。
+
 ## LangBot API
 
 这些 API 可在插件任何组件中调用。访问方式如下：
@@ -211,6 +271,19 @@ llm_message = await self.plugin.invoke_llm(
     funcs=[],
     extra_args={},
 )
+```
+
+### 列出可用解析器
+
+列出宿主当前可用的 Parser 插件，可按 MIME 类型过滤。
+
+```python
+async def list_parsers(self, mime_type: str | None = None) -> list[dict[str, Any]]:
+    """List available Parser plugins"""
+
+# 调用示例
+parsers = await self.plugin.list_parsers(mime_type="application/pdf")
+# 返回的每项包含 plugin_id、plugin_author、plugin_name、name、description、supported_mime_types
 ```
 
 ### 设置插件持久化数据

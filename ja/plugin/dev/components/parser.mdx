@@ -177,12 +177,22 @@ async def ingest(self, context: IngestionContext) -> IngestionResult:
 
 ## クロスプラグインパーサー呼び出し
 
-KnowledgeEngineプラグインは`self.plugin.invoke_parser`を通じて、他のプラグインが提供するパーサーを呼び出すことができます:
+他のプラグインが提供するパーサーを呼び出す前に、`self.plugin.list_parsers` を使ってホスト上で現在利用可能なパーサーを列挙できます:
 
 ```python
+parsers = await self.plugin.list_parsers(mime_type="application/pdf")
+# 各要素には plugin_id、plugin_author、plugin_name、name、description、supported_mime_types が含まれます
+```
+
+空配列が返る場合、その MIME タイプに対応する接続済みの Parser プラグインは現在存在しません。
+
+`plugin_author` と `plugin_name` を取得したら、`self.plugin.invoke_parser` で対象のパーサーを呼び出せます:
+
+```python
+parser = parsers[0]
 result = await self.plugin.invoke_parser(
-    plugin_author="author_name",
-    plugin_name="plugin_name",
+    plugin_author=parser["plugin_author"],
+    plugin_name=parser["plugin_name"],
     storage_path=context.file_object.storage_path,
     mime_type=context.file_object.metadata.mime_type,
     filename=context.file_object.metadata.filename,

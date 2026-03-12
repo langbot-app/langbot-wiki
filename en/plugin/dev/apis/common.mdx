@@ -82,6 +82,66 @@ async def get_query_vars(self) -> dict[str, Any]:
 query_vars = await event_context.get_query_vars()
 ```
 
+### List Knowledge Bases Configured for the Current Pipeline
+
+Get the knowledge bases configured in the pipeline used by the current request.
+
+```python
+async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
+    """List knowledge bases configured for the current pipeline"""
+
+# Usage example
+knowledge_bases = await event_context.list_pipeline_knowledge_bases()
+
+# Return example
+[
+    {
+        "uuid": "kb_uuid",
+        "name": "Product Docs",
+        "description": "Internal product documentation",
+    }
+]
+```
+
+This only returns knowledge bases bound in the current pipeline's `Local Agent` configuration. If the pipeline has no knowledge base configured, or is not using `Local Agent`, an empty list is returned.
+
+### Retrieve Knowledge from the Current Pipeline Scope
+
+Run retrieval against the knowledge bases that are allowed for the current request's pipeline.
+
+```python
+async def retrieve_knowledge(
+    self,
+    kb_id: str,
+    query_text: str,
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Retrieve relevant documents from a knowledge base"""
+
+# Usage example
+knowledge_bases = await event_context.list_pipeline_knowledge_bases()
+results = await event_context.retrieve_knowledge(
+    kb_id=knowledge_bases[0]["uuid"],
+    query_text="How do I configure the enterprise knowledge base?",
+    top_k=3,
+    filters={"document_type": {"$eq": "manual"}},
+)
+
+# Return example
+[
+    {
+        "id": "chunk_0",
+        "content": [{"type": "text", "text": "Knowledge base configuration guide"}],
+        "metadata": {"document_id": "doc_001"},
+        "distance": 0.12,
+        "score": 0.88,
+    }
+]
+```
+
+`kb_id` must come from `list_pipeline_knowledge_bases` and must belong to a knowledge base configured for the current pipeline. Otherwise, LangBot returns an error.
+
 ## LangBot API
 
 These APIs can be called in any plugin component. Access methods:
@@ -211,6 +271,19 @@ llm_message = await self.plugin.invoke_llm(
     funcs=[],
     extra_args={},
 )
+```
+
+### List Available Parsers
+
+List Parser plugins currently available on the host, optionally filtered by MIME type.
+
+```python
+async def list_parsers(self, mime_type: str | None = None) -> list[dict[str, Any]]:
+    """List available Parser plugins"""
+
+# Usage example
+parsers = await self.plugin.list_parsers(mime_type="application/pdf")
+# Each item includes plugin_id, plugin_author, plugin_name, name, description, supported_mime_types
 ```
 
 ### Set Plugin Persistent Data
