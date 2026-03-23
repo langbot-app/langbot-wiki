@@ -382,6 +382,69 @@ file_bytes = await self.plugin.get_config_file("key")
 
 Use this in conjunction with configuration fields of type [``file or array[file``](/en/plugin/dev/basic-info.html#type-file).
 
+## Knowledge Base API
+
+These APIs are accessible via `self.plugin` in any component, allowing you to list and retrieve from all knowledge bases in the LangBot instance without pipeline restrictions.
+
+### List All Knowledge Bases
+
+List all available knowledge bases in the LangBot instance.
+
+```python
+async def list_knowledge_bases(self) -> list[dict[str, Any]]:
+    """List all knowledge bases
+
+    Returns:
+        List of knowledge base dicts, each containing:
+        - uuid: Knowledge base UUID
+        - name: Knowledge base name
+        - description: Knowledge base description
+    """
+
+# Usage example
+knowledge_bases = await self.plugin.list_knowledge_bases()
+for kb in knowledge_bases:
+    print(f"KB: {kb['name']} ({kb['uuid']})")
+```
+
+### Retrieve from Knowledge Base
+
+Retrieve relevant documents from any knowledge base.
+
+```python
+async def retrieve_knowledge(
+    self,
+    kb_id: str,
+    query_text: str,
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Retrieve from a knowledge base
+
+    Args:
+        kb_id: Knowledge base UUID (from list_knowledge_bases)
+        query_text: Search query text
+        top_k: Number of results to return (default: 5)
+        filters: Optional metadata filters for retrieval
+
+    Returns:
+        List of retrieval result entries
+    """
+
+# Usage example
+results = await self.plugin.retrieve_knowledge(
+    kb_id="kb-uuid-here",
+    query_text="How to configure the system?",
+    top_k=3,
+)
+for entry in results:
+    print(entry)
+```
+
+:::tip
+Unlike the query-based `list_pipeline_knowledge_bases()` and `retrieve_knowledge()` in the Request API, these APIs do not require a `query_id` and can be used in any component (including Tool components). They can access all knowledge bases without being restricted to the current pipeline's configuration.
+:::
+
 ## RAG API
 
 These APIs are available for `KnowledgeEngine` components to access the LangBot host's embedding models, vector database, and file storage. Access method:
