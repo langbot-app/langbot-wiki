@@ -47,7 +47,7 @@ execution:
 spec:
   config:
     - name: github_token  # 必須; 設定項目名、プラグイン内での取得に使用
-      type: string  # 必須; 設定項目タイプ、string、integer、float、boolean、select、prompt-editor、llm-model-selector、bot-selectorなどをサポート
+      type: string  # 必須; 設定項目タイプ、string、integer、float、boolean、select、prompt-editor、llm-model-selector、embedding-model-selector、model-fallback-selector、knowledge-base-selector、knowledge-base-multi-selector、bot-selectorなどをサポート
       label:  # 必須; 設定項目表示名、多言語サポート。言語コードはRFC 4646標準に従います。
         en_US: Github Token
         zh_Hans: Github Token
@@ -228,12 +228,88 @@ for file_config in files_config:
 
 ### type: llm-model-selector
 
-LLMモデルセレクター。設定されたLLMモデルを選択できるLLMモデルセレクターを表示し、最終結果はLLMモデルUUIDとして表されます。
+LLMモデルセレクター。設定されたLLMモデルを選択できるLLMモデルセレクター（プロバイダーごとにグループ化）を表示し、最終結果はLLMモデルUUIDとして表されます。
 
 ```yaml
 - name: model
   type: llm-model-selector
   ...
+```
+
+### type: embedding-model-selector
+
+Embeddingモデルセレクター。設定されたEmbeddingモデルを選択できるEmbeddingモデルセレクター（プロバイダーごとにグループ化）を表示し、最終結果はEmbeddingモデルUUIDとして表されます。
+
+```yaml
+- name: embedding_model
+  type: embedding-model-selector
+  ...
+```
+
+プラグインでEmbeddingモデルUUIDを使用する:
+
+```python
+# 設定からEmbeddingモデルUUIDを取得
+embedding_model_uuid = self.get_config()['embedding_model']
+print(embedding_model_uuid)  # 出力: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: model-fallback-selector
+
+モデルフォールバックセレクター。プライマリモデルセレクターと順序付きのフォールバックモデルリストを表示し、フォールバックモデルの追加、削除、並び替えをサポートします。最終結果は `primary`（プライマリモデルUUID）と `fallbacks`（フォールバックモデルUUIDのリスト）を含むオブジェクトとして表されます。
+
+```yaml
+- name: model_with_fallback
+  type: model-fallback-selector
+  ...
+```
+
+プラグインで使用する:
+
+```python
+# 設定からモデルフォールバック設定を取得
+model_config = self.get_config()['model_with_fallback']
+primary_model = model_config['primary']       # プライマリモデルUUID
+fallback_models = model_config['fallbacks']   # フォールバックモデルUUIDリスト
+
+print(primary_model)    # 出力: '550e8400-e29b-41d4-a716-446655440000'
+print(fallback_models)  # 出力: ['660e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440002']
+```
+
+### type: knowledge-base-selector
+
+ナレッジベースセレクター。ナレッジベースセレクター（ナレッジエンジンごとにグループ化）を表示し、設定されたナレッジベースを選択できます。最終結果はナレッジベースUUIDとして表されます。ナレッジベースを選択しないことを示す空のオプション（`__none__`）が含まれます。
+
+```yaml
+- name: knowledge_base
+  type: knowledge-base-selector
+  ...
+```
+
+プラグインで使用する:
+
+```python
+# 設定からナレッジベースUUIDを取得
+kb_uuid = self.get_config()['knowledge_base']
+print(kb_uuid)  # 出力: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: knowledge-base-multi-selector
+
+ナレッジベースマルチセレクター。ナレッジベースの複数選択ダイアログ（ナレッジエンジンごとにグループ化）を表示し、チェックボックスで複数のナレッジベースを選択できます。最終結果はナレッジベースUUIDの配列として表されます。
+
+```yaml
+- name: knowledge_bases
+  type: knowledge-base-multi-selector
+  ...
+```
+
+プラグインで使用する:
+
+```python
+# 設定からナレッジベースUUIDリストを取得
+kb_uuids = self.get_config()['knowledge_bases']
+print(kb_uuids)  # 出力: ['550e8400-e29b-41d4-a716-446655440000', '660e8400-e29b-41d4-a716-446655440001']
 ```
 
 ### type: bot-selector

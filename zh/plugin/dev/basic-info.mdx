@@ -47,7 +47,7 @@ execution:
 spec:
   config:
     - name: github_token  # 必填；配置项名称，用于在插件中获取
-      type: string  # 必填；配置项类型，支持 string, integer, float, boolean, select, prompt-editor, llm-model-selector, bot-selector 等
+      type: string  # 必填；配置项类型，支持 string, integer, float, boolean, select, prompt-editor, llm-model-selector, embedding-model-selector, model-fallback-selector, knowledge-base-selector, knowledge-base-multi-selector, bot-selector 等
       label:  # 必填；配置项显示名称，支持多语言。语言代码采用 RFC 4646 标准。
         en_US: Github Token
         zh_Hans: Github Token
@@ -228,12 +228,88 @@ for file_config in files_config:
 
 ### type: llm-model-selector
 
-LLM 模型选择器。会展示一个 LLM 模型选择器，可选择已配置的 LLM 模型，最终结果表示为 LLM 模型 uuid。
+LLM 模型选择器。会展示一个 LLM 模型选择器，可选择已配置的 LLM 模型（按供应商分组），最终结果表示为 LLM 模型 uuid。
 
 ```yaml
 - name: model
   type: llm-model-selector
   ...
+```
+
+### type: embedding-model-selector
+
+Embedding 模型选择器。会展示一个 Embedding 模型选择器，可选择已配置的 Embedding 模型（按供应商分组），最终结果表示为 Embedding 模型 uuid。
+
+```yaml
+- name: embedding_model
+  type: embedding-model-selector
+  ...
+```
+
+在插件中获取 Embedding 模型 uuid：
+
+```python
+# 从配置中获取 Embedding 模型 UUID
+embedding_model_uuid = self.get_config()['embedding_model']
+print(embedding_model_uuid)  # 输出: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: model-fallback-selector
+
+模型回退选择器。会展示一个主模型选择器和一个有序的回退模型列表，支持添加、删除和调整回退模型顺序。最终结果表示为包含 `primary`（主模型 uuid）和 `fallbacks`（回退模型 uuid 列表）的对象。
+
+```yaml
+- name: model_with_fallback
+  type: model-fallback-selector
+  ...
+```
+
+在插件中使用：
+
+```python
+# 从配置中获取模型回退配置
+model_config = self.get_config()['model_with_fallback']
+primary_model = model_config['primary']       # 主模型 UUID
+fallback_models = model_config['fallbacks']   # 回退模型 UUID 列表
+
+print(primary_model)    # 输出: '550e8400-e29b-41d4-a716-446655440000'
+print(fallback_models)  # 输出: ['660e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440002']
+```
+
+### type: knowledge-base-selector
+
+知识库选择器。会展示一个知识库选择器（按知识引擎分组），可选择已配置的知识库，最终结果表示为知识库 uuid。包含一个空选项（`__none__`）表示不选择任何知识库。
+
+```yaml
+- name: knowledge_base
+  type: knowledge-base-selector
+  ...
+```
+
+在插件中使用：
+
+```python
+# 从配置中获取知识库 UUID
+kb_uuid = self.get_config()['knowledge_base']
+print(kb_uuid)  # 输出: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: knowledge-base-multi-selector
+
+知识库多选器。会展示一个知识库多选对话框（按知识引擎分组），支持通过复选框选择多个知识库，最终结果表示为知识库 uuid 数组。
+
+```yaml
+- name: knowledge_bases
+  type: knowledge-base-multi-selector
+  ...
+```
+
+在插件中使用：
+
+```python
+# 从配置中获取知识库 UUID 列表
+kb_uuids = self.get_config()['knowledge_bases']
+print(kb_uuids)  # 输出: ['550e8400-e29b-41d4-a716-446655440000', '660e8400-e29b-41d4-a716-446655440001']
 ```
 
 ### type: bot-selector

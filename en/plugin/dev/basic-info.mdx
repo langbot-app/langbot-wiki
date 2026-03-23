@@ -47,7 +47,7 @@ For example:
 spec:
   config:
     - name: github_token  # Required; configuration item name, used for retrieval in the plugin
-      type: string  # Required; configuration item type, supports string, integer, float, boolean, select, prompt-editor, llm-model-selector, bot-selector, etc.
+      type: string  # Required; configuration item type, supports string, integer, float, boolean, select, prompt-editor, llm-model-selector, embedding-model-selector, model-fallback-selector, knowledge-base-selector, knowledge-base-multi-selector, bot-selector, etc.
       label:  # Required; configuration item display name, supports multilingual. Language codes follow RFC 4646 standard.
         en_US: Github Token
         zh_Hans: Github Token
@@ -228,12 +228,88 @@ for file_config in files_config:
 
 ### type: llm-model-selector
 
-LLM model selector. Displays an LLM model selector where you can choose configured LLM models, with the final result represented as the LLM model UUID.
+LLM model selector. Displays an LLM model selector where you can choose configured LLM models (grouped by provider), with the final result represented as the LLM model UUID.
 
 ```yaml
 - name: model
   type: llm-model-selector
   ...
+```
+
+### type: embedding-model-selector
+
+Embedding model selector. Displays an embedding model selector where you can choose configured embedding models (grouped by provider), with the final result represented as the embedding model UUID.
+
+```yaml
+- name: embedding_model
+  type: embedding-model-selector
+  ...
+```
+
+Using the embedding model UUID in the plugin:
+
+```python
+# Get embedding model UUID from config
+embedding_model_uuid = self.get_config()['embedding_model']
+print(embedding_model_uuid)  # Output: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: model-fallback-selector
+
+Model fallback selector. Displays a primary model selector along with an ordered list of fallback models, supporting adding, removing, and reordering fallback models. The final result is represented as an object containing `primary` (primary model UUID) and `fallbacks` (list of fallback model UUIDs).
+
+```yaml
+- name: model_with_fallback
+  type: model-fallback-selector
+  ...
+```
+
+Using the model fallback config in the plugin:
+
+```python
+# Get model fallback config from config
+model_config = self.get_config()['model_with_fallback']
+primary_model = model_config['primary']       # Primary model UUID
+fallback_models = model_config['fallbacks']   # List of fallback model UUIDs
+
+print(primary_model)    # Output: '550e8400-e29b-41d4-a716-446655440000'
+print(fallback_models)  # Output: ['660e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440002']
+```
+
+### type: knowledge-base-selector
+
+Knowledge base selector. Displays a knowledge base selector (grouped by knowledge engine), where you can choose a configured knowledge base. The final result is represented as the knowledge base UUID. Includes an empty option (`__none__`) to represent selecting no knowledge base.
+
+```yaml
+- name: knowledge_base
+  type: knowledge-base-selector
+  ...
+```
+
+Using the knowledge base UUID in the plugin:
+
+```python
+# Get knowledge base UUID from config
+kb_uuid = self.get_config()['knowledge_base']
+print(kb_uuid)  # Output: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: knowledge-base-multi-selector
+
+Knowledge base multi-selector. Displays a knowledge base multi-selection dialog (grouped by knowledge engine), supporting selecting multiple knowledge bases via checkboxes. The final result is represented as an array of knowledge base UUIDs.
+
+```yaml
+- name: knowledge_bases
+  type: knowledge-base-multi-selector
+  ...
+```
+
+Using the knowledge base UUIDs in the plugin:
+
+```python
+# Get knowledge base UUID list from config
+kb_uuids = self.get_config()['knowledge_bases']
+print(kb_uuids)  # Output: ['550e8400-e29b-41d4-a716-446655440000', '660e8400-e29b-41d4-a716-446655440001']
 ```
 
 ### type: bot-selector
