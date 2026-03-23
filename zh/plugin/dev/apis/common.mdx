@@ -309,6 +309,69 @@ file_bytes = await self.plugin.get_config_file("key")
 
 请结合 [``file 或 array[file] 类型配置项``](/zh/plugin/dev/basic-info.html#type-file)使用。
 
+## 知识库 API
+
+这些 API 可在任意组件中通过 `self.plugin` 访问，用于列出和检索 LangBot 实例中的所有知识库，不受流水线配置限制。
+
+### 列出所有知识库
+
+列出 LangBot 实例中所有可用的知识库。
+
+```python
+async def list_knowledge_bases(self) -> list[dict[str, Any]]:
+    """列出所有知识库
+
+    Returns:
+        知识库列表，每个元素包含：
+        - uuid: 知识库 UUID
+        - name: 知识库名称
+        - description: 知识库描述
+    """
+
+# 调用示例
+knowledge_bases = await self.plugin.list_knowledge_bases()
+for kb in knowledge_bases:
+    print(f"KB: {kb['name']} ({kb['uuid']})")
+```
+
+### 检索知识库
+
+从任意知识库中检索相关文档。
+
+```python
+async def retrieve_knowledge(
+    self,
+    kb_id: str,
+    query_text: str,
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """从知识库中检索
+
+    Args:
+        kb_id: 知识库 UUID（从 list_knowledge_bases 获取）
+        query_text: 检索查询文本
+        top_k: 返回结果数量（默认：5）
+        filters: 可选的元数据过滤条件
+
+    Returns:
+        检索结果条目列表
+    """
+
+# 调用示例
+results = await self.plugin.retrieve_knowledge(
+    kb_id="kb-uuid-here",
+    query_text="如何配置系统？",
+    top_k=3,
+)
+for entry in results:
+    print(entry)
+```
+
+:::tip
+与请求 API 中的 `list_pipeline_knowledge_bases()` 和 `retrieve_knowledge()` 不同，这些 API 不需要 `query_id`，可以在任何组件中使用（包括 Tool 组件），且可以访问所有知识库，不受当前流水线配置限制。
+:::
+
 ## RAG API
 
 这些 API 供 `KnowledgeEngine` 组件调用，用于访问 LangBot 宿主的嵌入模型、向量数据库和文件存储。访问方式：

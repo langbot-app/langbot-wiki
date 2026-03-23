@@ -309,6 +309,69 @@ file_bytes = await self.plugin.get_config_file("key")
 
 これは[``fileまたはarray[file``](/en/plugin/dev/basic-info.html#type-file)型の設定フィールドと組み合わせて使用します。
 
+## ナレッジベース API
+
+これらのAPIは任意のコンポーネントから`self.plugin`経由でアクセスでき、パイプライン制限なしにLangBotインスタンス内のすべてのナレッジベースの一覧取得と検索が可能です。
+
+### すべてのナレッジベースの一覧取得
+
+LangBotインスタンスで利用可能なすべてのナレッジベースを一覧取得します。
+
+```python
+async def list_knowledge_bases(self) -> list[dict[str, Any]]:
+    """すべてのナレッジベースを一覧取得
+
+    Returns:
+        ナレッジベースのリスト、各要素は以下を含む：
+        - uuid: ナレッジベースUUID
+        - name: ナレッジベース名
+        - description: ナレッジベースの説明
+    """
+
+# 使用例
+knowledge_bases = await self.plugin.list_knowledge_bases()
+for kb in knowledge_bases:
+    print(f"KB: {kb['name']} ({kb['uuid']})")
+```
+
+### ナレッジベースからの検索
+
+任意のナレッジベースから関連ドキュメントを検索します。
+
+```python
+async def retrieve_knowledge(
+    self,
+    kb_id: str,
+    query_text: str,
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """ナレッジベースから検索
+
+    Args:
+        kb_id: ナレッジベースUUID（list_knowledge_basesから取得）
+        query_text: 検索クエリテキスト
+        top_k: 返す結果の数（デフォルト：5）
+        filters: オプションのメタデータフィルター
+
+    Returns:
+        検索結果エントリのリスト
+    """
+
+# 使用例
+results = await self.plugin.retrieve_knowledge(
+    kb_id="kb-uuid-here",
+    query_text="システムの設定方法は？",
+    top_k=3,
+)
+for entry in results:
+    print(entry)
+```
+
+:::tip
+リクエストAPIの`list_pipeline_knowledge_bases()`や`retrieve_knowledge()`とは異なり、これらのAPIは`query_id`を必要とせず、任意のコンポーネント（Toolコンポーネントを含む）で使用できます。現在のパイプライン設定に制限されることなく、すべてのナレッジベースにアクセスできます。
+:::
+
 ## RAG API
 
 これらのAPIは`KnowledgeEngine`コンポーネントがLangBotホストの埋め込みモデル、ベクトルデータベース、ファイルストレージにアクセスするために使用できます。アクセス方法:
