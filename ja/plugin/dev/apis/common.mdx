@@ -82,66 +82,6 @@ async def get_query_vars(self) -> dict[str, Any]:
 query_vars = await event_context.get_query_vars()
 ```
 
-### 現在のパイプラインに設定されたナレッジベース一覧の取得
-
-現在のリクエストで使用されているパイプラインに設定されたナレッジベース一覧を取得します。
-
-```python
-async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
-    """List knowledge bases configured for the current pipeline"""
-
-# 使用例
-knowledge_bases = await event_context.list_pipeline_knowledge_bases()
-
-# 返却例
-[
-    {
-        "uuid": "kb_uuid",
-        "name": "Product Docs",
-        "description": "社内製品ドキュメント",
-    }
-]
-```
-
-返されるのは、現在のパイプラインの `Local Agent` 設定に紐づいたナレッジベースだけです。ナレッジベースが未設定、または `Local Agent` を使っていない場合は空配列になります。
-
-### 現在のパイプライン範囲でナレッジを検索
-
-現在のリクエストのパイプラインで許可されているナレッジベースの範囲内で検索を実行します。
-
-```python
-async def retrieve_knowledge(
-    self,
-    kb_id: str,
-    query_text: str,
-    top_k: int = 5,
-    filters: dict[str, Any] | None = None,
-) -> list[dict[str, Any]]:
-    """Retrieve relevant documents from a knowledge base"""
-
-# 使用例
-knowledge_bases = await event_context.list_pipeline_knowledge_bases()
-results = await event_context.retrieve_knowledge(
-    kb_id=knowledge_bases[0]["uuid"],
-    query_text="エンタープライズ向けナレッジベースの設定方法は？",
-    top_k=3,
-    filters={"document_type": {"$eq": "manual"}},
-)
-
-# 返却例
-[
-    {
-        "id": "chunk_0",
-        "content": [{"type": "text", "text": "ナレッジベース設定ガイド"}],
-        "metadata": {"document_id": "doc_001"},
-        "distance": 0.12,
-        "score": 0.88,
-    }
-]
-```
-
-`kb_id` は `list_pipeline_knowledge_bases` の返却値から取得し、現在のパイプラインに設定されたナレッジベースである必要があります。そうでない場合、LangBot はエラーを返します。
-
 ## LangBot API
 
 これらのAPIは、任意のプラグインコンポーネントで呼び出すことができます。アクセス方法:
@@ -442,7 +382,7 @@ for entry in results:
 ```
 
 :::tip
-リクエストAPIの`list_pipeline_knowledge_bases()`や`retrieve_knowledge()`とは異なり、これらのAPIは`query_id`を必要とせず、任意のコンポーネント（Toolコンポーネントを含む）で使用できます。現在のパイプライン設定に制限されることなく、すべてのナレッジベースにアクセスできます。
+これらのAPIは`query_id`を必要とせず、任意のコンポーネント（Toolコンポーネントを含む）で使用できます。現在のパイプライン設定に制限されることなく、すべてのナレッジベースにアクセスできます。
 :::
 
 ## RAG API
