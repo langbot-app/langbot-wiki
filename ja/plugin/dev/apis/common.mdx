@@ -82,6 +82,29 @@ async def get_query_vars(self) -> dict[str, Any]:
 query_vars = await event_context.get_query_vars()
 ```
 
+### 現在のパイプラインに設定されたナレッジベース一覧の取得
+
+現在のリクエストが使用するパイプラインに設定されたナレッジベースの一覧を取得します。
+
+```python
+async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
+    """List knowledge bases configured for the current pipeline"""
+
+# 使用例
+knowledge_bases = await event_context.list_pipeline_knowledge_bases()
+
+# 返り値の例
+[
+    {
+        "uuid": "kb_uuid",
+        "name": "Product Docs",
+        "description": "社内製品ドキュメント",
+    }
+]
+```
+
+現在のリクエストに対応するパイプラインの `Local Agent` 設定にバインドされたナレッジベースのみを返します。現在のパイプラインにナレッジベースが設定されていない場合、または `Local Agent` を使用していない場合は、空のリストが返されます。
+
 ## LangBot API
 
 これらのAPIは、任意のプラグインコンポーネントで呼び出すことができます。アクセス方法:

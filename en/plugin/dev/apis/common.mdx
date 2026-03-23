@@ -82,6 +82,29 @@ async def get_query_vars(self) -> dict[str, Any]:
 query_vars = await event_context.get_query_vars()
 ```
 
+### List Pipeline Knowledge Bases
+
+Get the list of knowledge bases configured for the pipeline used by the current request.
+
+```python
+async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
+    """List knowledge bases configured for the current pipeline"""
+
+# Usage example
+knowledge_bases = await event_context.list_pipeline_knowledge_bases()
+
+# Return example
+[
+    {
+        "uuid": "kb_uuid",
+        "name": "Product Docs",
+        "description": "Internal product documentation",
+    }
+]
+```
+
+Only returns knowledge bases bound in the `Local Agent` configuration of the pipeline corresponding to the current request. If the current pipeline has no knowledge bases configured, or does not use `Local Agent`, an empty list is returned.
+
 ## LangBot API
 
 These APIs can be called in any plugin component. Access methods:
