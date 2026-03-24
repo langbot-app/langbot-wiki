@@ -14,6 +14,15 @@
     "href": "https://langbot.app"
   },
   "favicon": "/favicon.ico",
+  "description": "Official documentation for LangBot — the open-source multi-platform AI bot framework. Deploy Dify, Coze, n8n, GPT-4, Claude, and DeepSeek to Discord, Slack, Telegram, WeChat, DingTalk, Lark, LINE, and QQ in minutes.",
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:site_name": "LangBot Docs",
+      "twitter:card": "summary_large_image",
+      "og:image": "https://langbot.app/og-image.png"
+    }
+  },
   "navbar": {
     "links": [
       {
