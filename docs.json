@@ -162,6 +162,12 @@
                       "en/usage/platforms/wecom/wecomcs",
                       "en/usage/platforms/wecom/wecombot"
                     ]
+                  },
+                  {
+                    "group": "WeChat",
+                    "pages": [
+                      "en/usage/platforms/wechat/weixin"
+                    ]
                   }
                 ]
               },
@@ -353,7 +359,8 @@
                   {
                     "group": "微信",
                     "pages": [
-                      "zh/usage/platforms/wechat/wechatpad"
+                      "zh/usage/platforms/wechat/wechatpad",
+                      "zh/usage/platforms/wechat/weixin"
                     ]
                   }
                 ]
@@ -563,6 +570,12 @@
                       "ja/usage/platforms/wecom/wecom",
                       "ja/usage/platforms/wecom/wecomcs",
                       "ja/usage/platforms/wecom/wecombot"
+                    ]
+                  },
+                  {
+                    "group": "WeChat",
+                    "pages": [
+                      "ja/usage/platforms/wechat/weixin"
                     ]
                   }
                 ]

@@ -1,0 +1,58 @@
+---
+title: "通过 OpenClaw 接入个人微信"
+---
+
+## 简介
+
+[OpenClaw](https://github.com/dingxiang-me/OpenClaw-Wechat) 是一个开源 AI Agent 框架，通过 OpenClaw 微信适配器可以将 LangBot 接入个人微信，支持群聊、流式输出、白名单控制等功能。
+
+## 前置准备
+
+- 已部署并运行 LangBot
+
+<Warning>
+请确认您的手机微信版本为 最新的**8.0.69** 或以上，否则可能无法正常使用 OpenClaw 微信适配器。您可以在微信的「我」->「设置」->「关于微信」中查看当前版本号。
+</Warning>
+
+## 在 LangBot 中配置
+
+### 1. 新建适配器
+
+启动 LangBot 主程序，新建机器人，填写机器人名称，平台/适配器选择 `OpenClaw 微信`，点击提交即可。
+
+![新建微信适配器](/images/zh/deploy/bots/wexin/wexin_01.png)
+
+### 2. 启用适配器
+
+启用适配器并保存配置。
+
+![启用适配器](/images/zh/deploy/bots/wexin/wexin_02.png)
+
+### 3. 扫码登录
+
+打开日志，查看带有图片标志的日志详情，获取登录二维码。
+
+![打开日志查看二维码](/images/zh/deploy/bots/wexin/wexin_03.png)
+
+使用手机微信扫描二维码完成登录。
+
+<Warning>
+扫码前请再次确认微信版本为 **8.0.69** 或以上，否则可能导致扫码失败。
+</Warning>
+
+![扫码链接](/images/zh/deploy/bots/wexin/wexin_04.jpg)
+
+### 4. 确认登录成功
+
+扫码成功后，手机端会进入与 ClawBot 的聊天页面。
+
+![微信 ClawBot 聊天页面](/images/zh/deploy/bots/wexin/wexin_05.jpg)
+
+同时，LangBot 日志中会出现连接成功的信息，配置页面中的令牌和账号也会自动更新，表示登录成功。
+
+![日志信息](/images/zh/deploy/bots/wexin/wexin_06.png)
+![配置页](/images/zh/deploy/bots/wexin/wexin_07.png)
+
+## 开始使用
+
+登录成功后，其他微信用户向您的微信账号发送消息即可触发 LangBot 自动回复。
