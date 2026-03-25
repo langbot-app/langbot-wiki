@@ -84,7 +84,7 @@ query_vars = await event_context.get_query_vars()
 
 ### 現在のパイプラインに設定されたナレッジベース一覧の取得
 
-現在のリクエストで使用されているパイプラインに設定されたナレッジベース一覧を取得します。
+現在のリクエストが使用するパイプラインに設定されたナレッジベースの一覧を取得します。
 
 ```python
 async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
@@ -93,7 +93,7 @@ async def list_pipeline_knowledge_bases(self) -> list[dict[str, Any]]:
 # 使用例
 knowledge_bases = await event_context.list_pipeline_knowledge_bases()
 
-# 返却例
+# 返り値の例
 [
     {
         "uuid": "kb_uuid",
@@ -103,44 +103,7 @@ knowledge_bases = await event_context.list_pipeline_knowledge_bases()
 ]
 ```
 
-返されるのは、現在のパイプラインの `Local Agent` 設定に紐づいたナレッジベースだけです。ナレッジベースが未設定、または `Local Agent` を使っていない場合は空配列になります。
-
-### 現在のパイプライン範囲でナレッジを検索
-
-現在のリクエストのパイプラインで許可されているナレッジベースの範囲内で検索を実行します。
-
-```python
-async def retrieve_knowledge(
-    self,
-    kb_id: str,
-    query_text: str,
-    top_k: int = 5,
-    filters: dict[str, Any] | None = None,
-) -> list[dict[str, Any]]:
-    """Retrieve relevant documents from a knowledge base"""
-
-# 使用例
-knowledge_bases = await event_context.list_pipeline_knowledge_bases()
-results = await event_context.retrieve_knowledge(
-    kb_id=knowledge_bases[0]["uuid"],
-    query_text="エンタープライズ向けナレッジベースの設定方法は？",
-    top_k=3,
-    filters={"document_type": {"$eq": "manual"}},
-)
-
-# 返却例
-[
-    {
-        "id": "chunk_0",
-        "content": [{"type": "text", "text": "ナレッジベース設定ガイド"}],
-        "metadata": {"document_id": "doc_001"},
-        "distance": 0.12,
-        "score": 0.88,
-    }
-]
-```
-
-`kb_id` は `list_pipeline_knowledge_bases` の返却値から取得し、現在のパイプラインに設定されたナレッジベースである必要があります。そうでない場合、LangBot はエラーを返します。
+現在のリクエストに対応するパイプラインの `Local Agent` 設定にバインドされたナレッジベースのみを返します。現在のパイプラインにナレッジベースが設定されていない場合、または `Local Agent` を使用していない場合は、空のリストが返されます。
 
 ## LangBot API
 
@@ -381,6 +344,69 @@ file_bytes = await self.plugin.get_config_file("key")
 ```
 
 これは[``fileまたはarray[file``](/en/plugin/dev/basic-info.html#type-file)型の設定フィールドと組み合わせて使用します。
+
+## ナレッジベース API
+
+これらのAPIは任意のコンポーネントから`self.plugin`経由でアクセスでき、パイプライン制限なしにLangBotインスタンス内のすべてのナレッジベースの一覧取得と検索が可能です。
+
+### すべてのナレッジベースの一覧取得
+
+LangBotインスタンスで利用可能なすべてのナレッジベースを一覧取得します。
+
+```python
+async def list_knowledge_bases(self) -> list[dict[str, Any]]:
+    """すべてのナレッジベースを一覧取得
+
+    Returns:
+        ナレッジベースのリスト、各要素は以下を含む：
+        - uuid: ナレッジベースUUID
+        - name: ナレッジベース名
+        - description: ナレッジベースの説明
+    """
+
+# 使用例
+knowledge_bases = await self.plugin.list_knowledge_bases()
+for kb in knowledge_bases:
+    print(f"KB: {kb['name']} ({kb['uuid']})")
+```
+
+### ナレッジベースからの検索
+
+任意のナレッジベースから関連ドキュメントを検索します。
+
+```python
+async def retrieve_knowledge(
+    self,
+    kb_id: str,
+    query_text: str,
+    top_k: int = 5,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """ナレッジベースから検索
+
+    Args:
+        kb_id: ナレッジベースUUID（list_knowledge_basesから取得）
+        query_text: 検索クエリテキスト
+        top_k: 返す結果の数（デフォルト：5）
+        filters: オプションのメタデータフィルター
+
+    Returns:
+        検索結果エントリのリスト
+    """
+
+# 使用例
+results = await self.plugin.retrieve_knowledge(
+    kb_id="kb-uuid-here",
+    query_text="システムの設定方法は？",
+    top_k=3,
+)
+for entry in results:
+    print(entry)
+```
+
+<Tip>
+これらのAPIは`query_id`を必要とせず、任意のコンポーネント（Toolコンポーネントを含む）で使用できます。現在のパイプライン設定に制限されることなく、すべてのナレッジベースにアクセスできます。
+</Tip>
 
 ## RAG API
 

@@ -14,6 +14,22 @@ LangBot Space 是 LangBot 提供中心化服务平台。请访问[LangBot Space]
 
 ## 使用 CLI 登录 LangBot Space
 
+### 方式一：使用个人访问令牌（推荐）
+
+1. 登录 [LangBot Space](https://space.langbot.app)，点击头像进入 **账户设置**，在 **账户** 标签页中找到 **个人访问令牌**，创建一个新的令牌。
+2. 复制生成的令牌（仅显示一次），在终端执行：
+
+```bash
+➜  HelloPlugin > lbp login --token lbpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+==================================================
+✅ 使用个人访问令牌登录成功！
+令牌已保存至：~/.langbot/cli/config.json
+==================================================
+```
+
+### 方式二：使用设备码验证
+
 在任意目录执行命令`lbp login`：
 
 ```bash
@@ -44,7 +60,7 @@ Expires in: 21600 seconds
 ==================================================
 ```
 
-登录成功后，您可以继续使用 CLI 上传插件。
+两种方式登录成功后，均可继续使用 CLI 上传插件。
 
 ## 上传插件
 
