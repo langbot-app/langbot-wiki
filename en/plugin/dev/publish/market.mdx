@@ -14,6 +14,22 @@ This will redirect to GitHub authorization page, please complete authorization a
 
 ## Log in to LangBot Space Using CLI
 
+### Option 1: Personal Access Token (Recommended)
+
+1. Log in to [LangBot Space](https://space.langbot.app), go to **Settings → Personal Access Tokens**, and create a new token.
+2. Copy the generated token (shown only once), then run:
+
+```bash
+➜  HelloPlugin > lbp login --token lbpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+==================================================
+✅ Logged in with personal access token!
+Token saved to: ~/.langbot/cli/config.json
+==================================================
+```
+
+### Option 2: Device Code Verification
+
 Execute command `lbp login` in any directory:
 
 ```bash
@@ -44,7 +60,7 @@ Expires in: 21600 seconds
 ==================================================
 ```
 
-After successful login, you can continue using CLI to upload plugins.
+After successful login with either method, you can continue using CLI to upload plugins.
 
 ## Upload Plugin
 
