@@ -14,7 +14,7 @@
     "href": "https://langbot.app"
   },
   "favicon": "/favicon.ico",
-  "description": "Official documentation for LangBot — the open-source multi-platform AI bot framework. Deploy Dify, Coze, n8n, GPT-4, Claude, and DeepSeek to Discord, Slack, Telegram, WeChat, DingTalk, Lark, LINE, and QQ in minutes.",
+  "description": "Production-grade No-code AI Bot Platform. Connect DeepSeek, Dify, GPT-4 & Claude to WeChat, Discord, Telegram, Slack, Lark & DingTalk in 5 minutes.",
   "seo": {
     "indexing": "all",
     "metatags": {
@@ -54,52 +54,132 @@
   },
   "redirects": [
     {
-      "source": "/zh/deploy/models/readme",
-      "destination": "/zh/usage/models/readme"
+      "source": "/en/deploy/platforms/:slug*",
+      "destination": "/en/usage/platforms/:slug*"
     },
     {
-      "source": "/zh/deploy/platforms/readme",
-      "destination": "/zh/usage/platforms/readme"
+      "source": "/zh/deploy/platforms/:slug*",
+      "destination": "/zh/usage/platforms/:slug*"
     },
     {
-      "source": "/zh/deploy/pipelines/readme",
-      "destination": "/zh/usage/pipelines/readme"
+      "source": "/ja/deploy/platforms/:slug*",
+      "destination": "/ja/usage/platforms/:slug*"
     },
     {
-      "source": "/zh/deploy/knowledge/readme",
-      "destination": "/zh/usage/knowledge/readme"
+      "source": "/en/deploy/models/:slug*",
+      "destination": "/en/usage/models/:slug*"
     },
     {
-      "source": "/en/deploy/models/readme",
-      "destination": "/en/usage/models/readme"
+      "source": "/zh/deploy/models/:slug*",
+      "destination": "/zh/usage/models/:slug*"
     },
     {
-      "source": "/en/deploy/platforms/readme",
-      "destination": "/en/usage/platforms/readme"
+      "source": "/ja/deploy/models/:slug*",
+      "destination": "/ja/usage/models/:slug*"
     },
     {
-      "source": "/en/deploy/pipelines/readme",
-      "destination": "/en/usage/pipelines/readme"
+      "source": "/en/deploy/pipelines/:slug*",
+      "destination": "/en/usage/pipelines/:slug*"
     },
     {
-      "source": "/en/deploy/knowledge/readme",
-      "destination": "/en/usage/knowledge/readme"
+      "source": "/zh/deploy/pipelines/:slug*",
+      "destination": "/zh/usage/pipelines/:slug*"
     },
     {
-      "source": "/ja/deploy/models/readme",
-      "destination": "/ja/usage/models/readme"
+      "source": "/ja/deploy/pipelines/:slug*",
+      "destination": "/ja/usage/pipelines/:slug*"
     },
     {
-      "source": "/ja/deploy/platforms/readme",
-      "destination": "/ja/usage/platforms/readme"
+      "source": "/en/deploy/knowledge/:slug*",
+      "destination": "/en/usage/knowledge/:slug*"
     },
     {
-      "source": "/ja/deploy/pipelines/readme",
-      "destination": "/ja/usage/pipelines/readme"
+      "source": "/zh/deploy/knowledge/:slug*",
+      "destination": "/zh/usage/knowledge/:slug*"
     },
     {
-      "source": "/ja/deploy/knowledge/readme",
-      "destination": "/ja/usage/knowledge/readme"
+      "source": "/ja/deploy/knowledge/:slug*",
+      "destination": "/ja/usage/knowledge/:slug*"
+    },
+    {
+      "source": "/en/deploy/mcp/:slug*",
+      "destination": "/en/usage/mcp/:slug*"
+    },
+    {
+      "source": "/zh/deploy/mcp/:slug*",
+      "destination": "/zh/usage/mcp/:slug*"
+    },
+    {
+      "source": "/ja/deploy/mcp/:slug*",
+      "destination": "/ja/usage/mcp/:slug*"
+    },
+    {
+      "source": "/insight/:slug*",
+      "destination": "/en/insight/:slug*"
+    },
+    {
+      "source": "/plugin/:slug*",
+      "destination": "/en/plugin/:slug*"
+    },
+    {
+      "source": "/deploy/:slug*",
+      "destination": "/en/deploy/:slug*"
+    },
+    {
+      "source": "/workshop/:slug*",
+      "destination": "/en/workshop/:slug*"
+    },
+    {
+      "source": "/develop/:slug*",
+      "destination": "/en/develop/:slug*"
+    },
+    {
+      "source": "/usage/:slug*",
+      "destination": "/en/usage/:slug*"
+    },
+    {
+      "source": "/config/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/webui/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/posts/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/session/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/pipeline/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/i18n/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/development/:slug*",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/api/v1/:slug*",
+      "destination": "/en/api-reference/:slug*"
+    },
+    {
+      "source": "/README_EN",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/ws",
+      "destination": "/en/insight/guide"
+    },
+    {
+      "source": "/app",
+      "destination": "/en/insight/guide"
     }
   ],
   "navigation": {
@@ -707,7 +787,6 @@
       }
     ]
   },
-  "description": "Production-grade No-code AI Bot Platform. Connect DeepSeek, Dify, GPT-4 & Claude to WeChat, Discord, Telegram, Slack, Lark & DingTalk in 5 minutes.",
   "fonts": {
     "family": "Source Sans Pro"
   },
