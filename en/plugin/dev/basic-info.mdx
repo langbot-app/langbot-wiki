@@ -84,11 +84,28 @@ All types of configuration items support conditional rendering using the `show_i
 
 ### type: string
 
-String type.
+String type. Optionally supports `options` for preset values — when provided, a dropdown button appears next to the input allowing users to quickly fill in a preset value. Users can still type freely.
 
 ```yaml
 - name: api_key
   type: string
+  ...
+```
+
+With preset options:
+
+```yaml
+- name: api_url
+  type: string
+  options:  # Optional preset values, displayed as a dropdown button next to the input.
+    - name: "https://api.openai.com/v1"  # The value to fill in when selected.
+      label:  # Display name, supports multilingual.
+        en_US: OpenAI Official
+        zh_Hans: OpenAI 官方
+    - name: "https://api.deepseek.com/v1"
+      label:
+        en_US: DeepSeek
+        zh_Hans: DeepSeek
   ...
 ```
 
@@ -134,13 +151,13 @@ Boolean type.
 
 ### type: select
 
-Dropdown menu. Requires configuring `options`, which represents the dropdown menu options.
+Dropdown menu. Requires configuring `options`, which represents the dropdown menu options. Each option displays its `label` as the primary text, with the `name` (value) shown in smaller text below.
 
 ```yaml
 - name: mode
   type: select
   options:  # Dropdown options, supports multilingual.
-    - name: mode1  # Value
+    - name: mode1  # Value, displayed as secondary text in the dropdown.
       label:  # Display name, supports multilingual.
         en_US: Mode 1
         zh_Hans: 模式 1

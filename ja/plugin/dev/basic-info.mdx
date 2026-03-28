@@ -84,11 +84,28 @@ spec:
 
 ### type: string
 
-文字列型。
+文字列型。オプションで`options`を設定してプリセット値をサポートできます。設定すると、入力フィールドの横にドロップダウンボタンが表示され、ユーザーがプリセット値をすばやく入力できます。自由入力も可能です。
 
 ```yaml
 - name: api_key
   type: string
+  ...
+```
+
+プリセットオプション付き：
+
+```yaml
+- name: api_url
+  type: string
+  options:  # オプションのプリセット値、入力フィールドの横にドロップダウンボタンとして表示。
+    - name: "https://api.openai.com/v1"  # 選択時に入力される値。
+      label:  # 表示名、多言語サポート。
+        en_US: OpenAI Official
+        zh_Hans: OpenAI 官方
+    - name: "https://api.deepseek.com/v1"
+      label:
+        en_US: DeepSeek
+        zh_Hans: DeepSeek
   ...
 ```
 
@@ -134,13 +151,13 @@ spec:
 
 ### type: select
 
-ドロップダウンメニュー。`options`の設定が必要で、ドロップダウンメニューのオプションを表します。
+ドロップダウンメニュー。`options`の設定が必要で、ドロップダウンメニューのオプションを表します。各オプションは`label`をメインテキストとして表示し、`name`（値）を小さなテキストで下に表示します。
 
 ```yaml
 - name: mode
   type: select
   options:  # ドロップダウンオプション、多言語サポート。
-    - name: mode1  # 値
+    - name: mode1  # 値、ドロップダウンで小さなテキストとして表示。
       label:  # 表示名、多言語サポート。
         en_US: Mode 1
         zh_Hans: 模式 1

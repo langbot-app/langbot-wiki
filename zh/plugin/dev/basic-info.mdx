@@ -84,11 +84,28 @@ spec:
 
 ### type: string
 
-字符串。
+字符串。可选配置 `options` 预选项——配置后会在输入框旁显示一个下拉按钮，用户可快速选择预设值填入输入框，也可以自由输入。
 
 ```yaml
 - name: api_key
   type: string
+  ...
+```
+
+带预选项：
+
+```yaml
+- name: api_url
+  type: string
+  options:  # 可选的预设值，以下拉按钮形式显示在输入框旁。
+    - name: "https://api.openai.com/v1"  # 选中时填入的值。
+      label:  # 显示名称，支持多语言。
+        en_US: OpenAI Official
+        zh_Hans: OpenAI 官方
+    - name: "https://api.deepseek.com/v1"
+      label:
+        en_US: DeepSeek
+        zh_Hans: DeepSeek
   ...
 ```
 
@@ -134,13 +151,13 @@ spec:
 
 ### type: select
 
-下拉框。需要配置 `options` 选项，表示下拉框的选项。
+下拉框。需要配置 `options` 选项，表示下拉框的选项。每个选项会显示 `label` 作为主要文本，`name`（值）以小字显示在下方。
 
 ```yaml
 - name: mode
   type: select
   options:  # 下拉框选项，支持多语言。
-    - name: mode1  # 值
+    - name: mode1  # 值，在下拉框中以小字显示。
       label:  # 显示名称，支持多语言。
         en_US: Mode 1
         zh_Hans: 模式 1
