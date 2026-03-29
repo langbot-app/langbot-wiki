@@ -43,7 +43,8 @@ Note:
 
 ### Configuring the Bot
 Start the LangBot main program, select the adapter `WeCom Intelligent Bot`, and fill in the configuration items.
-Enter the BotID and Secret from the long connection into the fields, click save and enable.
+Enter the BotID, Secret, and bot name from the long connection into the fields, click save and enable.
+> The bot name must match the name of the newly created bot, otherwise the bot will not respond in group chats.
 
 ![Long Connection Configuration](/images/zh/deploy/bots/wecom/wecombot/wecombot_10.png)
 
@@ -77,7 +78,14 @@ Return to the WeCom robot configuration page and fill the copied webhook address
 Details page after successful creation:  
 ![Creation Successful](/images/zh/deploy/bots/wecom/wecombot/wecombot_5.png)
 
-Copy the `Bot ID` from the WeCom robot details page, return to the LangBot management page, change the Bot ID of the deployed intelligent robot to the copied ID, and restart the robot.
+Copy the `Bot ID` and bot name from the WeCom robot details page, return to the LangBot management page, change the Bot ID of the deployed intelligent robot to the copied ID, fill in the bot name, and restart the robot.
+
+## Enable Streaming
+
+A streaming toggle has been added for locally deployed models or models that do not support streaming.
+
+![Streaming Toggle](/images/zh/deploy/bots/wecom/wecombot/wecombot_12.png)
+
 
 ## Start Using
 

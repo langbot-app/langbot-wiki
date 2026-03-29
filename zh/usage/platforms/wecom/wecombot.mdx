@@ -43,7 +43,8 @@ title: "部署企业微信智能机器人"
 
 ### 配置机器人
 启动 LangBot 主程序，适配器选择 `企业微信智能机器人`，填写配置项，
-将长连接中的botid和secret填入，点击保存并使用
+将长连接中的botid和secret以及机器人名称填入，点击保存并使用
+> 其中机器人名称要与新建的机器人名称一样，不然群聊会不回复
 
 ![长连接配置](/images/zh/deploy/bots/wecom/wecombot/wecombot_10.png)
 
@@ -77,7 +78,14 @@ title: "部署企业微信智能机器人"
 创建成功之后的详情页：
 ![创建成功](/images/zh/deploy/bots/wecom/wecombot/wecombot_5.png)
 
-复制企业微信机器人详情页的`Bot ID`，回到LangBot管理页面，将部署的智能机器人的机器人Id改为复制的ID，重新启动机器人。
+复制企业微信机器人详情页的`Bot ID`和机器人的名称，回到LangBot管理页面，将部署的智能机器人的机器人Id改为复制的ID，并填入机器人名称，重新启动机器人。
+
+## 开启流式
+
+针对部分本地搭建或者不支持流式的模型新增流式开关
+
+![流式开关](/images/zh/deploy/bots/wecom/wecombot/wecombot_12.png)
+
 
 ## 开始使用
 
