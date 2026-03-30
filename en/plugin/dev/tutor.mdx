@@ -45,7 +45,8 @@ The plugin class in main.py is common code for each plugin, initialized when the
 
 Each component is a core functional module of your plugin, which can be [added and removed](/en/plugin/dev/components/add) as needed. Different components are called in different situations, making it easy to extend plugin functionality later. Each component directly inherits from the various component base classes under the `langbot_plugin.api.definition.components` package and contains a `plugin: BasePlugin` object, allowing you to directly call the plugin's APIs.
 
-<Info title="- For detailed API documentation, please refer to [API Reference](/en/plugin/dev/apis/common).">
+<Info title="">
+- For detailed API documentation, please refer to [API Reference](/en/plugin/dev/apis/common).
 
 Please continue reading this tutorial to understand the plugin development process.
 </Info>
@@ -76,14 +77,15 @@ lbp init
 
 Follow the prompts to enter `Author`, `Description`, and other information.
 
-<Info title="You can also use the `lbp init HelloPlugin` command to initialize the plugin in the subdirectory `HelloPlugin`.">
-
+<Info title="">
+You can also use the `lbp init HelloPlugin` command to initialize the plugin in the subdirectory `HelloPlugin`.
 <img width="600" src="/images/zh/plugin/dev/create_plugin.png" />
 </Info>
 
 This operation will generate the initial files for the plugin. You can now open the `HelloPlugin` directory in your favorite editor and start writing plugin code.
 
-<Info title='If you get a "command not found" error for `lbp`, it may be because you have not properly set the `PATH` environment variable.'>
+<Info title="">
+If you get a "command not found" error for `lbp`, it may be because you have not properly set the `PATH` environment variable.
 You can use `python -m langbot_plugin.cli.__init__` instead of the `lbp` command.
 
 For example:

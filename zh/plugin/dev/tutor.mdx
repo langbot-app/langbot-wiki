@@ -45,7 +45,8 @@ main.py 中的插件类是每个插件通用的代码，在插件被启动时会
 
 各个组件是您插件的核心功能模块，可以根据需要[添加和删除组件](/zh/plugin/dev/components/add)。不同的组件会在不同的情况下被调用，这种设计方便后续扩展插件功能。各个组件均直接继承于`langbot_plugin.api.definition.components`包下的各个组件基类，并在其中包含`plugin: BasePlugin`对象，您可直接调用插件的 API。
 
-<Info title="- 详细的 API 说明请参考[API 参考](/zh/plugin/dev/apis/common)。">
+<Info title="">
+- 详细的 API 说明请参考[API 参考](/zh/plugin/dev/apis/common)。
 
 请您继续阅读本页教程，了解插件的开发流程。
 </Info>
@@ -76,14 +77,15 @@ lbp init
 
 按照提示输入`Author(作者)`、`Description(描述)`等信息
 
-<Info title="您也可以使用`lbp init HelloPlugin`命令，在子目录`HelloPlugin`中初始化插件。">
-
+<Info title="">
+您也可以使用`lbp init HelloPlugin`命令，在子目录`HelloPlugin`中初始化插件。
 <img width="600" src="/images/zh/plugin/dev/create_plugin.png" />
 </Info>
 
 此操作将生成插件的初始文件。您现在可以在您喜爱的编辑器中打开 `HelloPlugin` 目录，开始编写插件代码。
 
-<Info title="若提示找不到 `lbp` 命令，可能是由于您未正确设置 `PATH` 环境变量。">
+<Info title="">
+若提示找不到 `lbp` 命令，可能是由于您未正确设置 `PATH` 环境变量。
 可使用`python -m langbot_plugin.cli.__init__`替代`lbp`命令。
 
 例如：

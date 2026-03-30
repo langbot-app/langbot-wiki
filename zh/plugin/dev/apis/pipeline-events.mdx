@@ -297,6 +297,8 @@ event_context.prevent_default()
 调用该方法后，该事件后续默认行为将被阻止，流水线将直接结束。
 
 <Info>
+仅以下事件可阻止默认行为：
+
   - PersonMessageReceived
   - GroupMessageReceived
   - PersonNormalMessageReceived

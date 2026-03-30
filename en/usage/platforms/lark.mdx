@@ -44,17 +44,18 @@ Streaming related:
 
 After filling in, start LangBot. If configured successfully, the log will show `[01-29 23:42:56.796] manager.py (68) - [INFO] : Initializing platform adapter 1: lark`, keep LangBot running.
 
-<Warning title="By default, WebSocket long connection mode is used, corresponding to the long connection subscription below. But in some cases (such as international version of Feishu), long connection mode is not available, in which case you need to use Webhook mode, corresponding to the `Send events to developer server` mode, please refer to the following configuration:">
+<Warning title="">
+By default, WebSocket long connection mode is used, corresponding to the long connection subscription below. But in some cases (such as international version of Feishu), long connection mode is not available, in which case you need to use Webhook mode, corresponding to the `Send events to developer server` mode, please refer to the following configuration:
 
 - `enable-webhook`: Set to `true`
 - `encrypt-key`: Set to `Encrypt Key` in the `Encryption Strategy` of the `Events and Callbacks` page
 
 Note that in Webhook mode, LangBot needs to be deployed on a server with a public IP, and ensure that the firewall has opened the port configured above.
 
+</Warning>
 <Tip>
 **No public server?** [LangBot Cloud](https://space.langbot.app/cloud) includes built-in domain and HTTPS — get Lark bots working out of the box.
 </Tip>
-</Warning>
 
 ## Configure Event Subscription
 
@@ -66,11 +67,12 @@ And add the event: `Receive Messages`
 
 ![alt text](/images/zh/deploy/bots/lark/lark_08.png)
 
-<Warning title="Webhook mode configuration method:">
+<Warning title="">
+Webhook mode configuration method:
 
 ![alt text](/images/zh/deploy/bots/lark/lark_13.png)
 
-Please start LangBot first, fill in your server address and port here, the path is `/lark/callback`, click `Save`.
+Please start LangBot first, fill in the Webhook address obtained from LangBot here.
 
 </Warning>
 
