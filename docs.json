@@ -408,35 +408,6 @@
                 "group": "配置机器人",
                 "pages": [
                   "zh/usage/platforms/readme",
-                  "zh/usage/platforms/discord",
-                  "zh/usage/platforms/telegram",
-                  "zh/usage/platforms/slack",
-                  "zh/usage/platforms/line",
-                  "zh/usage/platforms/kook",
-                  "zh/usage/platforms/lark",
-                  "zh/usage/platforms/dingtalk",
-                  "zh/usage/platforms/wxoa",
-                  {
-                    "group": "QQ (OneBot v11)",
-                    "pages": [
-                      "zh/usage/platforms/qq/aiocqhttp/napcat",
-                      "zh/usage/platforms/qq/aiocqhttp/lagrange",
-                      "zh/usage/platforms/qq/aiocqhttp/llonebot"
-                    ]
-                  },
-                  {
-                    "group": "Satori (QQ 等多平台)",
-                    "pages": [
-                      "zh/usage/platforms/satori/llonebot"
-                    ]
-                  },
-                  {
-                    "group": "QQ 官方机器人",
-                    "pages": [
-                      "zh/usage/platforms/qq/official_webhook",
-                      "zh/usage/platforms/qq/official"
-                    ]
-                  },
                   {
                     "group": "企业微信",
                     "pages": [
@@ -448,10 +419,39 @@
                   {
                     "group": "微信",
                     "pages": [
-                      "zh/usage/platforms/wechat/wechatpad",
-                      "zh/usage/platforms/wechat/weixin"
+                      "zh/usage/platforms/wechat/weixin",
+                      "zh/usage/platforms/wechat/wechatpad"
                     ]
-                  }
+                  },
+                  {
+                    "group": "QQ 官方机器人",
+                    "pages": [
+                      "zh/usage/platforms/qq/official_webhook",
+                      "zh/usage/platforms/qq/official"
+                    ]
+                  },
+                  {
+                    "group": "QQ (OneBot v11)",
+                    "pages": [
+                      "zh/usage/platforms/qq/aiocqhttp/napcat",
+                      "zh/usage/platforms/qq/aiocqhttp/lagrange",
+                      "zh/usage/platforms/qq/aiocqhttp/llonebot"
+                    ]
+                  },
+                  "zh/usage/platforms/lark",
+                  "zh/usage/platforms/dingtalk",
+                  "zh/usage/platforms/wxoa",
+                  "zh/usage/platforms/kook",
+                  {
+                    "group": "Satori (QQ 等多平台)",
+                    "pages": [
+                      "zh/usage/platforms/satori/llonebot"
+                    ]
+                  },
+                  "zh/usage/platforms/discord",
+                  "zh/usage/platforms/telegram",
+                  "zh/usage/platforms/slack",
+                  "zh/usage/platforms/line"
                 ]
               },
               {
