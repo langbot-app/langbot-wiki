@@ -2,7 +2,7 @@
 title: "Development Configuration"
 ---
 
-LangBot is divided into frontend and backend. The frontend is developed using Next.js + shadcn, and the backend is developed using Quart (an asynchronous version of Flask).
+LangBot is divided into frontend and backend. The frontend is developed using Vite + React Router + shadcn, and the backend is developed using Quart (an asynchronous version of Flask).
 
 ## Backend
 
@@ -54,7 +54,7 @@ npm run dev
 
 Then according to the output information, visit `http://127.0.0.1:3000` to view the standalone frontend page.
 
-<Info title="When using `pnpm dev` to start locally, the environment variable `NEXT_PUBLIC_API_BASE_URL` will be automatically used by the frontend to ensure that the frontend can access the `5300` port of the locally running backend.">
+<Info title="When using `pnpm dev` to start locally, the environment variable `VITE_API_BASE_URL` will be automatically used by the frontend to ensure that the frontend can access the `5300` port of the locally running backend.">
 
 In production environments, the frontend will be precompiled into static files and provided by the backend, and the frontend will automatically access the backend address on the same domain.
 </Info>
