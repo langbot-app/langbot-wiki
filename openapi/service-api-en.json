@@ -2750,6 +2750,113 @@
           }
         }
       }
+    },
+    "/api/v1/tools": {
+      "get": {
+        "tags": [
+          "Tools"
+        ],
+        "summary": "List all available tools",
+        "description": "List all available tools in the current LangBot instance, including plugin tools and MCP tools.",
+        "operationId": "listTools",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "msg": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tools": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ToolSummary"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/{tool_name}": {
+      "get": {
+        "tags": [
+          "Tools"
+        ],
+        "summary": "Get tool detail",
+        "description": "Get detailed information about a specific tool.",
+        "operationId": "getToolDetail",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tool_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tool name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "msg": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tool": {
+                          "$ref": "#/components/schemas/ToolSummary"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3173,6 +3280,46 @@
           },
           "msg": {
             "type": "string"
+          }
+        }
+      },
+      "ToolSummary": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool name"
+          },
+          "label": {
+            "type": "object",
+            "description": "Display label (i18n)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "description": "Tool description (i18n)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "icon": {
+            "type": "string",
+            "description": "Tool icon"
+          },
+          "spec": {
+            "type": "object",
+            "description": "Tool specification",
+            "properties": {
+              "llm_prompt": {
+                "type": "string"
+              },
+              "parameters": {
+                "type": "object",
+                "description": "JSON Schema for tool parameters"
+              }
+            }
           }
         }
       }

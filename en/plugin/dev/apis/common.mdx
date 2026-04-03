@@ -249,6 +249,87 @@ parsers = await self.plugin.list_parsers(mime_type="application/pdf")
 # Each item includes plugin_id, plugin_author, plugin_name, name, description, supported_mime_types
 ```
 
+### List All Available Tools
+
+List all available tools in the current LangBot instance (including plugin tools and MCP tools).
+
+```python
+async def list_tools(self) -> list[dict[str, Any]]:
+    """List all available tools
+
+    Returns:
+        A list of tool dicts, each containing:
+        - name: Tool name
+        - label: Display label (i18n)
+        - description: Tool description (i18n)
+        - icon: Tool icon
+        - spec: Tool specification (includes llm_prompt and parameters)
+    """
+
+# Example
+tools = await self.plugin.list_tools()
+for tool in tools:
+    print(f"Tool: {tool['name']}")
+```
+
+### Get Tool Detail
+
+Get detailed information about a specific tool.
+
+```python
+async def get_tool_detail(self, tool_name: str) -> dict[str, Any]:
+    """Get detailed information about a specific tool
+
+    Args:
+        tool_name: Tool name (metadata.name, e.g. "get_weather_alerts")
+
+    Returns:
+        Tool detail dict containing name, label, description, spec (with parameters and llm_prompt)
+    """
+
+# Example
+detail = await self.plugin.get_tool_detail("get_weather_alerts")
+print(detail['spec']['parameters'])
+```
+
+### Call Tool
+
+Call a specific tool.
+
+```python
+async def call_tool(
+    self,
+    tool_name: str,
+    parameters: dict[str, Any],
+    session: dict[str, Any],
+    query_id: int,
+) -> dict[str, Any]:
+    """Call a specific tool
+
+    Args:
+        tool_name: Tool name (metadata.name)
+        parameters: Tool parameters
+        session: Session info
+        query_id: Query ID
+
+    Returns:
+        Tool response dict
+    """
+
+# Example
+result = await self.plugin.call_tool(
+    tool_name="get_weather_alerts",
+    parameters={"state": "CA"},
+    session={},
+    query_id=0,
+)
+print(result)
+```
+
+<Tip>
+Tool names use `metadata.name` (e.g. `echo_tool`, `get_weather_alerts`), without author or plugin name prefix.
+</Tip>
+
 ### Set Plugin Persistent Data
 
 Persistently store plugin data. Data stored through this interface can only be accessed by this plugin. Values need to be converted to bytes manually.

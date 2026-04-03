@@ -249,6 +249,87 @@ parsers = await self.plugin.list_parsers(mime_type="application/pdf")
 # 各要素には plugin_id、plugin_author、plugin_name、name、description、supported_mime_types が含まれます
 ```
 
+### 利用可能なツール一覧を取得
+
+現在の LangBot インスタンスで利用可能なすべてのツール（プラグインツールおよび MCP ツール）を取得します。
+
+```python
+async def list_tools(self) -> list[dict[str, Any]]:
+    """利用可能なすべてのツールを取得
+
+    Returns:
+        ツールのリスト。各要素に以下が含まれます：
+        - name: ツール名
+        - label: 表示名（多言語）
+        - description: ツールの説明（多言語）
+        - icon: ツールアイコン
+        - spec: ツール仕様（llm_prompt と parameters を含む）
+    """
+
+# 使用例
+tools = await self.plugin.list_tools()
+for tool in tools:
+    print(f"Tool: {tool['name']}")
+```
+
+### ツール詳細を取得
+
+特定のツールの詳細情報を取得します。
+
+```python
+async def get_tool_detail(self, tool_name: str) -> dict[str, Any]:
+    """特定のツールの詳細情報を取得
+
+    Args:
+        tool_name: ツール名（metadata.name、例: "get_weather_alerts"）
+
+    Returns:
+        ツール詳細 dict（name、label、description、spec を含む）
+    """
+
+# 使用例
+detail = await self.plugin.get_tool_detail("get_weather_alerts")
+print(detail['spec']['parameters'])
+```
+
+### ツールを呼び出す
+
+指定されたツールを呼び出します。
+
+```python
+async def call_tool(
+    self,
+    tool_name: str,
+    parameters: dict[str, Any],
+    session: dict[str, Any],
+    query_id: int,
+) -> dict[str, Any]:
+    """特定のツールを呼び出す
+
+    Args:
+        tool_name: ツール名（metadata.name）
+        parameters: ツールパラメータ
+        session: セッション情報
+        query_id: クエリ ID
+
+    Returns:
+        ツールの応答 dict
+    """
+
+# 使用例
+result = await self.plugin.call_tool(
+    tool_name="get_weather_alerts",
+    parameters={"state": "CA"},
+    session={},
+    query_id=0,
+)
+print(result)
+```
+
+<Tip>
+ツール名は `metadata.name`（例: `echo_tool`、`get_weather_alerts`）を使用します。作者やプラグイン名のプレフィックスは不要です。
+</Tip>
+
 ### プラグイン永続データの設定
 
 プラグインデータを永続的に保存します。このインターフェースを通じて保存されたデータは、このプラグインのみがアクセスできます。値は手動でbytesに変換する必要があります。

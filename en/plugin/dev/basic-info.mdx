@@ -50,7 +50,7 @@ For example:
 spec:
   config:
     - name: github_token  # Required; configuration item name, used for retrieval in the plugin
-      type: string  # Required; configuration item type, supports string, integer, float, boolean, select, prompt-editor, llm-model-selector, bot-selector, etc.
+      type: string  # Required; configuration item type, supports string, integer, float, boolean, select, prompt-editor, llm-model-selector, bot-selector, tools-selector, etc.
       label:  # Required; configuration item display name, supports multilingual. Language codes follow RFC 4646 standard.
         en_US: Github Token
         zh_Hans: Github Token
@@ -272,6 +272,33 @@ Using the Bot UUID in the plugin:
 # Get Bot UUID from config
 bot_uuid = self.get_config()['bot']
 print(bot_uuid)  # Output: '550e8400-e29b-41d4-a716-446655440000'
+```
+
+### type: tools-selector
+
+Tool selector. Displays a multi-select tool selector where you can choose registered tools (plugin tools and MCP tools), with the final result represented as an array of tool names.
+
+```yaml
+- name: selected_tools
+  type: tools-selector
+  ...
+```
+
+Using the selected tool names in the plugin:
+
+```python
+# Get selected tool names from config
+selected_tools = self.get_config()['selected_tools']
+print(selected_tools)  # Output: ['get_weather_alerts', 'web_search']
+
+# Call selected tools
+for tool_name in selected_tools:
+    result = await self.plugin.call_tool(
+        tool_name=tool_name,
+        parameters={"query": "hello"},
+        session={},
+        query_id=0,
+    )
 ```
 
 ## What's Next
