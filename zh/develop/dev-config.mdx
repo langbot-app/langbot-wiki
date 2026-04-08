@@ -70,3 +70,93 @@ uv run pre-commit install
 ## API 文档
 
 我们在开发每个接口之前都会先在 APIFox 中编写接口文档，请查看 [API 文档](https://ok52vhsenr.apifox.cn/)。
+
+## 数据库迁移
+
+LangBot 使用 [Alembic](https://alembic.sqlalchemy.org/) 管理数据库迁移，同时支持 SQLite 和 PostgreSQL，无需针对不同数据库编写不同的迁移代码。
+
+### 迁移文件位置
+
+```
+src/langbot/pkg/persistence/alembic/versions/
+```
+
+### 创建新迁移
+
+在 `versions/` 目录下新建 Python 文件，遵循命名规范 `NNNN_description.py`：
+
+```python
+"""描述你的迁移
+
+Revision ID: 0003_add_bot_description
+Revises: 0002_sample
+Create Date: 2026-04-08
+"""
+from alembic import op
+import sqlalchemy as sa
+
+revision = '0003_add_bot_description'
+down_revision = '0002_sample'  # 指向前一个迁移的 revision
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    # Schema 变更（SQLite 和 PostgreSQL 通用）
+    op.add_column('bots', sa.Column('description', sa.String(512), server_default=''))
+
+
+def downgrade() -> None:
+    op.drop_column('bots', 'description')
+```
+
+### 迁移模式
+
+<AccordionGroup>
+<Accordion title="Schema 变更（增/删列、建表）">
+```python
+def upgrade() -> None:
+    # 添加列
+    op.add_column('table_name', sa.Column('new_col', sa.String(255), server_default=''))
+    
+    # 新建表
+    op.create_table(
+        'new_table',
+        sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column('name', sa.String(255), nullable=False),
+    )
+```
+
+<Info>
+`env.py` 中设置了 `render_as_batch=True`，Alembic 会自动处理 SQLite 的 ALTER TABLE 限制（通过临时表重建），无需手动区分数据库类型。
+</Info>
+</Accordion>
+
+<Accordion title="数据迁移（读取并修改数据）">
+```python
+import json
+
+def upgrade() -> None:
+    conn = op.get_bind()
+    rows = conn.execute(sa.text("SELECT uuid, config FROM pipelines")).fetchall()
+    for row in rows:
+        config = json.loads(row[1]) if isinstance(row[1], str) else row[1]
+        config.setdefault('ai', {})['new_key'] = 'default_value'
+        conn.execute(
+            sa.text("UPDATE pipelines SET config = :cfg WHERE uuid = :uuid"),
+            {"cfg": json.dumps(config), "uuid": row[0]}
+        )
+```
+</Accordion>
+</AccordionGroup>
+
+### 运行机制
+
+迁移在 LangBot 启动时自动执行，无需手动运行命令：
+
+1. 首次启动时，自动 stamp 基线版本（标记现有数据库）
+2. 之后每次启动，自动执行所有未应用的迁移（`alembic upgrade head`）
+
+### CI 测试
+
+仓库中包含 `test-migrations.yml` 工作流，当 `persistence/` 相关文件变更时会自动在 SQLite 和 PostgreSQL 上测试迁移脚本。

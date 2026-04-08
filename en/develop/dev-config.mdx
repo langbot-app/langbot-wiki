@@ -70,3 +70,93 @@ uv run pre-commit install
 ## API Documentation
 
 We will write API documentation in APIFox before developing each interface. Please refer to [API Documentation(Chinese)](https://ok52vhsenr.apifox.cn/).
+
+## Database Migrations
+
+LangBot uses [Alembic](https://alembic.sqlalchemy.org/) to manage database migrations, supporting both SQLite and PostgreSQL seamlessly without database-specific branching.
+
+### Migration File Location
+
+```
+src/langbot/pkg/persistence/alembic/versions/
+```
+
+### Creating a New Migration
+
+Create a new Python file in the `versions/` directory following the naming convention `NNNN_description.py`:
+
+```python
+"""Describe your migration
+
+Revision ID: 0003_add_bot_description
+Revises: 0002_sample
+Create Date: 2026-04-08
+"""
+from alembic import op
+import sqlalchemy as sa
+
+revision = '0003_add_bot_description'
+down_revision = '0002_sample'  # Points to the previous migration's revision
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    # Schema change (works on both SQLite and PostgreSQL)
+    op.add_column('bots', sa.Column('description', sa.String(512), server_default=''))
+
+
+def downgrade() -> None:
+    op.drop_column('bots', 'description')
+```
+
+### Migration Patterns
+
+<AccordionGroup>
+<Accordion title="Schema Changes (add/drop columns, create tables)">
+```python
+def upgrade() -> None:
+    # Add a column
+    op.add_column('table_name', sa.Column('new_col', sa.String(255), server_default=''))
+    
+    # Create a new table
+    op.create_table(
+        'new_table',
+        sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+        sa.Column('name', sa.String(255), nullable=False),
+    )
+```
+
+<Info>
+`env.py` sets `render_as_batch=True`, which makes Alembic automatically handle SQLite's ALTER TABLE limitations (via temporary table rebuild). No need to branch on database type.
+</Info>
+</Accordion>
+
+<Accordion title="Data Migrations (read and modify data)">
+```python
+import json
+
+def upgrade() -> None:
+    conn = op.get_bind()
+    rows = conn.execute(sa.text("SELECT uuid, config FROM pipelines")).fetchall()
+    for row in rows:
+        config = json.loads(row[1]) if isinstance(row[1], str) else row[1]
+        config.setdefault('ai', {})['new_key'] = 'default_value'
+        conn.execute(
+            sa.text("UPDATE pipelines SET config = :cfg WHERE uuid = :uuid"),
+            {"cfg": json.dumps(config), "uuid": row[0]}
+        )
+```
+</Accordion>
+</AccordionGroup>
+
+### How It Works
+
+Migrations run automatically when LangBot starts — no manual commands needed:
+
+1. On first startup, the baseline version is automatically stamped (marking the existing database)
+2. On subsequent startups, all pending migrations are applied (`alembic upgrade head`)
+
+### CI Testing
+
+The repository includes a `test-migrations.yml` workflow that automatically tests migration scripts on both SQLite and PostgreSQL when `persistence/` related files change.
