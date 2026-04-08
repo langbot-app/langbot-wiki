@@ -83,7 +83,20 @@ src/langbot/pkg/persistence/alembic/versions/
 
 ### 创建新迁移
 
-在 `versions/` 目录下新建 Python 文件，遵循命名规范 `NNNN_description.py`：
+推荐使用 **autogenerate** 自动生成迁移脚本，它会对比 ORM 模型和数据库 schema 的差异：
+
+```bash
+# 在项目根目录下运行（需要已有 data/config.yaml）
+uv run python -m langbot.pkg.persistence.alembic_runner autogenerate "描述你的变更"
+```
+
+生成的文件会出现在 `src/langbot/pkg/persistence/alembic/versions/` 目录下，请检查并编辑生成的脚本，确认变更无误后提交。
+
+<Info>
+autogenerate 能自动检测列的增删、表的增删、类型变更等。但对于**数据迁移**（如修改 JSON 字段的内容），需要手动在生成的脚本中添加代码。
+</Info>
+
+也可以手动创建迁移文件，遵循命名规范 `NNNN_description.py`：
 
 ```python
 """描述你的迁移
@@ -160,3 +173,19 @@ def upgrade() -> None:
 ### CI 测试
 
 仓库中包含 `test-migrations.yml` 工作流，当 `persistence/` 相关文件变更时会自动在 SQLite 和 PostgreSQL 上测试迁移脚本。
+
+### CLI 工具
+
+```bash
+# 自动生成迁移脚本（对比 ORM 模型和数据库）
+uv run python -m langbot.pkg.persistence.alembic_runner autogenerate "描述"
+
+# 升级数据库
+uv run python -m langbot.pkg.persistence.alembic_runner upgrade
+
+# 查看当前版本
+uv run python -m langbot.pkg.persistence.alembic_runner current
+
+# 标记版本（不执行迁移）
+uv run python -m langbot.pkg.persistence.alembic_runner stamp head
+```

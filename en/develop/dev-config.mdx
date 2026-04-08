@@ -83,7 +83,20 @@ src/langbot/pkg/persistence/alembic/versions/
 
 ### Creating a New Migration
 
-Create a new Python file in the `versions/` directory following the naming convention `NNNN_description.py`:
+The recommended way is to use **autogenerate**, which compares ORM models against the database schema and generates a migration script:
+
+```bash
+# Run from the project root (requires data/config.yaml)
+uv run python -m langbot.pkg.persistence.alembic_runner autogenerate "describe your changes"
+```
+
+The generated file will appear in `src/langbot/pkg/persistence/alembic/versions/`. Review and edit the generated script to confirm the changes are correct before committing.
+
+<Info>
+Autogenerate can automatically detect column additions/removals, table changes, type changes, etc. However, for **data migrations** (e.g., modifying JSON field content), you need to manually add code to the generated script.
+</Info>
+
+You can also create migration files manually, following the naming convention `NNNN_description.py`:
 
 ```python
 """Describe your migration
@@ -160,3 +173,19 @@ Migrations run automatically when LangBot starts — no manual commands needed:
 ### CI Testing
 
 The repository includes a `test-migrations.yml` workflow that automatically tests migration scripts on both SQLite and PostgreSQL when `persistence/` related files change.
+
+### CLI Tool
+
+```bash
+# Autogenerate migration (compare ORM models against DB)
+uv run python -m langbot.pkg.persistence.alembic_runner autogenerate "description"
+
+# Upgrade database
+uv run python -m langbot.pkg.persistence.alembic_runner upgrade
+
+# Show current revision
+uv run python -m langbot.pkg.persistence.alembic_runner current
+
+# Stamp revision (without running migrations)
+uv run python -m langbot.pkg.persistence.alembic_runner stamp head
+```

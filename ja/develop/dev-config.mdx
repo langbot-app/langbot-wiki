@@ -83,7 +83,20 @@ src/langbot/pkg/persistence/alembic/versions/
 
 ### 新しいマイグレーションの作成
 
-`versions/` ディレクトリに `NNNN_description.py` の命名規則に従ってPythonファイルを作成します：
+**autogenerate** を使用してマイグレーションスクリプトを自動生成することを推奨します。ORMモデルとデータベーススキーマの差分を比較して生成します：
+
+```bash
+# プロジェクトルートで実行（data/config.yaml が必要）
+uv run python -m langbot.pkg.persistence.alembic_runner autogenerate "変更内容の説明"
+```
+
+生成されたファイルは `src/langbot/pkg/persistence/alembic/versions/` に作成されます。生成されたスクリプトを確認・編集し、変更が正しいことを確認してからコミットしてください。
+
+<Info>
+autogenerateは列の追加/削除、テーブルの変更、型の変更などを自動検出できます。ただし、**データマイグレーション**（JSONフィールドの内容変更など）は、生成されたスクリプトに手動でコードを追加する必要があります。
+</Info>
+
+手動でマイグレーションファイルを作成することもできます。命名規則 `NNNN_description.py` に従ってください：
 
 ```python
 """マイグレーションの説明
@@ -160,3 +173,19 @@ def upgrade() -> None:
 ### CIテスト
 
 リポジトリには`test-migrations.yml`ワークフローが含まれており、`persistence/`関連ファイルが変更された際に、SQLiteとPostgreSQLの両方でマイグレーションスクリプトが自動テストされます。
+
+### CLIツール
+
+```bash
+# マイグレーションを自動生成（ORMモデルとDBの差分を比較）
+uv run python -m langbot.pkg.persistence.alembic_runner autogenerate "説明"
+
+# データベースをアップグレード
+uv run python -m langbot.pkg.persistence.alembic_runner upgrade
+
+# 現在のリビジョンを表示
+uv run python -m langbot.pkg.persistence.alembic_runner current
+
+# リビジョンをスタンプ（マイグレーションを実行せず）
+uv run python -m langbot.pkg.persistence.alembic_runner stamp head
+```
