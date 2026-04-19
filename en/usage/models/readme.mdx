@@ -45,3 +45,42 @@ The system has integrated the official embedding model provided by seekdb, no pa
 - On the "Embedding Model" page, select "seekdb-built-in";
 - Click "Save" to use it immediately;
 - Then select this model in your knowledge base to take effect.
+
+### Rerank Model
+
+Rerank models re-score RAG retrieval results to significantly improve the precision of knowledge base answers. When a knowledge base returns multiple candidate documents, the rerank model uses a cross-encoder to precisely score each document's relevance to the query, selecting only the most relevant content.
+
+Enter `Model Name` and select `Model Provider`, then submit. After that, select this model in your pipeline's "AI" configuration.
+
+<Tip>
+Rerank models are optional. Without one, knowledge base results are used in their original retrieval order. With a rerank model configured, results are re-scored and only the top-K most relevant results are kept.
+</Tip>
+
+**Supported providers and models:**
+
+| Provider | Recommended Models | Notes |
+| --- | --- | --- |
+| [SiliconFlow](https://siliconflow.cn/) | `BAAI/bge-reranker-v2-m3`, `Qwen/Qwen3-Reranker-8B` | Recommended for China |
+| [Jina](https://jina.ai/) | `jina-reranker-v2-base-multilingual` | Multilingual |
+| [Cohere](https://cohere.com/) | `rerank-v3.5` | Industry leading |
+| [Voyage AI](https://voyageai.com/) | `rerank-2.5` | |
+| [GiteeAI](https://ai.gitee.com/) | `bge-reranker-v2-m3`, `Qwen3-Reranker-8B` | |
+| [Aliyun Bailian](https://bailian.console.aliyun.com/) | `qwen3-rerank`, `gte-rerank` | Requires extra args, see below |
+| [OpenRouter](https://openrouter.ai/) | `cohere/rerank-v3.5`, `cohere/rerank-4-pro` | Universal gateway |
+| [302.AI](https://share.302.ai/SuTG99) | `jina-reranker-m0`, `qwen3-rerank` | |
+| OpenAI Compatible | Any service supporting `/rerank` | Universal |
+
+### Using Rerank Models with Aliyun Bailian
+
+Aliyun Bailian's rerank API endpoint path differs from its LLM endpoint. You need to specify `rerank_url` in the model's **extra arguments**:
+
+1. When adding a model, select the `Aliyun Bailian` provider
+2. Enter the model name (e.g., `qwen3-rerank`)
+3. Add an extra argument:
+   - Key: `rerank_url`
+   - Type: `string`
+   - Value: `https://dashscope.aliyuncs.com/compatible-api/v1/reranks`
+
+<Warning>
+Other providers (SiliconFlow, Jina, Cohere, etc.) do not require extra arguments — they use the standard `/rerank` endpoint.
+</Warning>

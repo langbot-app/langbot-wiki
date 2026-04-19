@@ -29,6 +29,17 @@ Go to your pipeline configuration, under the "AI" tab, choose `Local Agent` as t
 
 <img width="400px" src="/images/zh/deploy/knowledge/use_kb.png" alt="use_kb" />
 
+### Configure Reranking (Optional)
+
+After selecting a knowledge base, you can configure a **Rerank Model** below to improve retrieval quality:
+
+- **Rerank Model**: Select a configured rerank model (if none available, add one in [Model Configuration](/en/usage/models/readme) first)
+- **Rerank Top-K**: Number of most relevant results to keep after reranking, default is 5
+
+<Tip>
+Rerank models are optional. When configured, candidate documents from knowledge base retrieval are re-scored by the rerank model, keeping only the top-K most relevant results before passing them to the LLM, significantly reducing noise from irrelevant content.
+</Tip>
+
 <Info>
 LangBot's built-in knowledge base can be used only when the runner is set to `Local Agent`. For other runners, refer to their documentation.
 </Info>

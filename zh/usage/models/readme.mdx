@@ -23,7 +23,8 @@ LangBot Models 是 LangBot 官方提供的模型服务。当您使用 LangBot Sp
 ├── API Keys: [sk-xxx]
 ├── LLM 模型: gpt-4o
 ├── LLM 模型: gpt-4o-mini
-└── 向量模型: text-embedding-3-small
+├── 向量模型: text-embedding-3-small
+└── 重排序模型: rerank-v3.5
 ```
 
 <Tip>
@@ -57,6 +58,45 @@ LangBot Models 是 LangBot 官方提供的模型服务。当您使用 LangBot Sp
 
 ### 使用 seekdb 内置嵌入模型（零配置）
 系统已集成 seekdb 提供的官方嵌入模型，无需填写任何参数。
-- 在“嵌入模型”页面选择「seekdb-内置」；
+- 在”嵌入模型”页面选择「seekdb-内置」；
 - 点击「保存」即可立即使用；
 - 后续在知识库中选择该模型即可生效。
+
+### 重排序模型 (Rerank Model)
+
+重排序模型用于对 RAG 检索结果进行重新评分排序，显著提升知识库回答的精准度。当知识库返回多个候选文档时，重排序模型会使用 cross-encoder 对每个文档与查询的相关性进行精确打分，筛选出最相关的内容。
+
+填入 `模型名称`、选择 `模型供应商`，然后提交即可。之后请在流水线的”AI 能力”配置中选择此模型。
+
+<Tip>
+重排序模型是可选的。不配置时，知识库检索结果将按向量相似度排序直接使用。配置后，检索结果会经过重排序模型重新打分，只保留最相关的 Top-K 条结果。
+</Tip>
+
+**支持的供应商和模型：**
+
+| 供应商 | 推荐模型 | 备注 |
+| --- | --- | --- |
+| [SiliconFlow](https://siliconflow.cn/) | `BAAI/bge-reranker-v2-m3`, `Qwen/Qwen3-Reranker-8B` | 国内推荐 |
+| [Jina](https://jina.ai/) | `jina-reranker-v2-base-multilingual` | 多语言支持 |
+| [Cohere](https://cohere.com/) | `rerank-v3.5` | 全球领先 |
+| [Voyage AI](https://voyageai.com/) | `rerank-2.5` | |
+| [GiteeAI](https://ai.gitee.com/) | `bge-reranker-v2-m3`, `Qwen3-Reranker-8B` | |
+| [阿里云百炼](https://bailian.console.aliyun.com/) | `qwen3-rerank`, `gte-rerank` | 需要额外参数，见下方 |
+| [OpenRouter](https://openrouter.ai/) | `cohere/rerank-v3.5`, `cohere/rerank-4-pro` | 通用网关 |
+| [302.AI](https://share.302.ai/SuTG99) | `jina-reranker-m0`, `qwen3-rerank` | |
+| OpenAI 兼容 | 任意支持 `/rerank` 的服务 | 通用 |
+
+### 阿里云百炼使用重排序模型
+
+阿里云百炼的重排序 API 端点路径与其 LLM 端点不同，需要在模型的**额外参数**中指定 `rerank_url`：
+
+1. 添加模型时，选择 `阿里云百炼` 供应商
+2. 填入模型名称（如 `qwen3-rerank`）
+3. 在额外参数中添加一个参数：
+   - Key: `rerank_url`
+   - Type: `string`
+   - Value: `https://dashscope.aliyuncs.com/compatible-api/v1/reranks`
+
+<Warning>
+其他供应商（SiliconFlow、Jina、Cohere 等）无需填写额外参数，使用标准的 `/rerank` 端点即可。
+</Warning>
