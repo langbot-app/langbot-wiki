@@ -45,3 +45,13 @@ The system has integrated the official embedding model provided by seekdb, no pa
 - On the "Embedding Model" page, select "seekdb-built-in";
 - Click "Save" to use it immediately;
 - Then select this model in your knowledge base to take effect.
+
+### Rerank Model
+
+Rerank models re-score RAG retrieval results to significantly improve the precision of knowledge base answers. When a knowledge base returns multiple candidate documents, the rerank model uses a cross-encoder to precisely score each document's relevance to the query, selecting only the most relevant content.
+
+Enter `Model Name` and select `Model Provider`, then submit. After that, select this model in your pipeline's "AI" configuration.
+
+<Tip>
+Rerank models are optional. Without one, knowledge base results are used in their original retrieval order. With a rerank model configured, results are re-scored and only the top-K most relevant results are kept.
+</Tip>
