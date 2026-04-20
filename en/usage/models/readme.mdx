@@ -46,6 +46,12 @@ The system has integrated the official embedding model provided by seekdb, no pa
 - Click "Save" to use it immediately;
 - Then select this model in your knowledge base to take effect.
 
+### Using Chroma Built-in Embedding Model (Zero Configuration)
+The system has integrated Chroma's built-in embedding model (all-MiniLM-L6-v2), no parameters required.
+- On the "Embedding Model" page, select "chroma-built-in";
+- Click "Save" to use it immediately;
+- Then select this model in your knowledge base to take effect.
+
 ### Rerank Model
 
 Rerank models re-score RAG retrieval results to significantly improve the precision of knowledge base answers. When a knowledge base returns multiple candidate documents, the rerank model uses a cross-encoder to precisely score each document's relevance to the query, selecting only the most relevant content.
