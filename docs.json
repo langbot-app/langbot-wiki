@@ -321,7 +321,8 @@
                       "en/plugin/dev/components/command",
                       "en/plugin/dev/components/tool",
                       "en/plugin/dev/components/knowledge-engine",
-                      "en/plugin/dev/components/parser"
+                      "en/plugin/dev/components/parser",
+                      "en/plugin/dev/components/page"
                     ]
                   },
                   "en/plugin/dev/style",
@@ -528,7 +529,8 @@
                       "zh/plugin/dev/components/command",
                       "zh/plugin/dev/components/tool",
                       "zh/plugin/dev/components/knowledge-engine",
-                      "zh/plugin/dev/components/parser"
+                      "zh/plugin/dev/components/parser",
+                      "zh/plugin/dev/components/page"
                     ]
                   },
                   "zh/plugin/dev/style",
