@@ -732,7 +732,8 @@
                       "ja/plugin/dev/components/command",
                       "ja/plugin/dev/components/tool",
                       "ja/plugin/dev/components/knowledge-engine",
-                      "ja/plugin/dev/components/parser"
+                      "ja/plugin/dev/components/parser",
+                      "ja/plugin/dev/components/page"
                     ]
                   },
                   "ja/plugin/dev/style",
