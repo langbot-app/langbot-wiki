@@ -2,171 +2,145 @@
 title: "System Environment Settings"
 ---
 
-Configure some environment information for system operation, located in the `data/config.yaml` file.  
+Configure system runtime settings in `data/config.yaml`.
 Generally, no modification is needed.
 
 ```yaml
-# Administrator session list, only valid when processing commands
-# Format is session ID (person_xxxx or group_xxxx)
-# Session ID can be found in the console logs when sending messages
-# For example:
-# admins:
-#   - person_1234567890
-#   - group_1234567890
 admins: []
-
-# API port
 api:
     port: 5300
-    # LangBot centrally manages all bot addresses that require Webhook listening
-    # This is the Webhook address prefix displayed on the bot page that requires Webhook connection
-    # You can modify it according to your network environment
     webhook_prefix: 'http://127.0.0.1:5300'
-
-# Command configuration
+    extra_webhook_prefix: ''
 command:
-    # Command prefixes, messages with these prefixes will be recognized as commands
+    enable: true
     prefix:
     - '!'
     - ！
-
-    # Command permission configuration, key is the command prefix, value is the permission type
     privilege: {}
-
-# Concurrency settings
 concurrency:
-    # Single pipeline concurrency
     pipeline: 20
-    # Single session concurrency
     session: 1
-
-# Database configuration
+proxy:
+    http: ''
+    https: ''
+system:
+    instance_id: ''
+    edition: community
+    recovery_key: ''
+    allow_modify_login_info: true
+    disabled_adapters: []
+    limitation:
+        max_bots: -1
+        max_pipelines: -1
+        max_extensions: -1
+    task_retention:
+        # Keep at most this many completed async task records in memory
+        completed_limit: 200
+    jwt:
+        expire: 604800
+        secret: ''
 database:
-    # The database to use
-    # Supported databases:
-    # - sqlite (local SQLite database, default)
-    # - postgresql (PostgreSQL database, please configure below)
     use: sqlite
-    # SQLite configuration
     sqlite:
         path: 'data/langbot.db'
-    # PostgreSQL configuration
     postgresql:
         host: '127.0.0.1'
         port: 5432
-        database: 'postgres'
         user: 'postgres'
         password: 'postgres'
-
-# Plugin system configuration
-plugin:
-    # Whether to enable the plugin system
-    enable: true
-    # Plugin runtime WebSocket address
-    # Default value for Docker environment
-    # If you want to use a standalone Plugin Runtime, please refer to https://docs.langbot.app/en/develop/plugin-runtime.html
-    runtime_ws_url: 'ws://langbot_plugin_runtime:5400/control/ws'
-    # Whether to enable the plugin marketplace
-    enable_marketplace: true
-    # Plugin marketplace URL
-    cloud_service_url: 'https://space.langbot.app'
-
-# Proxy configuration
-proxy:
-    # HTTP proxy address
-    # If proxy is already set in environment variables, no configuration is needed
-    # For example:
-    # proxy:
-    #     http: 'http://127.0.0.1:7890'
-    #     https: 'http://127.0.0.1:7890'
-    http: ''
-    https: ''
-
-# Object storage configuration
-storage:
-    # The object storage to use
-    # Supported object storage:
-    # - local (local storage, default)
-    # - s3 (S3 protocol object storage, supports R2, MinIO, etc. Please configure below)
-    use: local
-    # S3 configuration
-    s3:
-        endpoint_url: ''
-        access_key_id: ''
-        secret_access_key: ''
-        region: 'us-east-1'
-        bucket: 'langbot-storage'
-
-# System configuration
-system:
-    # JWT configuration
-    jwt:
-        # JWT expiration time in seconds
-        expire: 604800
-        # JWT secret key, a key will be automatically generated on first startup
-        secret: 'xxxx'
-    # Whether to allow changing the password
-    allow_change_password: true
-    # Recovery password key
-    recovery_key: 'xxxx'
-
-# Vector database configuration
+        database: 'postgres'
 vdb:
-    # The vector database to use
-    # Supported vector databases:
-    # - chroma (default, embedded vector database)
-    # - qdrant (external vector database, please configure below)
-    # - milvus (scalable vector database, please configure below)
-    # - pgvector (PostgreSQL extension, please configure below)
-    # - seekdb (Built-in embedded-model database, please configure below)
     use: chroma
-    # Qdrant configuration
     qdrant:
-        # Qdrant URL
         url: ''
-        # Qdrant Host
         host: localhost
-        # Qdrant Port
         port: 6333
-        # Qdrant API Key
         api_key: ''
-    # Milvus configuration
+    seekdb:
+        mode: embedded  # 'embedded' or 'server'
+        # Embedded mode options:
+        path: './data/seekdb'
+        database: 'langbot'
+        # Server mode options (used when mode='server'):
+        host: 'localhost'
+        port: 2881
+        user: 'root'
+        password: ''
+        tenant: ''  # Optional, for OceanBase server
     milvus:
         uri: 'http://127.0.0.1:19530'
         token: ''
-    # pgvector configuration
+        db_name: ''
     pgvector:
         host: '127.0.0.1'
         port: 5433
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
-    seekdb:
-        # 'embedded' or 'server'
-        mode: embedded  
-        # Embedded mode options:
-        path: './data/seekdb'          
-        database: 'langbot'            
-         # Server mode options (used when mode='server'):
-        host: 'localhost'              
-        port: 2881                     
-        user: 'root'                   
-        password: ''                   
-        # Optional, for OceanBase server
-        tenant: ''  
+storage:
+    use: local
+    cleanup:
+        # Enable periodic cleanup of local/S3 uploaded files and old log files
+        enabled: true
+        # Cleanup check interval in hours
+        check_interval_hours: 1
+        # Root-level uploaded files older than this will be deleted
+        uploaded_file_retention_days: 7
+        # LangBot log files older than this many days will be deleted
+        log_retention_days: 3
+    s3:
+        endpoint_url: ''
+        access_key_id: ''
+        secret_access_key: ''
+        region: 'us-east-1'
+        bucket: 'langbot-storage'
+plugin:
+    enable: true
+    runtime_ws_url: 'ws://langbot_plugin_runtime:5400/control/ws'
+    enable_marketplace: true
+    display_plugin_debug_url: 'ws://localhost:5401/plugin/debug/ws'
+    binary_storage:
+        # Max bytes for a single plugin binary storage value
+        max_value_bytes: 10485760
+monitoring:
+    auto_cleanup:
+        # Enable automatic cleanup of expired monitoring records
+        enabled: true
+        # Retention period in days, records older than this will be deleted
+        retention_days: 30
+        # Cleanup check interval in hours
+        check_interval_hours: 1
+        # Number of expired rows to delete per table batch
+        delete_batch_size: 1000
+space:
+    # Space service URL for OAuth and API
+    url: 'https://space.langbot.app'
+    # Space API URL for model requests (MaaS)
+    models_gateway_api_url: 'https://api.langbot.cloud/v1'
+    # OAuth authorization page URL
+    oauth_authorize_url: 'https://space.langbot.app/auth/authorize'
+    disable_models_service: false
+    disable_telemetry: false
 ```
 
-## Set configuration via environment variables
+## Notes
 
-The configuration in `config.yaml` can be set via environment variables. The environment variable name is uppercase letters, using double underscores to connect, for example: `API__PORT` represents `api.port`.
+- `storage.cleanup.uploaded_file_retention_days` only cleans temporary uploaded files at the storage root. It does not delete plugin configuration files or internal objects stored under directories.
+- `storage.cleanup.log_retention_days` cleans old log files by the date in their file names. The default keeps at most 3 days of logs.
+- When SQLite is used as the database, automatic monitoring cleanup directly releases database file space after deleting expired records.
+- `plugin.binary_storage.max_value_bytes` limits the size of a single plugin binary storage value. The default is 10 MiB.
+- The WebUI sidebar includes a “Storage Analysis” page for viewing database, logs, uploaded files, vector store, plugins, MCP, temporary files, and cleanup candidates.
+
+## Set Configuration Via Environment Variables
+
+The configuration in `config.yaml` can be set via environment variables. Environment variable names use uppercase letters and double underscores, for example: `API__PORT` represents `api.port`.
 
 - `API__PORT` represents `api.port`
 - `CONCURRENCY__PIPELINE` represents `concurrency.pipeline`
-- `CONCURRENCY__SESSION` represents `concurrency.session`
-- `DATABASE__POSTGRESQL__DATABASE` represents `database.postgresql.database`
-- `DATABASE__POSTGRESQL__HOST` represents `database.postgresql.host`
 - `DATABASE__SQLITE__PATH` represents `database.sqlite.path`
+- `STORAGE__CLEANUP__UPLOADED_FILE_RETENTION_DAYS` represents `storage.cleanup.uploaded_file_retention_days`
+- `STORAGE__CLEANUP__LOG_RETENTION_DAYS` represents `storage.cleanup.log_retention_days`
+- `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` represents `monitoring.auto_cleanup.retention_days`
+- `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` represents `plugin.binary_storage.max_value_bytes`
 
-...
-
-When starting, LangBot will read all environment variables and apply the corresponding configuration to `config.yaml` and write to the `data/config.yaml` file.
+On startup, LangBot reads all environment variables, applies the corresponding configuration to `config.yaml`, and writes it to `data/config.yaml`.

@@ -2,171 +2,145 @@
 title: "システム環境設定"
 ---
 
-システム動作のための環境情報を設定します。`data/config.yaml`ファイルに配置されています。
+システム動作のための環境情報を設定します。設定ファイルは `data/config.yaml` にあります。
 通常、変更は必要ありません。
 
 ```yaml
-# 管理者セッションリスト、コマンド処理時のみ有効
-# 形式はセッションID(person_xxxxまたはgroup_xxxx)
-# セッションIDはメッセージ送信時のコンソールログで確認できます
-# 例:
-# admins:
-#   - person_1234567890
-#   - group_1234567890
 admins: []
-
-# APIポート
 api:
     port: 5300
-    # LangBotはWebhookリスニングを必要とするすべてのボットアドレスを一元管理します
-    # これはWebhook接続を必要とするボットページに表示されるWebhookアドレスプレフィックスです
-    # ネットワーク環境に応じて変更できます
     webhook_prefix: 'http://127.0.0.1:5300'
-
-# コマンド設定
+    extra_webhook_prefix: ''
 command:
-    # コマンドプレフィックス、これらのプレフィックスを持つメッセージはコマンドとして認識されます
+    enable: true
     prefix:
     - '!'
     - ！
-
-    # コマンド権限設定、キーはコマンドプレフィックス、値は権限タイプ
     privilege: {}
-
-# 同時実行設定
 concurrency:
-    # 単一パイプライン同時実行
     pipeline: 20
-    # 単一セッション同時実行
     session: 1
-
-# データベース設定
+proxy:
+    http: ''
+    https: ''
+system:
+    instance_id: ''
+    edition: community
+    recovery_key: ''
+    allow_modify_login_info: true
+    disabled_adapters: []
+    limitation:
+        max_bots: -1
+        max_pipelines: -1
+        max_extensions: -1
+    task_retention:
+        # メモリ内に保持する完了済み非同期タスク履歴の最大数
+        completed_limit: 200
+    jwt:
+        expire: 604800
+        secret: ''
 database:
-    # 使用するデータベース
-    # サポートされているデータベース:
-    # - sqlite (ローカルSQLiteデータベース、デフォルト)
-    # - postgresql (PostgreSQLデータベース、以下で設定してください)
     use: sqlite
-    # SQLite設定
     sqlite:
         path: 'data/langbot.db'
-    # PostgreSQL設定
     postgresql:
         host: '127.0.0.1'
         port: 5432
-        database: 'postgres'
         user: 'postgres'
         password: 'postgres'
-
-# プラグインシステム設定
-plugin:
-    # プラグインシステムを有効にするか
-    enable: true
-    # プラグインランタイムWebSocketアドレス
-    # Docker環境のデフォルト値
-    # スタンドアロンのPlugin Runtimeを使用する場合は、https://docs.langbot.app/en/develop/plugin-runtime.htmlを参照してください
-    runtime_ws_url: 'ws://langbot_plugin_runtime:5400/control/ws'
-    # プラグインマーケットプレイスを有効にするか
-    enable_marketplace: true
-    # プラグインマーケットプレイスURL
-    cloud_service_url: 'https://space.langbot.app'
-
-# プロキシ設定
-proxy:
-    # HTTPプロキシアドレス
-    # プロキシが既に環境変数に設定されている場合、設定は不要です
-    # 例:
-    # proxy:
-    #     http: 'http://127.0.0.1:7890'
-    #     https: 'http://127.0.0.1:7890'
-    http: ''
-    https: ''
-
-# オブジェクトストレージ設定
-storage:
-    # 使用するオブジェクトストレージ
-    # サポートされているオブジェクトストレージ:
-    # - local (ローカルストレージ、デフォルト)
-    # - s3 (S3プロトコルオブジェクトストレージ、R2、MinIOなどをサポート。以下で設定してください)
-    use: local
-    # S3設定
-    s3:
-        endpoint_url: ''
-        access_key_id: ''
-        secret_access_key: ''
-        region: 'us-east-1'
-        bucket: 'langbot-storage'
-
-# システム設定
-system:
-    # JWT設定
-    jwt:
-        # JWT有効期限(秒)
-        expire: 604800
-        # JWTシークレットキー、最初の起動時に自動生成されます
-        secret: 'xxxx'
-    # パスワード変更を許可するか
-    allow_change_password: true
-    # 復旧キー
-    recovery_key: 'xxxx'
-
-# ベクトルデータベース設定
+        database: 'postgres'
 vdb:
-    # 使用するベクトルデータベース
-    # サポートされているベクトルデータベース:
-    # - chroma (デフォルト、組み込みベクトルデータベース)
-    # - qdrant (外部ベクトルデータベース、以下で設定してください)
-    # - milvus (スケーラブルベクトルデータベース、以下で設定してください)
-    # - pgvector (PostgreSQL拡張、以下で設定してください)
-    # - seekdb (組み込み埋め込みモデルを提供するデータベース、以下で設定してください)
     use: chroma
-    # Qdrant設定
     qdrant:
-        # Qdrant URL
         url: ''
-        # Qdrant Host
         host: localhost
-        # Qdrant Port
         port: 6333
-        # Qdrant API Key
         api_key: ''
-    # Milvus設定
+    seekdb:
+        mode: embedded  # 'embedded' または 'server'
+        # 組み込みモード設定:
+        path: './data/seekdb'
+        database: 'langbot'
+        # サーバーモード設定（mode='server' の場合）:
+        host: 'localhost'
+        port: 2881
+        user: 'root'
+        password: ''
+        tenant: ''  # OceanBase サーバー向けの任意項目
     milvus:
         uri: 'http://127.0.0.1:19530'
         token: ''
-    # pgvector設定
+        db_name: ''
     pgvector:
         host: '127.0.0.1'
         port: 5433
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
-    seekdb:
-        # 動作モード（'embedded' または 'server'）
-        mode: embedded  
-        # 組み込みモード設定：
-        path: './data/seekdb'          
-        database: 'langbot'            
-        # サーバーモード設定（mode='server'の場合に有効）：
-        host: 'localhost'              
-        port: 2881                     
-        user: 'root'                   
-        password: ''                   
-        # OceanBaseマルチテナントシナリオ用、オプション
-        tenant: ''     
+storage:
+    use: local
+    cleanup:
+        # ローカル/S3 のアップロードファイルと古いログを定期的に削除するか
+        enabled: true
+        # クリーンアップ確認間隔（時間）
+        check_interval_hours: 1
+        # ストレージルート直下のアップロードファイルを保持する日数
+        uploaded_file_retention_days: 7
+        # LangBot ログファイルを保持する日数
+        log_retention_days: 3
+    s3:
+        endpoint_url: ''
+        access_key_id: ''
+        secret_access_key: ''
+        region: 'us-east-1'
+        bucket: 'langbot-storage'
+plugin:
+    enable: true
+    runtime_ws_url: 'ws://langbot_plugin_runtime:5400/control/ws'
+    enable_marketplace: true
+    display_plugin_debug_url: 'ws://localhost:5401/plugin/debug/ws'
+    binary_storage:
+        # 1 つのプラグインバイナリストレージ値の最大バイト数
+        max_value_bytes: 10485760
+monitoring:
+    auto_cleanup:
+        # 期限切れの監視レコードを自動削除するか
+        enabled: true
+        # 監視レコードの保持日数
+        retention_days: 30
+        # クリーンアップ確認間隔（時間）
+        check_interval_hours: 1
+        # 各監視テーブルで 1 回に削除する期限切れ行数
+        delete_batch_size: 1000
+space:
+    # Space サービス URL
+    url: 'https://space.langbot.app'
+    # Space モデルリクエスト API URL（MaaS）
+    models_gateway_api_url: 'https://api.langbot.cloud/v1'
+    # OAuth 認可ページ URL
+    oauth_authorize_url: 'https://space.langbot.app/auth/authorize'
+    disable_models_service: false
+    disable_telemetry: false
 ```
+
+## 補足
+
+- `storage.cleanup.uploaded_file_retention_days` はストレージルート直下の一時アップロードファイルのみを削除します。プラグイン設定ファイルやディレクトリ配下の内部オブジェクトは削除しません。
+- `storage.cleanup.log_retention_days` はファイル名の日付に基づいて古いログを削除します。デフォルトでは最大 3 日分のログを保持します。
+- SQLite をデータベースとして使用している場合、監視レコードの自動削除後にデータベースファイルの空き容量を直接解放します。
+- `plugin.binary_storage.max_value_bytes` は 1 つのプラグインバイナリストレージ値のサイズを制限します。デフォルトは 10 MiB です。
+- WebUI のサイドバーには「ストレージ分析」ページがあり、データベース、ログ、アップロードファイル、ベクターストア、プラグイン、MCP、一時ファイル、クリーンアップ候補を確認できます。
 
 ## 環境変数による設定
 
-`config.yaml`の設定は環境変数を介して設定できます。環境変数名は大文字で、二重アンダースコアで接続されます。例: `API__PORT`は`api.port`を表します。
+`config.yaml` の設定は環境変数を介して設定できます。環境変数名は大文字で、二重アンダースコアで接続されます。例: `API__PORT` は `api.port` を表します。
 
-- `API__PORT`は`api.port`を表します
-- `CONCURRENCY__PIPELINE`は`concurrency.pipeline`を表します
-- `CONCURRENCY__SESSION`は`concurrency.session`を表します
-- `DATABASE__POSTGRESQL__DATABASE`は`database.postgresql.database`を表します
-- `DATABASE__POSTGRESQL__HOST`は`database.postgresql.host`を表します
-- `DATABASE__SQLITE__PATH`は`database.sqlite.path`を表します
+- `API__PORT` は `api.port` を表します
+- `CONCURRENCY__PIPELINE` は `concurrency.pipeline` を表します
+- `DATABASE__SQLITE__PATH` は `database.sqlite.path` を表します
+- `STORAGE__CLEANUP__UPLOADED_FILE_RETENTION_DAYS` は `storage.cleanup.uploaded_file_retention_days` を表します
+- `STORAGE__CLEANUP__LOG_RETENTION_DAYS` は `storage.cleanup.log_retention_days` を表します
+- `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` は `monitoring.auto_cleanup.retention_days` を表します
+- `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` は `plugin.binary_storage.max_value_bytes` を表します
 
-...
-
-起動時、LangBotはすべての環境変数を読み取り、対応する設定を`config.yaml`に適用して`data/config.yaml`ファイルに書き込みます。
+起動時、LangBot はすべての環境変数を読み取り、対応する設定を `config.yaml` に適用して `data/config.yaml` ファイルに書き込みます。
