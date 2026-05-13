@@ -1,0 +1,289 @@
+---
+title: "Configuration Reference"
+---
+
+Complete sandbox configuration options.
+
+## Configuration Location
+
+Sandbox configuration is in the `box` section of `data/config.yaml`:
+
+```yaml
+box:
+  backend: 'local'
+  runtime:
+    endpoint: ''
+  local:
+    profile: 'default'
+    image: ''
+    host_root: './data/box'
+    default_workspace: ''
+    allowed_mount_roots:
+      - './data/box'
+      - '/tmp'
+    workspace_quota_mb: null
+  e2b:
+    api_key: ''
+    api_url: ''
+    template: ''
+```
+
+---
+
+## Top-Level Configuration
+
+### `backend`
+
+Force a specific sandbox backend type.
+
+| Value | Description |
+|-------|-------------|
+| Empty/Not set | Try all backends (Docker → Nsjail → E2B), use first available |
+| `local` | Only try local backends (Docker → Nsjail), don't try E2B |
+| `docker` | Force Docker only |
+| `nsjail` | Force Nsjail only |
+| `e2b` | Force E2B cloud sandbox only |
+
+Default: `local`
+
+<Note>
+This is a **forced value**, not a priority list. For example, when set to `local`, E2B won't be used even if available.
+</Note>
+
+### `runtime.endpoint`
+
+External Box Runtime WebSocket URL.
+
+| Value | Description |
+|-------|-------------|
+| Empty | Auto-detect (stdio locally, WebSocket in container) |
+| `ws://host:port` | Connect to specified Runtime |
+
+Default: Empty
+
+<Note>
+Most cases don't need this configured. Only use when deploying Box Runtime independently.
+</Note>
+
+---
+
+## local Configuration
+
+### `local.profile`
+
+Security profile name.
+
+| Value | Description |
+|-------|-------------|
+| `default` | Default profile, no network, read/write mount |
+| `offline_readonly` | High security, no network, read-only mount |
+| `network_basic` | Network enabled, read/write mount |
+| `network_extended` | Full network, read/write mount, more resources |
+
+Default: `default`
+
+See [Security Profiles](./profiles) for details.
+
+### `local.image`
+
+Custom sandbox image.
+
+| Value | Description |
+|-------|-------------|
+| Empty | Use default image `rockchin/langbot-sandbox:latest` |
+| `python:3.11-slim` | Use Python 3.11 image |
+| `node:20-slim` | Use Node.js 20 image |
+
+Default: Empty
+
+<Note>
+Only applies to Docker backend. Nsjail uses host system environment, doesn't support custom images.
+</Note>
+
+### `local.host_root`
+
+Host sandbox working directory root path.
+
+Sandbox workspace files will be stored under this directory.
+
+| Value | Description |
+|-------|-------------|
+| `./data/box` | Relative to LangBot data directory |
+| `/var/lib/langbot/box` | Absolute path |
+
+Default: `./data/box`
+
+### `local.default_workspace`
+
+Default workspace name.
+
+| Value | Description |
+|-------|-------------|
+| Empty | Use `<host_root>/default` |
+| `my-workspace` | Use `<host_root>/my-workspace` |
+
+Default: Empty
+
+### `local.allowed_mount_roots`
+
+Whitelist of host directories Agent can mount.
+
+Agent's requested `host_path` must be under one of the directories in this list.
+
+```yaml
+allowed_mount_roots:
+  - './data/box'     # Allow mounting sandbox working directory
+  - '/tmp'           # Allow mounting temp directory
+  - '/home/user/projects'  # Allow mounting project directory
+```
+
+Default: `['<host_root>']` (only allow mounting sandbox working directory)
+
+### `local.workspace_quota_mb`
+
+Workspace disk quota in MB.
+
+| Value | Description |
+|-------|-------------|
+| `null` | Use Profile default (usually 0, unlimited) |
+| `0` | No limit |
+| `100` | Limit to 100 MB |
+| `500` | Limit to 500 MB |
+
+Default: `null`
+
+<Note>
+This quota is enforced. Existing sessions may be destroyed when exceeded.
+</Note>
+
+---
+
+## e2b Configuration
+
+### `e2b.api_key`
+
+E2B API Key.
+
+Can also be set via `E2B_API_KEY` environment variable, which takes precedence.
+
+| Source | Priority |
+|--------|----------|
+| `E2B_API_KEY` env var | High |
+| `e2b.api_key` in config.yaml | Low |
+
+### `e2b.api_url`
+
+Custom E2B API URL.
+
+For connecting to self-hosted E2B service. Can also be set via `E2B_API_URL` environment variable.
+
+| Value | Description |
+|-------|-------------|
+| Empty | Use official E2B service |
+| `https://your-e2b.example.com` | Self-hosted service address |
+
+### `e2b.template`
+
+Default E2B template ID.
+
+| Value | Description |
+|-------|-------------|
+| Empty | Use E2B default template |
+| `base` | Base template |
+| `python-3.11` | Python 3.11 template |
+| Custom ID | Your custom template created in E2B |
+
+---
+
+## Environment Variables
+
+All configuration items can be set via environment variables:
+
+| Environment Variable | Config Item |
+|---------------------|-------------|
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+
+<Note>
+E2B SDK also supports `E2B_API_KEY` and `E2B_API_URL` environment variables, which take precedence over `config.yaml`.
+</Note>
+
+---
+
+## Docker Compose Example
+
+Complete configuration for Docker Compose deployment:
+
+```yaml
+# docker-compose.yaml
+services:
+  langbot:
+    image: rockchin/langbot:latest
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock  # Allow Docker access
+    environment:
+      - BOX__LOCAL__PROFILE=default
+      - BOX__LOCAL__HOST_ROOT=/app/data/box
+```
+
+<Warning>
+Sandbox requires access to Docker daemon. Ensure `docker.sock` is correctly mounted.
+</Warning>
+
+---
+
+## Complete Configuration Examples
+
+### Basic Configuration
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'default'
+    host_root: './data/box'
+```
+
+### Development Environment
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'network_extended'
+    host_root: './data/box'
+    allowed_mount_roots:
+      - './data/box'
+      - '/tmp'
+      - './projects'
+```
+
+### High Security Configuration
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'offline_readonly'
+    host_root: './data/box'
+    allowed_mount_roots:
+      - './data/box'
+    workspace_quota_mb: 50
+```
+
+### E2B Cloud Sandbox
+
+```yaml
+box:
+  backend: 'e2b'
+  e2b:
+    api_key: 'e2b_xxxxx'
+    template: 'python-3.11'
+```

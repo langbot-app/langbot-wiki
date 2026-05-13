@@ -1,0 +1,267 @@
+---
+title: "サンドボックスバックエンド設定"
+---
+
+LangBotは3つのサンドボックスバックエンドをサポートしています。デプロイ環境に合わせて適切なものを選択してください。
+
+## バックエンド選択
+
+`backend`設定でバックエンドを選択します：
+
+| 値 | 説明 |
+|--------|------|
+| `local` | ローカルバックエンド、DockerとNsjailを自動選択（推奨） |
+| `docker` | Dockerバックエンドを強制 |
+| `nsjail` | Nsjailバックエンドを強制 |
+| `e2b` | E2Bクラウドサンドボックスを強制 |
+
+<Note>
+`backend`は環境変数`BOX_BACKEND`でも設定可能で、`config.yaml`より優先されます。
+</Note>
+
+### 自動選択ロジック
+
+`backend: 'local'`の場合、以下の順序で選択されます：
+
+1. **Docker** - `docker` CLIが利用可能な場合
+2. **Nsjail** - `nsjail`バイナリが利用可能な場合
+3. エラー - 利用可能なバックエンドなし
+
+| バックエンド | 名前 | 依存関係 | 特徴 |
+|-------------|------|------|------|
+| **Docker** | `docker` | `docker` CLI | 完全なコンテナ分離、最も推奨 |
+| **Nsjail** | `nsjail` | `nsjail` binary | 軽量Linuxサンドボックス |
+| **E2B** | `e2b` | `e2b` Pythonパッケージ | クラウドサンドボックスサービス |
+
+---
+
+## Dockerバックエンド
+
+最も推奨されるソリューション、完全なコンテナ分離を提供。
+
+### 前提条件
+
+- Docker Engine 20.10+がインストール済み
+- Docker daemonが実行中
+- LangBotプロセスが`docker`コマンドを実行する権限を持つ
+
+### 仕組み
+
+LangBotはDocker CLIを通じてサンドボックスコンテナを作成・管理：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         ホストシステム                            │
+│                                                                  │
+│  ┌─────────────────┐         ┌─────────────────────────────┐   │
+│  │  LangBot プロセス │         │  サンドボックスコンテナ（分離）  │   │
+│  │                 │         │                             │   │
+│  │  docker exec ───┼────────►│  python script.py           │   │
+│  │                 │         │                             │   │
+│  │  マウントディレクトリ ───┼────────►│  /workspace/                │   │
+│  │                 │         │  (CPU/メモリ/ネットワーク分離)  │   │
+│  └─────────────────┘         └─────────────────────────────┘   │
+│                                                                  │
+│  Docker daemon (docker.sock)                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+<Note>
+LangBotは`docker` CLIを通じてDocker daemonと通信します。コンテナ化デプロイでは`docker.sock`をマウントする必要があります。
+</Note>
+
+### コンテナ化デプロイ
+
+LangBotがDockerコンテナで実行される場合、ホストのDockerソケットをマウント：
+
+```yaml
+# docker-compose.yaml
+services:
+  langbot:
+    image: rockchin/langbot:latest
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock  # 必須：サンドボックスコンテナ作成を許可
+```
+
+<Warning>
+`docker.sock`をマウントすると、コンテナが他のコンテナを作成できるようになります。信頼できる環境でのみ使用してください。
+</Warning>
+
+### 設定例
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'default'
+    image: ''                    # 空の場合デフォルトイメージ使用
+    host_root: './data/box'      # ホストワーキングディレクトリ
+    default_workspace: ''        # デフォルトワークスペース
+    allowed_mount_roots:         # マウント可能なディレクトリのホワイトリスト
+      - './data/box'
+      - '/tmp'
+    workspace_quota_mb: null     # ディスククォータ
+```
+
+### カスタムイメージ
+
+デフォルトでは`rockchin/langbot-sandbox:latest`イメージを使用。カスタムイメージを指定可能：
+
+```yaml
+box:
+  local:
+    image: 'python:3.11-slim'
+```
+
+カスタムイメージの要件：
+- Linuxベース
+- `sh`シェルを含む
+- 必要なランタイム（Python、Node.jsなど）を含む
+
+---
+
+## Nsjailバックエンド
+
+軽量Linuxサンドボックス、コンテナランタイム不要。
+
+### 前提条件
+
+- Linuxシステム（macOS/Windows非対応）
+- `nsjail`バイナリがインストール済み
+- cgroup v2サポート（推奨）
+
+### nsjailのインストール
+
+```bash
+# Ubuntu/Debian
+apt-get install nsjail
+
+# またはソースからビルド
+git clone https://github.com/google/nsjail
+cd nsjail
+make
+```
+
+### 仕組み
+
+NsjailはLinuxカーネル機能（namespace、cgroup、seccomp）を使用して分離環境を作成：
+
+```
+┌─────────────────────────────────────────┐
+│              ホストシステム               │
+│                                          │
+│  ┌───────────────────────────────────┐  │
+│  │  Nsjail 分離プロセス                │  │
+│  │  - ホストシステムディレクトリをマウント（RO）│  │
+│  │  - 独立した /workspace              │  │
+│  │  - リソース制限（CPU/メモリ/PID）     │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+```
+
+### 特徴
+
+| 利点 | 制限 |
+|------------|-------------|
+| コンテナランタイム不要 | Linuxのみ |
+| 高速起動 | カスタムイメージ非対応 |
+| 低リソース消費 | ホストシステム環境を使用 |
+
+### 設定例
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'offline_readonly'  # 読み取り専用モード推奨
+    host_root: './data/box'
+```
+
+<Warning>
+Nsjailバックエンドはホストシステム環境を使用するため、`image`設定は無効です。`offline_readonly`プロファイルとの使用を推奨。
+</Warning>
+
+---
+
+## E2Bクラウドサンドボックス
+
+E2Bクラウドサンドボックスサービスを使用、ローカルインフラ不要。
+
+### 前提条件
+
+- E2B API Key（[e2b.dev](https://e2b.dev)から取得）
+- `e2b` Pythonパッケージのインストール：`pip install e2b`
+
+### 設定例
+
+```yaml
+box:
+  backend: 'e2b'
+  e2b:
+    api_key: 'your-api-key'      # またはE2B_API_KEY環境変数を設定
+    api_url: ''                  # カスタムAPI URL（オプション）
+    template: ''                 # デフォルトテンプレートID
+```
+
+### 環境変数
+
+環境変数でも設定可能：
+
+```bash
+export E2B_API_KEY='your-api-key'
+export E2B_API_URL='https://your-self-hosted-e2b.com'  # オプション
+```
+
+### テンプレートシステム
+
+E2Bはテンプレートでサンドボックス環境を定義：
+
+```yaml
+box:
+  e2b:
+    template: 'python-3.11'  # Python 3.11テンプレートを使用
+```
+
+一般的なテンプレート：
+- `base` - 基本環境
+- `python-3.11` - Python 3.11環境
+- カスタムテンプレートID
+
+### 自己ホストE2B
+
+自己ホストE2Bサービスをデプロイしている場合：
+
+```yaml
+box:
+  backend: 'e2b'
+  e2b:
+    api_key: 'your-api-key'
+    api_url: 'https://your-e2b-server.com'
+```
+
+---
+
+## バックエンド比較
+
+| 機能 | Docker | Nsjail | E2B |
+|---------|--------|--------|-----|
+| 完全分離 | ✅ | ⚠️ 一部 | ✅ |
+| カスタムイメージ | ✅ | ❌ | ✅ (テンプレート) |
+| ネットワーク分離 | ✅ | ✅ | ✅ |
+| リソース制限 | ✅ | ✅ | ✅ |
+| Linux対応 | ✅ | ✅ | ✅ |
+| macOS対応 | ✅ | ❌ | ✅ |
+| Windows対応 | ✅ | ❌ | ✅ |
+| ローカル依存 | Docker | nsjail | なし |
+| コスト | 無料 | 無料 | 従量課金 |
+
+## 選択ガイド
+
+| シナリオ | 推奨バックエンド |
+|----------|---------|
+| 本番環境 | Docker |
+| Linuxサーバー軽量デプロイ | Nsjail |
+| ローカルインフラなし | E2B |
+| 開発テスト | Docker |
+| クロスプラットフォーム一貫性 | E2B |

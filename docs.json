@@ -281,7 +281,16 @@
                     ]
                   },
                   "en/usage/knowledge/readme",
-                  "en/usage/mcp/readme"
+                  "en/usage/mcp/readme",
+                  {
+                    "group": "Code Sandbox",
+                    "pages": [
+                      "en/usage/sandbox/readme",
+                      "en/usage/sandbox/backend",
+                      "en/usage/sandbox/profiles",
+                      "en/usage/sandbox/config"
+                    ]
+                  }
                 ]
               },
               {
@@ -483,7 +492,16 @@
                     ]
                   },
                   "zh/usage/knowledge/readme",
-                  "zh/usage/mcp/readme"
+                  "zh/usage/mcp/readme",
+                  {
+                    "group": "代码沙箱",
+                    "pages": [
+                      "zh/usage/sandbox/readme",
+                      "zh/usage/sandbox/backend",
+                      "zh/usage/sandbox/profiles",
+                      "zh/usage/sandbox/config"
+                    ]
+                  }
                 ]
               },
               {
@@ -704,7 +722,16 @@
                     ]
                   },
                   "ja/usage/knowledge/readme",
-                  "ja/usage/mcp/readme"
+                  "ja/usage/mcp/readme",
+                  {
+                    "group": "コードサンドボックス",
+                    "pages": [
+                      "ja/usage/sandbox/readme",
+                      "ja/usage/sandbox/backend",
+                      "ja/usage/sandbox/profiles",
+                      "ja/usage/sandbox/config"
+                    ]
+                  }
                 ]
               },
               {

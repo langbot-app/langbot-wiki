@@ -1,0 +1,285 @@
+---
+title: "Security Profiles"
+---
+
+Profiles define default behaviors and security limits for sandboxes. Through preset profiles, you can quickly configure sandbox security levels without manually adjusting each parameter.
+
+## Design Philosophy
+
+Profiles serve two core purposes:
+
+1. **Provide default values**: Set reasonable defaults for Agent tool call parameters
+2. **Lock critical fields**: Prevent LLM from escalating privileges through tool parameters when prompted
+
+<Tip>
+When a field is locked, parameters specified by the Agent in `exec` tool calls are ignored, always using the Profile's default value. This ensures even if the LLM is prompted, it cannot bypass security limits.
+</Tip>
+
+## Built-in Profiles
+
+LangBot provides four built-in profiles:
+
+| Profile | Network | File Mount | Resources | Use Case |
+|---------|---------|------------|-----------|----------|
+| `default` | Off | Read/Write | Standard | General use, recommended for most users |
+| `offline_readonly` | Off | Read-only | Limited | High security, file reading only |
+| `network_basic` | On | Read/Write | Standard | Scripts requiring network access |
+| `network_extended` | On | Read/Write | More | Network tasks requiring full access |
+
+---
+
+## Profile Details
+
+### default
+
+Balanced configuration for most scenarios: no network access, read/write mounts, standard resource limits.
+
+```yaml
+box:
+  local:
+    profile: 'default'
+```
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Network | Off | No network access |
+| File mount | Read/Write | Can read and write mounted directories |
+| CPU limit | 1 core | |
+| Memory limit | 512 MB | |
+| PID limit | 128 | |
+| Read-only rootfs | Yes | Container root directory is read-only |
+| Max timeout | 120 seconds | |
+
+**Use cases**:
+- Execute Python data processing scripts
+- File read/write operations
+- Tasks not requiring network
+
+---
+
+### offline_readonly
+
+Highest security level for handling sensitive data. Critical fields are locked to prevent LLM from escalating privileges when prompted.
+
+```yaml
+box:
+  local:
+    profile: 'offline_readonly'
+```
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Network | Off | No network access |
+| File mount | Read-only | Can only read, cannot modify |
+| CPU limit | 0.5 core | |
+| Memory limit | 256 MB | |
+| PID limit | 64 | |
+| Read-only rootfs | Yes | |
+| Max timeout | 60 seconds | |
+
+**Locked fields**: `network`, `host_path_mode`, `read_only_rootfs`
+
+Even if LLM tries to pass `network: 'on'` or `host_path_mode: 'rw'` in tool calls, they will be ignored, always using the Profile's secure values.
+
+**Use cases**:
+- Read sensitive configuration files
+- Analyze user data
+- Scenarios only needing to view file contents
+
+<Warning>
+With this profile, Agent cannot create or modify any files. Use `default` or `network_basic` if tasks require writing files.
+</Warning>
+
+---
+
+### network_basic
+
+Recommended when network access is needed.
+
+```yaml
+box:
+  local:
+    profile: 'network_basic'
+```
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Network | On | Network access allowed |
+| File mount | Read/Write | |
+| CPU limit | 1 core | |
+| Memory limit | 512 MB | |
+| PID limit | 128 | |
+| Read-only rootfs | Yes | |
+| Max timeout | 120 seconds | |
+
+**Use cases**:
+- Call external APIs
+- Download files
+- Simple web scraping
+- Install Python packages
+
+---
+
+### network_extended
+
+For network tasks requiring full permissions.
+
+```yaml
+box:
+  local:
+    profile: 'network_extended'
+```
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Network | On | Full network access |
+| File mount | Read/Write | |
+| CPU limit | 2 cores | |
+| Memory limit | 1024 MB | |
+| PID limit | 256 | |
+| Read-only rootfs | No | Can write to root directory |
+| Max timeout | 300 seconds | |
+
+**Use cases**:
+- Long-running scripts
+- Tasks requiring system package installation
+- Complex network operations
+- Tasks needing more resources
+
+<Warning>
+This profile grants Agent more privileges. Ensure you trust your LLM provider.
+</Warning>
+
+---
+
+## Resource Limits Explained
+
+### CPU Limit
+
+Controls CPU time available to sandbox:
+
+| Value | Description |
+|-------|-------------|
+| 0.5 | Maximum 0.5 CPU cores |
+| 1.0 | Maximum 1 CPU core |
+| 2.0 | Maximum 2 CPU cores |
+
+### Memory Limit
+
+Controls memory available to sandbox:
+
+| Value | Description |
+|-------|-------------|
+| 256 MB | Suitable for simple scripts |
+| 512 MB | Default, suitable for most tasks |
+| 1024 MB | Suitable for data processing, ML |
+
+Processes are terminated when exceeding limits.
+
+### PID Limit
+
+Controls number of processes creatable in sandbox:
+
+| Value | Description |
+|-------|-------------|
+| 64 | Minimum, prevents fork bombs |
+| 128 | Default |
+| 256 | For multi-process tasks |
+
+### Timeout Limit
+
+Maximum execution time for single command:
+
+- Agent can specify `timeout_sec`, but cannot exceed Profile's `max_timeout_sec`
+- Commands are forcefully terminated after timeout
+
+---
+
+## Locked Fields
+
+Profiles can lock certain fields to prevent Agent from overriding via tool parameters:
+
+```python
+# locked field in Profile definition
+locked=frozenset({'network', 'host_path_mode', 'read_only_rootfs'})
+```
+
+When fields are locked:
+- Parameters specified by Agent in `exec` tool calls are ignored
+- Profile default values are always used
+
+This ensures security limits cannot be bypassed even if LLM is prompted.
+
+---
+
+## Custom Configuration
+
+Profiles provide defaults that you can override in `config.yaml`:
+
+```yaml
+box:
+  local:
+    profile: 'default'
+    # Override defaults
+    workspace_quota_mb: 100    # Limit workspace size to 100MB
+```
+
+### Workspace Quota
+
+Limit disk space used by sandbox workspace:
+
+```yaml
+box:
+  local:
+    workspace_quota_mb: 500  # 500 MB
+```
+
+When workspace exceeds quota:
+- New session creation is rejected
+- Existing sessions may be destroyed
+
+---
+
+## Security Best Practices
+
+### 1. Principle of Least Privilege
+
+Choose the profile with lowest permissions based on actual needs:
+
+```
+offline_readonly → default → network_basic → network_extended
+   (most secure)                                    (most permissive)
+```
+
+### 2. Limit Mount Directories
+
+Configure `allowed_mount_roots` to limit host directories Agent can access:
+
+```yaml
+box:
+  local:
+    allowed_mount_roots:
+      - './data/box'
+      - '/tmp'
+```
+
+Agent can only mount these directories or their subdirectories.
+
+### 3. Use Disk Quota
+
+Prevent Agent from consuming too much disk space:
+
+```yaml
+box:
+  local:
+    workspace_quota_mb: 100
+```
+
+### 4. Monitor Sandbox Status
+
+View sandbox status and errors via API:
+
+```
+GET /api/v1/box/status
+GET /api/v1/box/errors
+```

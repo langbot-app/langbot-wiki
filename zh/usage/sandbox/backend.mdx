@@ -1,0 +1,267 @@
+---
+title: "沙箱后端配置"
+---
+
+LangBot 支持三种沙箱后端，根据您的部署环境选择合适的方案。
+
+## 后端选择
+
+通过 `backend` 配置项选择后端：
+
+| 配置值 | 说明 |
+|--------|------|
+| `local` | 本地后端，自动在 Docker 和 Nsjail 之间选择（推荐） |
+| `docker` | 强制使用 Docker 后端 |
+| `nsjail` | 强制使用 Nsjail 后端 |
+| `e2b` | 强制使用 E2B 云端沙箱 |
+
+<Note>
+`backend` 也可以通过环境变量 `BOX_BACKEND` 设置，优先级高于 `config.yaml`。
+</Note>
+
+### 自动选择逻辑
+
+当 `backend: 'local'` 时，按以下顺序自动选择：
+
+1. **Docker** - 如果 `docker` CLI 可用
+2. **Nsjail** - 如果 `nsjail` binary 可用
+3. 报错 - 无可用后端
+
+| 后端 | 名称 | 依赖 | 特点 |
+|------|------|------|------|
+| **Docker** | `docker` | `docker` CLI | 完整容器隔离，最推荐 |
+| **Nsjail** | `nsjail` | `nsjail` binary | 轻量级 Linux 沙箱 |
+| **E2B** | `e2b` | `e2b` Python 包 | 云端沙箱服务 |
+
+---
+
+## Docker 后端
+
+最推荐的方案，提供完整的容器隔离。
+
+### 前提条件
+
+- 安装 Docker Engine 20.10+
+- Docker daemon 正在运行
+- LangBot 进程有权限执行 `docker` 命令
+
+### 工作原理
+
+LangBot 通过 Docker CLI 创建和管理沙箱容器：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         主机系统                                 │
+│                                                                  │
+│  ┌─────────────────┐         ┌─────────────────────────────┐   │
+│  │  LangBot 进程    │         │  沙箱容器 (隔离环境)          │   │
+│  │                 │         │                             │   │
+│  │  docker exec ───┼────────►│  python script.py           │   │
+│  │                 │         │                             │   │
+│  │  挂载目录 ───────┼────────►│  /workspace/                │   │
+│  │                 │         │  (CPU/内存/网络隔离)          │   │
+│  └─────────────────┘         └─────────────────────────────┘   │
+│                                                                  │
+│  Docker daemon (docker.sock)                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+<Note>
+LangBot 通过 `docker` CLI 与 Docker daemon 通信。在容器化部署时，需要挂载 `docker.sock`。
+</Note>
+
+### 容器化部署
+
+当 LangBot 运行在 Docker 容器中时，需要将主机的 Docker socket 挂载进去：
+
+```yaml
+# docker-compose.yaml
+services:
+  langbot:
+    image: rockchin/langbot:latest
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock  # 必需：允许创建沙箱容器
+```
+
+<Warning>
+挂载 `docker.sock` 赋予容器创建其他容器的能力。请确保在受信任的环境中使用。
+</Warning>
+
+### 配置示例
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'default'
+    image: ''                    # 留空使用默认镜像
+    host_root: './data/box'      # 主机工作目录
+    default_workspace: ''        # 默认工作空间
+    allowed_mount_roots:         # 允许挂载的目录白名单
+      - './data/box'
+      - '/tmp'
+    workspace_quota_mb: null     # 磁盘配额
+```
+
+### 自定义镜像
+
+默认使用 `rockchin/langbot-sandbox:latest` 镜像。您可以指定自定义镜像：
+
+```yaml
+box:
+  local:
+    image: 'python:3.11-slim'
+```
+
+自定义镜像要求：
+- 基于 Linux
+- 包含 `sh` shell
+- 包含您需要的运行时（Python、Node.js 等）
+
+---
+
+## Nsjail 后端
+
+轻量级 Linux 沙箱，无需容器运行时。
+
+### 前提条件
+
+- Linux 系统（不支持 macOS/Windows）
+- 安装 `nsjail` 二进制文件
+- cgroup v2 支持（推荐）
+
+### 安装 nsjail
+
+```bash
+# Ubuntu/Debian
+apt-get install nsjail
+
+# 或从源码编译
+git clone https://github.com/google/nsjail
+cd nsjail
+make
+```
+
+### 工作原理
+
+Nsjail 使用 Linux 内核特性（namespace、cgroup、seccomp）创建隔离环境：
+
+```
+┌─────────────────────────────────────────┐
+│              主机系统                    │
+│                                          │
+│  ┌───────────────────────────────────┐  │
+│  │  Nsjail 隔离进程                   │  │
+│  │  - 挂载主机系统目录（只读）         │  │
+│  │  - 独立的 /workspace               │  │
+│  │  - 资源限制（CPU/内存/PID）        │  │
+│  └───────────────────────────────────┘  │
+└─────────────────────────────────────────┘
+```
+
+### 特点
+
+| 优势 | 限制 |
+|------|------|
+| 无需容器运行时 | 仅支持 Linux |
+| 启动速度快 | 不支持自定义镜像 |
+| 资源占用低 | 使用主机系统环境 |
+
+### 配置示例
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'offline_readonly'  # 推荐只读模式
+    host_root: './data/box'
+```
+
+<Warning>
+Nsjail 后端使用主机系统环境，`image` 配置项无效。建议配合 `offline_readonly` profile 使用。
+</Warning>
+
+---
+
+## E2B 云端沙箱
+
+使用 E2B 提供的云端沙箱服务，无需本地基础设施。
+
+### 前提条件
+
+- E2B API Key（从 [e2b.dev](https://e2b.dev) 获取）
+- 安装 `e2b` Python 包：`pip install e2b`
+
+### 配置示例
+
+```yaml
+box:
+  backend: 'e2b'
+  e2b:
+    api_key: 'your-api-key'      # 或设置 E2B_API_KEY 环境变量
+    api_url: ''                  # 自建服务 URL（可选）
+    template: ''                 # 默认模板 ID
+```
+
+### 环境变量
+
+也可以通过环境变量配置：
+
+```bash
+export E2B_API_KEY='your-api-key'
+export E2B_API_URL='https://your-self-hosted-e2b.com'  # 可选
+```
+
+### 模板系统
+
+E2B 使用模板定义沙箱环境：
+
+```yaml
+box:
+  e2b:
+    template: 'python-3.11'  # 使用 Python 3.11 模板
+```
+
+常用模板：
+- `base` - 基础环境
+- `python-3.11` - Python 3.11 环境
+- 自定义模板 ID
+
+### 自建 E2B 服务
+
+如果您部署了自建 E2B 服务：
+
+```yaml
+box:
+  backend: 'e2b'
+  e2b:
+    api_key: 'your-api-key'
+    api_url: 'https://your-e2b-server.com'
+```
+
+---
+
+## 后端对比
+
+| 特性 | Docker | Nsjail | E2B |
+|------|--------|--------|-----|
+| 完全隔离 | ✅ | ⚠️ 部分 | ✅ |
+| 自定义镜像 | ✅ | ❌ | ✅ (模板) |
+| 网络隔离 | ✅ | ✅ | ✅ |
+| 资源限制 | ✅ | ✅ | ✅ |
+| Linux 支持 | ✅ | ✅ | ✅ |
+| macOS 支持 | ✅ | ❌ | ✅ |
+| Windows 支持 | ✅ | ❌ | ✅ |
+| 需要本地依赖 | Docker | nsjail | 无 |
+| 成本 | 免费 | 免费 | 按使用付费 |
+
+## 选择建议
+
+| 场景 | 推荐后端 |
+|------|---------|
+| 生产环境 | Docker |
+| Linux 服务器轻量部署 | Nsjail |
+| 无本地基础设施 | E2B |
+| 开发测试 | Docker |
+| 多平台一致性 | E2B |

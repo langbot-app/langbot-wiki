@@ -1,0 +1,289 @@
+---
+title: "設定リファレンス"
+---
+
+サンドボックス設定オプションの完全版。
+
+## 設定場所
+
+サンドボックス設定は`data/config.yaml`の`box`セクションにあります：
+
+```yaml
+box:
+  backend: 'local'
+  runtime:
+    endpoint: ''
+  local:
+    profile: 'default'
+    image: ''
+    host_root: './data/box'
+    default_workspace: ''
+    allowed_mount_roots:
+      - './data/box'
+      - '/tmp'
+    workspace_quota_mb: null
+  e2b:
+    api_key: ''
+    api_url: ''
+    template: ''
+```
+
+---
+
+## トップレベル設定
+
+### `backend`
+
+サンドボックスバックエンドタイプを強制指定。
+
+| 値 | 説明 |
+|-------|-------------|
+| 空/未設定 | すべてのバックエンドを試行（Docker → Nsjail → E2B）、最初に利用可能なものを使用 |
+| `local` | ローカルバックエンドのみ試行（Docker → Nsjail）、E2Bは試行しない |
+| `docker` | Dockerのみ強制 |
+| `nsjail` | Nsjailのみ強制 |
+| `e2b` | E2Bクラウドサンドボックスのみ強制 |
+
+デフォルト：`local`
+
+<Note>
+これは**強制値**であり、優先度リストではありません。例えば`local`に設定した場合、E2Bが利用可能でも使用されません。
+</Note>
+
+### `runtime.endpoint`
+
+外部Box RuntimeのWebSocket URL。
+
+| 値 | 説明 |
+|-------|-------------|
+| 空 | 自動検出（ローカルではstdio、コンテナではWebSocket） |
+| `ws://host:port` | 指定されたRuntimeに接続 |
+
+デフォルト：空
+
+<Note>
+ほとんどの場合、これを設定する必要はありません。Box Runtimeを独立してデプロイする場合にのみ使用します。
+</Note>
+
+---
+
+## local設定
+
+### `local.profile`
+
+セキュリティプロファイル名。
+
+| 値 | 説明 |
+|-------|-------------|
+| `default` | デフォルトプロファイル、ネットワークなし、読み書きマウント |
+| `offline_readonly` | 高セキュリティ、ネットワークなし、読み取り専用マウント |
+| `network_basic` | ネットワーク有効、読み書きマウント |
+| `network_extended` | 完全なネットワーク、読み書きマウント、より多くのリソース |
+
+デフォルト：`default`
+
+詳細は[セキュリティプロファイル](./profiles)を参照。
+
+### `local.image`
+
+カスタムサンドボックスイメージ。
+
+| 値 | 説明 |
+|-------|-------------|
+| 空 | デフォルトイメージ`rockchin/langbot-sandbox:latest`を使用 |
+| `python:3.11-slim` | Python 3.11イメージを使用 |
+| `node:20-slim` | Node.js 20イメージを使用 |
+
+デフォルト：空
+
+<Note>
+Dockerバックエンドのみ適用されます。Nsjailはホストシステム環境を使用するため、カスタムイメージはサポートされません。
+</Note>
+
+### `local.host_root`
+
+ホスト上のサンドボックスワーキングディレクトリのルートパス。
+
+サンドボックスワークスペースのファイルはこのディレクトリ下に保存されます。
+
+| 値 | 説明 |
+|-------|-------------|
+| `./data/box` | LangBotデータディレクトリからの相対パス |
+| `/var/lib/langbot/box` | 絶対パス |
+
+デフォルト：`./data/box`
+
+### `local.default_workspace`
+
+デフォルトワークスペース名。
+
+| 値 | 説明 |
+|-------|-------------|
+| 空 | `<host_root>/default`を使用 |
+| `my-workspace` | `<host_root>/my-workspace`を使用 |
+
+デフォルト：空
+
+### `local.allowed_mount_roots`
+
+エージェントがマウントできるホストディレクトリのホワイトリスト。
+
+エージェントがリクエストした`host_path`はこのリスト内のいずれかのディレクトリ下にある必要があります。
+
+```yaml
+allowed_mount_roots:
+  - './data/box'     # サンドボックスワーキングディレクトリのマウントを許可
+  - '/tmp'           # 一時ディレクトリのマウントを許可
+  - '/home/user/projects'  # プロジェクトディレクトリのマウントを許可
+```
+
+デフォルト：`['<host_root>']`（サンドボックスワーキングディレクトリのみマウント許可）
+
+### `local.workspace_quota_mb`
+
+ワークスペースのディスククォータ（MB単位）。
+
+| 値 | 説明 |
+|-------|-------------|
+| `null` | プロファイルのデフォルトを使用（通常は0、無制限） |
+| `0` | 制限なし |
+| `100` | 100 MBに制限 |
+| `500` | 500 MBに制限 |
+
+デフォルト：`null`
+
+<Note>
+このクォータは強制されます。超過した場合、既存のセッションが破棄される可能性があります。
+</Note>
+
+---
+
+## e2b設定
+
+### `e2b.api_key`
+
+E2B API Key。
+
+`E2B_API_KEY`環境変数でも設定可能で、こちらが優先されます。
+
+| ソース | 優先度 |
+|--------|----------|
+| `E2B_API_KEY`環境変数 | 高 |
+| `config.yaml`の`e2b.api_key` | 低 |
+
+### `e2b.api_url`
+
+カスタムE2B API URL。
+
+自己ホストE2Bサービスに接続する場合に使用。`E2B_API_URL`環境変数でも設定可能。
+
+| 値 | 説明 |
+|-------|-------------|
+| 空 | 公式E2Bサービスを使用 |
+| `https://your-e2b.example.com` | 自己ホストサービスのアドレス |
+
+### `e2b.template`
+
+デフォルトE2BテンプレートID。
+
+| 値 | 説明 |
+|-------|-------------|
+| 空 | E2Bデフォルトテンプレートを使用 |
+| `base` | ベーステンプレート |
+| `python-3.11` | Python 3.11テンプレート |
+| カスタムID | E2Bで作成したカスタムテンプレート |
+
+---
+
+## 環境変数
+
+すべての設定項目は環境変数で設定可能：
+
+| 環境変数 | 設定項目 |
+|---------------------|-------------|
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+
+<Note>
+E2B SDKは`E2B_API_KEY`と`E2B_API_URL`環境変数もサポートしており、`config.yaml`より優先されます。
+</Note>
+
+---
+
+## Docker Compose例
+
+Docker Composeデプロイの完全な設定：
+
+```yaml
+# docker-compose.yaml
+services:
+  langbot:
+    image: rockchin/langbot:latest
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock  # Dockerアクセスを許可
+    environment:
+      - BOX__LOCAL__PROFILE=default
+      - BOX__LOCAL__HOST_ROOT=/app/data/box
+```
+
+<Warning>
+サンドボックスはDocker daemonへのアクセスが必要です。`docker.sock`が正しくマウントされていることを確認してください。
+</Warning>
+
+---
+
+## 完全な設定例
+
+### 基本設定
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'default'
+    host_root: './data/box'
+```
+
+### 開発環境
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'network_extended'
+    host_root: './data/box'
+    allowed_mount_roots:
+      - './data/box'
+      - '/tmp'
+      - './projects'
+```
+
+### 高セキュリティ設定
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'offline_readonly'
+    host_root: './data/box'
+    allowed_mount_roots:
+      - './data/box'
+    workspace_quota_mb: 50
+```
+
+### E2Bクラウドサンドボックス
+
+```yaml
+box:
+  backend: 'e2b'
+  e2b:
+    api_key: 'e2b_xxxxx'
+    template: 'python-3.11'
+```

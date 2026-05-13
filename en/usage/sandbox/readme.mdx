@@ -1,0 +1,173 @@
+---
+title: "Code Sandbox"
+---
+
+LangBot's code sandbox feature allows AI agents to safely execute commands, read/write files, run MCP servers, and more in an isolated environment. This gives your AI bot real code execution capabilities.
+
+## What is a Code Sandbox?
+
+A code sandbox is an isolated execution environment where agents can:
+
+- Execute shell commands (e.g., `python`, `npm`, `curl`)
+- Create, read, and modify files
+- Run long-lived processes (e.g., MCP servers)
+- Access network resources (based on configuration)
+
+Meanwhile, the sandbox provides security isolation:
+
+- Execution doesn't affect the host system
+- Resource usage is limited (CPU, memory, process count)
+- File access scope is controlled
+
+## Use Cases
+
+| Scenario | Description |
+|----------|-------------|
+| **Data Analysis** | Agent executes Python scripts to process data, generate charts |
+| **Code Execution** | Run user-provided code snippets and return results |
+| **File Operations** | Read, edit documents, manage project files |
+| **MCP Server** | Run MCP tool services in isolated environment |
+| **Automation** | Execute scheduled scripts, system maintenance tasks |
+
+## How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LangBot Main Process                      │
+│                                                              │
+│  Agent (LLM) ──> Native Tools (exec/read/write/edit)        │
+│                           │                                  │
+│                     BoxService                               │
+│                           │                                  │
+│                  BoxRuntimeConnector                         │
+│                           │  Action RPC                      │
+└───────────────────────────┼─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Box Runtime Process                        │
+│                                                              │
+│   Backend (Docker / Nsjail / E2B)                           │
+│         │                                                    │
+│         ▼                                                    │
+│   ┌──────────────────────────────────────┐                  │
+│   │      Isolated Sandbox Environment     │                  │
+│   │   - Independent filesystem            │                  │
+│   │   - Network isolation (configurable)  │                  │
+│   │   - Resource limits                   │                  │
+│   └──────────────────────────────────────┘                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Backend Types
+
+LangBot supports multiple sandbox backends:
+
+| Backend | Dependency | Features | Use Case |
+|---------|------------|----------|----------|
+| **Docker** | `docker` CLI | Full container isolation, custom images | Production, complete isolation needed |
+| **Nsjail** | `nsjail` binary | Lightweight Linux sandbox, no container | Linux servers, lightweight deployment |
+| **E2B** | `e2b` SDK | Cloud sandbox service | No local infrastructure needed |
+
+<Tip>
+Use the `backend` config option: `local` auto-selects Docker or Nsjail; `docker`/`nsjail`/`e2b` forces a specific backend.
+</Tip>
+
+## Built-in Tools
+
+The sandbox feature provides four built-in tools for agents:
+
+| Tool | Function | Example |
+|------|----------|---------|
+| `exec` | Execute shell commands in sandbox | `python script.py` |
+| `read` | Read workspace file contents | Read `/workspace/data.json` |
+| `write` | Create or overwrite files | Write new config file |
+| `edit` | Edit existing files (string replacement) | Modify a function in code |
+
+<Note>
+The `exec` tool runs commands inside the sandbox container; `read`/`write`/`edit` operate directly on the host directory mapped to `/workspace`.
+</Note>
+
+## Scope and Lifecycle
+
+### Scope Configuration
+
+In the pipeline's AI configuration, you can set the **Sandbox Scope**, which determines how sandbox environments are shared across messages:
+
+| Scope | Template | Description |
+|--------|------|------|
+| Global | `{global}` | All users share the same sandbox |
+| Per chat (Recommended) | `{launcher_type}_{launcher_id}` | Messages in the same chat share sandbox |
+| Per user in chat | `{launcher_type}_{launcher_id}_{sender_id}` | Different users in same chat are isolated |
+| Per conversation context | `{launcher_type}_{launcher_id}_{conversation_id}` | Isolated by conversation context |
+| Per message | `{query_id}` | Each message is completely isolated |
+
+### Lifecycle
+
+Sandbox Session lifecycle rules:
+
+| Condition | Behavior |
+|------|------|
+| Idle timeout | Automatically cleaned up after 5 minutes (300 seconds) of inactivity |
+| Running processes | Not cleaned up, waits for processes to finish |
+| `persistent: true` | Never automatically cleaned up |
+
+<Warning>
+Commands within the same Session share filesystem state. Use "per message" scope for complete isolation.
+</Warning>
+
+## Working Directory and File Mounts
+
+### Directory Structure
+
+Default working directory for different backends:
+
+| Backend | Container Path | Description |
+|---------|-----------|------|
+| Docker | `/workspace` | Mounts host's `host_root` directory |
+| Nsjail | `/workspace` | Mounts host's `host_root` directory |
+| E2B | `/home/user/workspace` | Cloud sandbox writable directory |
+
+Agent operations via `exec`/`read`/`write`/`edit` tools all work on files under `/workspace`. E2B backend automatically maps paths to `/home/user/workspace`.
+
+### Mount Configuration
+
+Configure host mounts in `config.yaml`:
+
+```yaml
+box:
+  local:
+    host_root: './data/box'           # Host working directory
+    allowed_mount_roots:              # Whitelist of directories Agent can mount
+      - './data/box'
+      - '/tmp'
+```
+
+- `host_root`: Default working directory, mapped to `/workspace` in sandbox
+- `allowed_mount_roots`: Whitelist of directories Agent can request to mount
+
+## Quick Start
+
+1. Ensure Docker is installed and running (or choose another backend)
+2. Configure sandbox in `config.yaml`:
+
+```yaml
+box:
+  backend: 'local'
+  local:
+    profile: 'default'
+    host_root: './data/box'
+```
+
+3. Start LangBot, sandbox feature is automatically enabled
+4. Agent will automatically have `exec`/`read`/`write`/`edit` tools
+
+<Tip>
+Sandbox feature is automatically enabled—as long as the backend is available, the Agent will have the built-in tools. No manual activation in pipeline required.
+</Tip>
+
+## Next Steps
+
+- [Backend Configuration](./backend) - Detailed backend configuration
+- [Security Profiles](./profiles) - Use profiles to control security policies
+- [Configuration Reference](./config) - Complete configuration options
