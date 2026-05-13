@@ -1,0 +1,388 @@
+---
+title: "SKILL.md Format Reference"
+---
+
+SKILL.md is the core file for defining skills, using YAML frontmatter format.
+
+<Note>
+LangBot's SKILL.md format follows the [Agent Skills Open Standard](https://agentskills.io/specification), a cross-platform skill definition specification initiated by Anthropic.
+</Note>
+
+## File Format
+
+```markdown
+---
+# YAML Frontmatter (Metadata)
+name: skill-name
+description: Skill description
+---
+
+# Markdown Body (Instructions)
+## Use Cases
+...
+```
+
+## Frontmatter Fields
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Unique identifier for the skill |
+| `description` | string | Brief description for LLM to determine activation |
+
+<Note>
+According to the Agent Skills standard, `description` is a required field. LangBot currently allows omission for backward compatibility, but it's recommended to always provide it.
+</Note>
+
+### Field Details
+
+#### `name`
+
+The unique identifier for the skill, used for activation and reference.
+
+```yaml
+name: python-analyzer
+```
+
+Naming rules (following Agent Skills standard):
+- 1-64 characters
+- Only lowercase letters (a-z), numbers (0-9), and hyphens (`-`)
+- Must start with a letter, cannot start or end with a hyphen
+- Cannot contain consecutive hyphens (`--`)
+- Recommended to match the skill directory name
+
+#### `description`
+
+Brief description of the skill. The LLM uses this to determine whether to activate the skill.
+
+```yaml
+description: Analyze Python project structure, code quality, and dependencies
+```
+
+Writing guidelines:
+- Must be provided, max 1024 characters
+- Describe the skill's functionality and purpose
+- Explain applicable scenarios and trigger keywords
+- Help LLM determine when to activate
+
+**Good example:**
+```yaml
+description: Extracts text and tables from PDF files, fills PDF forms, and merges multiple PDFs. Use when working with PDF documents or when user mentions PDFs, forms, or document extraction.
+```
+
+**Poor example:**
+```yaml
+description: Helps with PDFs.
+```
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `license` | string | License name or reference |
+| `compatibility` | string | Environment requirements (product, system packages, network access, etc.) |
+| `metadata` | object | Custom key-value metadata |
+| `allowed-tools` | string | Pre-approved tool list (experimental) |
+
+#### `metadata`
+
+Custom key-value metadata for storing additional properties.
+
+```yaml
+metadata:
+  display_name: Python Project Analyzer
+  author: my-org
+  version: "1.0"
+```
+
+<Note>
+LangBot currently supports top-level `display_name` field as a convenience. Future versions will migrate to the standard `metadata.display_name` format, with both being compatible.
+</Note>
+
+## Instruction Body
+
+The content after the frontmatter is the skill's instructions, which will be injected into the Agent's System Prompt.
+
+### Recommended Structure
+
+```markdown
+---
+name: data-analyzer
+display_name: Data Analyzer
+description: Analyze data files and generate reports
+---
+
+## Use Cases
+
+Use this skill when users need to analyze CSV, JSON, or other data files.
+
+## Execution Steps
+
+1. Use `read` tool to read data files
+2. Use `exec` to run analysis scripts
+3. Generate structured report
+
+## Available Resources
+
+- `scripts/analyze.py`: Data analysis script
+- `templates/report.md`: Report template
+
+## Output Format
+
+Analysis report should include:
+- Data overview
+- Statistical summary
+- Visualization suggestions
+
+## Notes
+
+- Process large files in batches
+- Pay attention to data privacy
+```
+
+### Best Practices for Writing Instructions
+
+#### 1. Clarify Use Cases
+
+```markdown
+## Use Cases
+
+Activate this skill when users request:
+- Analyze Python project structure
+- Check code quality
+- Generate dependency reports
+
+Not suitable for:
+- Simple code snippet execution
+- Non-Python project analysis
+```
+
+#### 2. Provide Clear Execution Steps
+
+```markdown
+## Execution Steps
+
+1. **Confirm Target**: Clarify the project path to analyze
+2. **Scan Structure**: Use `exec` to run `find . -type f -name "*.py"`
+3. **Analyze Code**: Run `scripts/analyze.py`
+4. **Generate Report**: Output results based on template
+```
+
+#### 3. Explain Available Tools and Resources
+
+```markdown
+## Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `read` | Read project files |
+| `exec` | Execute analysis scripts |
+| `write` | Output report files |
+
+## Available Scripts
+
+- `scripts/analyze.py`: Main analysis script
+- `scripts/complexity.py`: Complexity analysis
+```
+
+#### 4. Define Output Format
+
+```markdown
+## Output Format
+
+```json
+{
+  "project": "Project Name",
+  "files": 100,
+  "lines": 5000,
+  "quality_score": 85,
+  "recommendations": ["..."]
+}
+```
+```
+
+## Complete Examples
+
+### Prompt-Only Skill
+
+```markdown
+---
+name: code-reviewer
+display_name: Code Review Assistant
+description: Review code and provide improvement suggestions, supports multiple programming languages
+---
+
+## Use Cases
+
+Activate when users request code review, code inspection, or code improvement suggestions.
+
+## Review Dimensions
+
+### 1. Code Quality
+- Readability and naming conventions
+- Code structure and organization
+- Comments and documentation
+
+### 2. Potential Issues
+- Bugs and logic errors
+- Security vulnerabilities
+- Performance issues
+
+### 3. Best Practices
+- Language-specific best practices
+- Design pattern application
+- Test coverage
+
+## Review Process
+
+1. Analyze code structure and style
+2. Identify potential issues
+3. Provide specific improvement suggestions
+4. Prioritize recommendations
+
+## Output Format
+
+### Issue Report
+- **Severity**: High/Medium/Low
+- **Location**: filename:line_number
+- **Description**: Issue description
+- **Suggestion**: Improvement suggestion
+
+### Summary
+- Overall score (1-10)
+- Key findings
+- Priority improvements
+```
+
+### File Package Skill
+
+```markdown
+---
+name: api-tester
+display_name: API Testing Tool
+description: Test REST API endpoints, validate responses and performance
+---
+
+## Use Cases
+
+Activate when users need to test APIs, validate interfaces, or debug APIs.
+
+## Available Resources
+
+### Scripts
+- `scripts/request.py`: HTTP request tool
+- `scripts/benchmark.py`: Performance benchmarking
+
+### Templates
+- `templates/test_report.md`: Test report template
+
+## Execution Steps
+
+1. **Parse Request**: Extract API information from user input
+2. **Execute Request**: Use `exec` to run `scripts/request.py`
+3. **Validate Response**: Check status code and response body
+4. **Generate Report**: Output test results
+
+## Example Commands
+
+```bash
+# Basic request test
+python scripts/request.py GET https://api.example.com/users
+
+# Authenticated request
+python scripts/request.py POST https://api.example.com/data \
+  --header "Authorization: Bearer token" \
+  --body '{"key": "value"}'
+
+# Performance test
+python scripts/benchmark.py https://api.example.com/endpoint --requests 100
+```
+
+## Output Format
+
+### Single Test
+- Request URL
+- Response status code
+- Response time
+- Response body summary
+
+### Batch Test
+- Success/failure count
+- Average response time
+- Error details list
+```
+
+## File Location
+
+Skill files should be placed in the following location:
+
+```
+data/skills/
+├── {skill-name}/
+│   └── SKILL.md
+```
+
+LangBot automatically scans all skills in the `data/skills/` directory at startup.
+
+## Multi-File Skills
+
+For skills containing multiple files:
+
+```
+data/skills/
+└── my-skill/
+    ├── SKILL.md           # Required
+    ├── scripts/           # Optional: scripts
+    │   ├── main.py
+    │   └── utils.py
+    ├── templates/         # Optional: templates
+    │   └── output.md
+    └── requirements.txt   # Optional: dependencies
+```
+
+Agent can access these files through `/workspace/.skills/{skill-name}/`.
+
+## Relationship with Agent Skills Standard
+
+LangBot's SKILL.md format follows the [Agent Skills Open Standard](https://agentskills.io/specification), a cross-platform skill definition specification initiated by Anthropic.
+
+### Standard Directory Structure
+
+```
+skill-name/
+├── SKILL.md          # Required: metadata + instructions
+├── scripts/          # Optional: executable code
+├── references/       # Optional: reference documentation
+└── assets/           # Optional: static resources
+```
+
+### Progressive Loading Model
+
+Agent Skills standard adopts progressive loading to optimize context usage:
+
+| Stage | Content Loaded | Recommended Size | When |
+|-------|----------------|------------------|------|
+| Discovery | `name` + `description` | ~100 tokens | Agent startup |
+| Activation | SKILL.md body | < 5000 tokens | Skill activation |
+| Execution | scripts/, references/, assets/ | On-demand | Task execution |
+
+**Best Practice**: Keep SKILL.md body under 500 lines, put detailed content in the references/ directory.
+
+### LangBot Compatibility Notes
+
+LangBot currently supports top-level `display_name` field as a convenience, but this is not an Agent Skills standard field.
+
+Future versions will:
+- Support `metadata.display_name` standard format
+- Both top-level `display_name` and `metadata.display_name` will be compatible
+- Recommended to use standard format for new skills:
+
+```yaml
+---
+name: my-skill
+description: Skill description
+metadata:
+  display_name: My Skill
+---
+```

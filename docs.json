@@ -501,6 +501,14 @@
                       "zh/usage/sandbox/profiles",
                       "zh/usage/sandbox/config"
                     ]
+                  },
+                  {
+                    "group": "技能系统",
+                    "pages": [
+                      "zh/usage/skills/readme",
+                      "zh/usage/skills/skill-format",
+                      "zh/usage/skills/tools-api"
+                    ]
                   }
                 ]
               },

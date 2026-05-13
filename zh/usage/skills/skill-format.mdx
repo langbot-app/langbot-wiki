@@ -1,0 +1,388 @@
+---
+title: "SKILL.md 格式参考"
+---
+
+SKILL.md 是定义技能的核心文件，使用 YAML frontmatter 格式。
+
+<Note>
+LangBot 的 SKILL.md 格式遵循 [Agent Skills 开放标准](https://agentskills.io/specification)，这是一个由 Anthropic 发起的跨平台技能定义规范。
+</Note>
+
+## 文件格式
+
+```markdown
+---
+# YAML Frontmatter（元数据）
+name: skill-name
+description: 技能描述
+---
+
+# Markdown 正文（指令）
+## 使用场景
+...
+```
+
+## Frontmatter 字段
+
+### 必需字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | string | 技能的唯一标识符 |
+| `description` | string | 简短描述，用于 LLM 判断是否激活 |
+
+<Note>
+根据 Agent Skills 标准，`description` 是必需字段。LangBot 当前兼容旧格式允许省略，但建议始终提供。
+</Note>
+
+### 字段详解
+
+#### `name`
+
+技能的唯一标识符，用于激活和引用。
+
+```yaml
+name: python-analyzer
+```
+
+命名规则（遵循 Agent Skills 标准）：
+- 1-64 个字符
+- 只能包含小写字母（a-z）、数字（0-9）和连字符（`-`）
+- 必须以字母开头，不能以连字符开头或结尾
+- 不能包含连续的连字符（`--`）
+- 建议与技能目录名匹配
+
+#### `description`
+
+技能的简短描述，LLM 会根据此描述判断是否激活技能。
+
+```yaml
+description: 分析 Python 项目结构、代码质量和依赖关系
+```
+
+编写建议：
+- 必须提供，最大 1024 字符
+- 描述技能的功能和用途
+- 说明适用的场景和触发关键词
+- 帮助 LLM 判断何时激活
+
+**好的示例：**
+```yaml
+description: 从 PDF 文件提取文本和表格，填充 PDF 表单，合并多个 PDF。适用于处理 PDF 文档，或用户提到 PDF、表单、文档提取时。
+```
+
+**不好的示例：**
+```yaml
+description: 帮助处理 PDF。
+```
+
+### 可选字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `license` | string | 许可证名称或引用 |
+| `compatibility` | string | 环境要求（产品、系统包、网络访问等） |
+| `metadata` | object | 自定义键值对元数据 |
+| `allowed-tools` | string | 预批准的工具列表（实验性） |
+
+#### `metadata`
+
+自定义键值对元数据，可用于存储额外属性。
+
+```yaml
+metadata:
+  display_name: Python 项目分析器
+  author: my-org
+  version: "1.0"
+```
+
+<Note>
+LangBot 当前支持顶层 `display_name` 字段作为便捷方式。未来版本将迁移到标准 `metadata.display_name` 格式，两者将同时兼容。
+</Note>
+
+## 指令正文
+
+Frontmatter 之后的内容是技能的指令，会被注入到 Agent 的 System Prompt 中。
+
+### 结构建议
+
+```markdown
+---
+name: data-analyzer
+display_name: 数据分析器
+description: 分析数据文件并生成报告
+---
+
+## 使用场景
+
+当用户需要分析 CSV、JSON 等数据文件时使用此技能。
+
+## 执行步骤
+
+1. 使用 `read` 工具读取数据文件
+2. 使用 `exec` 运行分析脚本
+3. 生成结构化报告
+
+## 可用资源
+
+- `scripts/analyze.py`: 数据分析脚本
+- `templates/report.md`: 报告模板
+
+## 输出格式
+
+分析报告应包含：
+- 数据概览
+- 统计摘要
+- 可视化建议
+
+## 注意事项
+
+- 大文件需分批处理
+- 注意数据隐私
+```
+
+### 指令编写最佳实践
+
+#### 1. 明确使用场景
+
+```markdown
+## 使用场景
+
+当用户请求以下任务时激活此技能：
+- 分析 Python 项目结构
+- 检查代码质量
+- 生成依赖报告
+
+不适合的场景：
+- 简单的代码片段执行
+- 非 Python 项目分析
+```
+
+#### 2. 提供清晰的执行步骤
+
+```markdown
+## 执行步骤
+
+1. **确认目标**：明确用户要分析的项目路径
+2. **扫描结构**：使用 `exec` 运行 `find . -type f -name "*.py"`
+3. **分析代码**：运行 `scripts/analyze.py`
+4. **生成报告**：基于模板输出结果
+```
+
+#### 3. 说明可用工具和资源
+
+```markdown
+## 可用工具
+
+| 工具 | 用途 |
+|------|------|
+| `read` | 读取项目文件 |
+| `exec` | 执行分析脚本 |
+| `write` | 输出报告文件 |
+
+## 可用脚本
+
+- `scripts/analyze.py`: 主分析脚本
+- `scripts/complexity.py`: 复杂度分析
+```
+
+#### 4. 定义输出格式
+
+```markdown
+## 输出格式
+
+```json
+{
+  "project": "项目名称",
+  "files": 100,
+  "lines": 5000,
+  "quality_score": 85,
+  "recommendations": ["..."]
+}
+```
+```
+
+## 完整示例
+
+### 纯提示词技能
+
+```markdown
+---
+name: code-reviewer
+display_name: 代码审查助手
+description: 审查代码并提供改进建议，支持多种编程语言
+---
+
+## 使用场景
+
+当用户请求代码审查、代码评审或代码改进建议时激活。
+
+## 审查维度
+
+### 1. 代码质量
+- 可读性和命名规范
+- 代码结构和组织
+- 注释和文档
+
+### 2. 潜在问题
+- Bug 和逻辑错误
+- 安全漏洞
+- 性能问题
+
+### 3. 最佳实践
+- 语言特定的最佳实践
+- 设计模式应用
+- 测试覆盖
+
+## 审查流程
+
+1. 分析代码结构和风格
+2. 识别潜在问题
+3. 提供具体改进建议
+4. 给出优先级排序
+
+## 输出格式
+
+### 问题报告
+- **严重程度**: 高/中/低
+- **位置**: 文件名:行号
+- **描述**: 问题描述
+- **建议**: 改进建议
+
+### 总结
+- 整体评分（1-10）
+- 主要发现
+- 优先改进项
+```
+
+### 文件包技能
+
+```markdown
+---
+name: api-tester
+display_name: API 测试工具
+description: 测试 REST API 端点，验证响应和性能
+---
+
+## 使用场景
+
+当用户需要测试 API、验证接口或进行 API 调试时激活。
+
+## 可用资源
+
+### 脚本
+- `scripts/request.py`: HTTP 请求工具
+- `scripts/benchmark.py`: 性能基准测试
+
+### 模板
+- `templates/test_report.md`: 测试报告模板
+
+## 执行步骤
+
+1. **解析请求**：从用户输入提取 API 信息
+2. **执行请求**：使用 `exec` 运行 `scripts/request.py`
+3. **验证响应**：检查状态码和响应体
+4. **生成报告**：输出测试结果
+
+## 示例命令
+
+```bash
+# 基本请求测试
+python scripts/request.py GET https://api.example.com/users
+
+# 带认证的请求
+python scripts/request.py POST https://api.example.com/data \
+  --header "Authorization: Bearer token" \
+  --body '{"key": "value"}'
+
+# 性能测试
+python scripts/benchmark.py https://api.example.com/endpoint --requests 100
+```
+
+## 输出格式
+
+### 单次测试
+- 请求 URL
+- 响应状态码
+- 响应时间
+- 响应体摘要
+
+### 批量测试
+- 成功/失败数量
+- 平均响应时间
+- 错误详情列表
+```
+
+## 文件位置
+
+Skill 文件应放置在以下位置：
+
+```
+data/skills/
+├── {skill-name}/
+│   └── SKILL.md
+```
+
+LangBot 启动时会自动扫描 `data/skills/` 目录下的所有技能。
+
+## 多文件技能
+
+对于包含多个文件的技能：
+
+```
+data/skills/
+└── my-skill/
+    ├── SKILL.md           # 必需
+    ├── scripts/           # 可选：脚本
+    │   ├── main.py
+    │   └── utils.py
+    ├── templates/         # 可选：模板
+    │   └── output.md
+    └── requirements.txt   # 可选：依赖
+```
+
+Agent 可以通过 `/workspace/.skills/{skill-name}/` 访问这些文件。
+
+## 与 Agent Skills 标准的关系
+
+LangBot 的 SKILL.md 格式遵循 [Agent Skills 开放标准](https://agentskills.io/specification)，这是由 Anthropic 发起的跨平台技能定义规范。
+
+### 标准目录结构
+
+```
+skill-name/
+├── SKILL.md          # 必需：元数据 + 指令
+├── scripts/          # 可选：可执行代码
+├── references/       # 可选：参考文档
+└── assets/           # 可选：静态资源
+```
+
+### 渐进式加载模型
+
+Agent Skills 标准采用渐进式加载，优化上下文使用：
+
+| 阶段 | 加载内容 | 建议大小 | 时机 |
+|------|----------|----------|------|
+| 发现 | `name` + `description` | ~100 tokens | Agent 启动时 |
+| 激活 | SKILL.md 正文 | < 5000 tokens | 技能激活时 |
+| 执行 | scripts/、references/、assets/ | 按需 | 任务执行时 |
+
+**最佳实践**：保持 SKILL.md 正文在 500 行以内，详细内容放入 references/ 目录。
+
+### LangBot 兼容性说明
+
+LangBot 当前支持顶层 `display_name` 字段作为便捷方式，但这不是 Agent Skills 标准字段。
+
+未来版本将：
+- 支持 `metadata.display_name` 标准格式
+- 顶层 `display_name` 和 `metadata.display_name` 将同时兼容
+- 建议新技能使用标准格式：
+
+```yaml
+---
+name: my-skill
+description: 技能描述
+metadata:
+  display_name: 我的技能
+---
+```

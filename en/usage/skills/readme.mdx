@@ -1,0 +1,415 @@
+---
+title: "Skills System"
+---
+
+Skills is LangBot's dynamic skill system that allows AI Agents to activate and execute specific tasks on demand. Through Skills, you can enable Agents to automatically load domain-specific knowledge and tools when needed.
+
+## What are Skills?
+
+Skills is a lightweight extension mechanism that enables Agents to:
+
+- Load domain-specific knowledge on demand
+- Execute workflows for specific tasks
+- Access predefined code and resources
+- Dynamically combine multiple skills
+
+Unlike plugins, Skills are more lightweight and flexible, suitable for defining workflows and instructions for specific tasks.
+
+## Design Philosophy
+
+### Industry Practices
+
+The Skills system design draws from mainstream Agent extension patterns in the industry:
+
+| System | Mechanism | Characteristics |
+|--------|-----------|-----------------|
+| **Claude Code** | Skills + Commands | Tool Call activation, Tool Result injection (protects KV Cache) |
+| **OpenAI GPTs** | Actions + Knowledge | Separates tool calling from knowledge injection |
+| **Cursor** | Rules + Tools | Independent configuration for rules and tools |
+
+### Insights from Claude Code
+
+Claude Code's Skills system has a key design decision: **skill content is injected through Tool Result, not by directly modifying the System Prompt**.
+
+The reasons for this design:
+
+1. **Protect KV Cache**: Directly modifying the System Prompt invalidates previous KV Cache, requiring recalculation every time
+2. **On-demand Loading**: Skills are only injected when trigger conditions match, reducing unnecessary token consumption
+3. **Incremental Context**: Tool Result is incremental content that doesn't affect existing cache
+
+### LangBot's Design
+
+LangBot adopts a **layered architecture**, separating Skills management from execution:
+
+```
+┌─────────────────────────────────────────┐
+│         Skills Management Layer          │
+│  create_skill, list_skills, update...    │
+│  - No sandbox dependency                 │
+│  - Pure metadata operations              │
+│  - Suitable for prompt-only skills       │
+└───────────────────┬─────────────────────┘
+                    │ Requires
+┌───────────────────▼─────────────────────┐
+│      import_skill_from_directory         │
+│      - Needs sandbox for workspace       │
+│      - Imports skill packages w/ scripts │
+└───────────────────┬─────────────────────┘
+                    │
+┌───────────────────▼─────────────────────┐
+│         Sandbox Execution Layer          │
+│  exec, read, write, edit                 │
+│  - Executes scripts in skills            │
+│  - Manipulates skill package files       │
+└─────────────────────────────────────────┘
+```
+
+### Why This Design?
+
+**1. Lower Barrier to Entry**
+
+Prompt-only skills (instructions only, no scripts) can be created and used without configuring a sandbox:
+
+```yaml
+# This skill doesn't need a sandbox
+name: code-reviewer
+instructions: |
+  When reviewing code, focus on:
+  - Code style consistency
+  - Potential security vulnerabilities
+  - Performance optimization suggestions
+```
+
+**2. Separation of Concerns**
+
+| Operation Type | Needs Sandbox | Reason |
+|----------------|---------------|--------|
+| Create/update prompt-only skills | No | Just metadata, no code execution |
+| Import skills with scripts | Yes | Needs filesystem access |
+| Execute scripts in skills | Yes | Needs isolated execution environment |
+
+**3. Security**
+
+- Simple CRUD operations don't require filesystem access for Agents
+- Sandbox isolation is only enabled when needed
+
+**4. Performance**
+
+- Direct memory/database operations are faster than sandbox operations
+- Reduces unnecessary sandbox startup overhead
+
+## How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Agent (LLM)                              │
+│                                                              │
+│  User request: "Help me analyze this Python project"         │
+│                                                              │
+│  Decision: matches skill: python-analyzer                    │
+│                                                              │
+│  Output: [ACTIVATE_SKILL: python-analyzer]                   │
+│                                                              │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Skill Activation                           │
+│                                                              │
+│  1. Detect activation marker (regex match)                   │
+│  2. Remove marker, inject skill instructions as System Msg   │
+│  3. Mount skill package to /workspace/.skills/{skill-name}/  │
+│                                                              │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Agent Continues (with skill context)            │
+│                                                              │
+│  - Use exec/read/write/edit to operate skill package         │
+│  - Execute tasks following skill instructions                │
+│  - Multiple skills can be activated and combined             │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+<Note>
+**Current Implementation**: LangBot uses text marker `[ACTIVATE_SKILL:]` + System Message injection mechanism.
+
+**TODO Future Optimization**: Consider switching to Tool Call / Tool Result mechanism, following Claude Code's design:
+- Advantage: Protects KV Cache, Tool Result is incremental content that doesn't invalidate cache
+- Advantage: Consistent with tool calling semantics, more aligned with Agent design patterns
+- Reason for current design: Compatible with models that don't support Function Calling, marker mechanism works with any LLM
+</Note>
+
+## Skill File Structure
+
+Each Skill is a directory containing a `SKILL.md` file:
+
+```
+data/skills/
+├── my-skill/
+│   ├── SKILL.md           # Required: skill definition file
+│   ├── scripts/           # Optional: script files
+│   │   └── analyze.py
+│   └── templates/         # Optional: template files
+│       └── report.md
+└── another-skill/
+    └── SKILL.md
+```
+
+### SKILL.md Format
+
+Use YAML frontmatter to define metadata:
+
+```markdown
+---
+name: python-analyzer
+display_name: Python Project Analyzer
+description: Analyze Python project structure, code quality and dependencies
+---
+
+## Use Cases
+
+When users need to analyze Python projects, follow these steps:
+
+1. Use the `read` tool to read project structure
+2. Use `exec` to run analysis scripts
+3. Generate analysis report
+
+## Available Scripts
+
+- `scripts/analyze.py`: Main analysis script
+- `scripts/dependency_check.py`: Dependency checking
+
+## Output Format
+
+Analysis report should include:
+- Project structure overview
+- Code quality score
+- Dependency graph
+```
+
+## Activation Mechanism
+
+### Automatic Activation
+
+When the LLM determines that a user request matches a skill, it outputs an activation marker at the beginning of its response:
+
+```
+[ACTIVATE_SKILL: python-analyzer]
+```
+
+Multiple skills can be activated simultaneously:
+
+```
+[ACTIVATE_SKILL: python-analyzer]
+[ACTIVATE_SKILL: report-generator]
+```
+
+### Effects After Activation
+
+1. **Instruction Injection**: The skill's `instructions` are injected into System Prompt
+2. **Path Mounting**: Skill package is mounted to `/workspace/.skills/{skill-name}/`
+3. **Tool Access**: Agent can use `exec`/`read`/`write`/`edit` to operate skill files
+
+## Built-in Tools
+
+The Skills system provides the following tools for Agents:
+
+| Tool | Function | Needs Sandbox |
+|------|----------|---------------|
+| `create_skill` | Create new managed skill | No |
+| `list_skills` | List all managed skills | No |
+| `get_skill` | Get single skill details | No |
+| `update_skill` | Update existing skill | No |
+| `delete_skill` | Delete skill | No |
+| `import_skill_from_directory` | Import skill from workspace | Yes |
+| `reload_skills` | Reload skills | No |
+
+<Note>
+`create_skill`, `list_skills`, `get_skill`, `update_skill`, `delete_skill` don't depend on sandbox and can directly operate prompt-only skills. `import_skill_from_directory` needs sandbox to access workspace directory.
+</Note>
+
+## Skill Types
+
+### Prompt-Only Skills
+
+Contains only instructions, no additional files:
+
+```markdown
+---
+name: code-reviewer
+display_name: Code Review Assistant
+description: Review code and provide improvement suggestions
+---
+
+## Review Steps
+
+1. Analyze code structure and style
+2. Check for potential bugs and security issues
+3. Provide improvement suggestions
+
+## Review Criteria
+
+- Code readability
+- Performance optimization
+- Security best practices
+```
+
+### File Package Skills
+
+Contains scripts, templates, and other resource files:
+
+```
+data-analyzer/
+├── SKILL.md
+├── scripts/
+│   ├── analyze.py
+│   └── visualize.py
+├── templates/
+│   └── report.md
+└── requirements.txt
+```
+
+## Binding to Pipeline
+
+You can bind skills in Pipeline configuration to make them available in that Pipeline:
+
+```yaml
+# Pipeline configuration
+ai:
+  local-agent:
+    bound_skills:
+      - python-analyzer
+      - report-generator
+```
+
+Bound skills will appear as available skills in that Pipeline's Agent.
+
+## Quick Start
+
+### 1. Create Your First Skill
+
+Create a skill in the `data/skills/` directory:
+
+```bash
+mkdir -p data/skills/my-first-skill
+```
+
+Create `SKILL.md`:
+
+```markdown
+---
+name: my-first-skill
+display_name: My First Skill
+description: A simple example skill
+---
+
+## Task Description
+
+This is an example skill demonstrating basic skill functionality.
+
+## Execution Steps
+
+1. Understand user request
+2. Execute corresponding operations
+3. Return results
+```
+
+### 2. Bind in Pipeline
+
+Add to Pipeline's AI configuration:
+
+```yaml
+bound_skills:
+  - my-first-skill
+```
+
+### 3. Test Activation
+
+Send a request matching the skill description to the Agent and observe if the skill is correctly activated.
+
+## Skill Management
+
+### View Existing Skills
+
+Agent can use `list_skills` to view all managed skills:
+
+```
+list_skills()
+```
+
+Returns:
+
+```json
+{
+  "skills": [
+    {
+      "name": "python-analyzer",
+      "display_name": "Python Project Analyzer",
+      "description": "Analyze Python projects..."
+    }
+  ],
+  "count": 1
+}
+```
+
+### Dynamically Create Skills
+
+Agent can use `create_skill` to dynamically create skills:
+
+```
+create_skill(
+  name="code-formatter",
+  display_name="Code Formatter",
+  description="Format code in various programming languages",
+  instructions="## Usage\n..."
+)
+```
+
+### Import from Workspace
+
+If a skill contains script files, prepare it in sandbox first, then import:
+
+```
+# 1. Create skill directory in sandbox
+exec("mkdir -p /workspace/my-skill/scripts")
+
+# 2. Write skill files
+write("/workspace/my-skill/SKILL.md", "---\nname: my-skill\n...")
+write("/workspace/my-skill/scripts/main.py", "# Main script")
+
+# 3. Import to managed skills
+import_skill_from_directory(path="/workspace/my-skill")
+```
+
+## Best Practices
+
+### 1. Skill Naming
+
+- Use lowercase letters, numbers, hyphens, underscores
+- Names should be concise and descriptive
+- Examples: `python-analyzer`, `data-visualizer`
+
+### 2. Description Writing
+
+- Clearly state the skill's purpose and applicable scenarios
+- Help LLM correctly determine when to activate
+
+### 3. Instruction Design
+
+- Provide clear execution steps
+- Explain available resources and tools
+- Define output formats
+
+### 4. Resource Organization
+
+- Put scripts in `scripts/` directory
+- Put templates in `templates/` directory
+- Keep structure clear
+
+## Next Steps
+
+- [SKILL.md Format Reference](./skill-format) - Detailed file format documentation
+- [Tools API](./tools-api) - Complete API documentation for skill tools

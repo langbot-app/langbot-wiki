@@ -1,0 +1,390 @@
+---
+title: "技能工具 API"
+---
+
+Skills 系统为 Agent 提供了一系列工具，用于创建、管理和使用技能。
+
+## 工具概览
+
+| 工具 | 功能 | 需要沙箱 |
+|------|------|---------|
+| `create_skill` | 创建新的托管技能 | 否 |
+| `list_skills` | 列出所有托管技能 | 否 |
+| `get_skill` | 获取单个技能详情 | 否 |
+| `update_skill` | 更新现有技能 | 否 |
+| `delete_skill` | 删除技能 | 否 |
+| `import_skill_from_directory` | 从工作区导入技能 | 是 |
+| `reload_skills` | 重新加载技能 | 否 |
+
+---
+
+## create_skill
+
+创建新的托管技能。
+
+### 使用场景
+
+- 创建纯提示词技能
+- 快速定义新的任务能力
+- 不需要额外文件资源的技能
+
+### 参数
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | 是 | 技能名称（唯一标识符） |
+| `instructions` | string | 是 | SKILL.md 正文指令 |
+| `display_name` | string | 否 | 显示名称 |
+| `description` | string | 否 | 技能描述 |
+
+### 示例
+
+```json
+{
+  "name": "code-formatter",
+  "display_name": "代码格式化器",
+  "description": "格式化各种编程语言的代码",
+  "instructions": "## 使用方法\n\n1. 识别代码语言\n2. 应用相应格式化规则\n3. 返回格式化结果\n\n## 支持的语言\n\n- Python (black)\n- JavaScript (prettier)\n- Go (gofmt)"
+}
+```
+
+### 返回值
+
+```json
+{
+  "created": true,
+  "skill": {
+    "name": "code-formatter",
+    "display_name": "代码格式化器",
+    "description": "格式化各种编程语言的代码",
+    "instructions": "..."
+  }
+}
+```
+
+### 错误
+
+- `name is required`: 未提供技能名称
+- `instructions is required`: 未提供指令内容
+- 技能名称已存在
+
+---
+
+## list_skills
+
+列出所有托管技能。
+
+### 使用场景
+
+- 查看可用的技能
+- 确认技能是否已创建
+- 了解技能列表
+
+### 参数
+
+无参数。
+
+### 示例
+
+```json
+{}
+```
+
+### 返回值
+
+```json
+{
+  "skills": [
+    {
+      "name": "python-analyzer",
+      "display_name": "Python 项目分析器",
+      "description": "分析 Python 项目结构"
+    },
+    {
+      "name": "code-reviewer",
+      "display_name": "代码审查助手",
+      "description": "审查代码并提供改进建议"
+    }
+  ],
+  "skill_names": ["python-analyzer", "code-reviewer"],
+  "count": 2
+}
+```
+
+---
+
+## get_skill
+
+获取单个技能的详细信息。
+
+### 使用场景
+
+- 查看技能的完整内容
+- 确认技能指令
+- 准备更新前检查
+
+### 参数
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | 是 | 技能名称 |
+
+### 示例
+
+```json
+{
+  "name": "python-analyzer"
+}
+```
+
+### 返回值
+
+```json
+{
+  "skill": {
+    "name": "python-analyzer",
+    "display_name": "Python 项目分析器",
+    "description": "分析 Python 项目结构",
+    "instructions": "## 使用场景\n...",
+    "package_root": "/path/to/skill",
+    "created_at": "2024-01-15T10:00:00Z",
+    "updated_at": "2024-01-20T15:30:00Z"
+  }
+}
+```
+
+### 错误
+
+- `name is required`: 未提供技能名称
+- `Skill "xxx" not found`: 技能不存在
+
+---
+
+## update_skill
+
+更新现有技能的内容。
+
+### 使用场景
+
+- 修改技能指令
+- 更新显示名称或描述
+- 迭代改进技能
+
+### 参数
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | 是 | 要更新的技能名称 |
+| `display_name` | string | 否 | 新的显示名称 |
+| `description` | string | 否 | 新的描述 |
+| `instructions` | string | 否 | 新的指令内容 |
+
+### 示例
+
+```json
+{
+  "name": "code-reviewer",
+  "description": "审查代码并提供改进建议，支持多种编程语言和框架",
+  "instructions": "## 使用场景\n\n当用户请求代码审查时激活...\n\n## 新增功能\n\n- 支持框架特定检查"
+}
+```
+
+### 返回值
+
+```json
+{
+  "updated": true,
+  "skill": {
+    "name": "code-reviewer",
+    "display_name": "代码审查助手",
+    "description": "审查代码并提供改进建议，支持多种编程语言和框架",
+    "instructions": "..."
+  }
+}
+```
+
+### 错误
+
+- `name is required`: 未提供技能名称
+
+---
+
+## delete_skill
+
+删除托管技能。
+
+### 使用场景
+
+- 移除不再需要的技能
+- 清理测试技能
+- 重新创建技能前删除旧版本
+
+### 参数
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `name` | string | 是 | 要删除的技能名称 |
+
+### 示例
+
+```json
+{
+  "name": "old-skill"
+}
+```
+
+### 返回值
+
+```json
+{
+  "deleted": true,
+  "skill_name": "old-skill"
+}
+```
+
+### 错误
+
+- `name is required`: 未提供技能名称
+
+---
+
+## import_skill_from_directory
+
+从沙箱工作区导入技能包。
+
+### 使用场景
+
+- 导入包含脚本文件的技能
+- 导入从 Git 克隆的技能仓库
+- 导入预先准备的复杂技能
+
+### 前提条件
+
+- 沙箱功能已启用
+- 目标目录存在于 `/workspace` 下
+- 目录包含 `SKILL.md` 文件
+
+### 参数
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `path` | string | 是 | 沙箱内的目录路径（必须在 `/workspace` 下） |
+| `name` | string | 否 | 覆盖技能名称 |
+| `display_name` | string | 否 | 覆盖显示名称 |
+| `description` | string | 否 | 覆盖描述 |
+| `instructions` | string | 否 | 覆盖指令内容 |
+
+### 工作流程
+
+```
+1. 在沙箱中准备技能目录
+   /workspace/my-skill/
+   ├── SKILL.md
+   └── scripts/
+       └── main.py
+
+2. 调用 import_skill_from_directory
+
+3. 技能被导入到托管技能存储
+   data/skills/my-skill/
+```
+
+### 示例
+
+```json
+{
+  "path": "/workspace/my-skill",
+  "name": "data-processor",
+  "description": "处理和转换数据文件"
+}
+```
+
+### 返回值
+
+```json
+{
+  "imported": true,
+  "source_path": "/workspace/my-skill",
+  "skill": {
+    "name": "data-processor",
+    "display_name": "数据处理工具",
+    "description": "处理和转换数据文件",
+    "instructions": "...",
+    "package_root": "/path/to/data/skills/data-processor"
+  }
+}
+```
+
+### 错误
+
+- `path is required`: 未提供路径
+- `path must be under /workspace`: 路径不在工作区内
+- `Directory does not exist`: 目录不存在
+- `No default workspace configured`: 沙箱未配置
+
+---
+
+## reload_skills
+
+重新从文件系统加载技能。
+
+### 使用场景
+
+- 手动修改技能文件后刷新
+- 外部工具创建技能后同步
+- 确保技能列表最新
+
+### 参数
+
+无参数。
+
+### 示例
+
+```json
+{}
+```
+
+### 返回值
+
+```json
+{
+  "reloaded": true,
+  "skill_names": ["python-analyzer", "code-reviewer", "data-processor"],
+  "count": 3
+}
+```
+
+---
+
+## 激活机制
+
+除了上述管理工具，Skills 系统还提供了激活机制。
+
+### 激活标记
+
+LLM 通过在响应开头输出特殊标记来激活技能：
+
+```
+[ACTIVATE_SKILL: skill-name]
+```
+
+### 多技能激活
+
+可以同时激活多个技能：
+
+```
+[ACTIVATE_SKILL: python-analyzer]
+[ACTIVATE_SKILL: report-generator]
+```
+
+### 激活后效果
+
+1. 技能指令被注入到 System Prompt
+2. 技能包挂载到 `/workspace/.skills/{skill-name}/`
+3. Agent 可使用 `exec`/`read`/`write`/`edit` 操作技能文件
+
+### 限制
+
+- 只能激活已绑定到当前 Pipeline 的技能
+- 激活发生在响应生成过程中，需要多轮对话完成
+- 技能激活后，原始标记会从响应中移除

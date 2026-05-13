@@ -1,0 +1,390 @@
+---
+title: "スキルツール API"
+---
+
+Skills システムは Agent がスキルを作成、管理、使用するための一連のツールを提供します。
+
+## ツール概要
+
+| ツール | 機能 | サンドボックス必要 |
+|--------|------|-------------------|
+| `create_skill` | 新しい管理スキルを作成 | 不要 |
+| `list_skills` | すべての管理スキルを一覧 | 不要 |
+| `get_skill` | 単一スキルの詳細を取得 | 不要 |
+| `update_skill` | 既存スキルを更新 | 不要 |
+| `delete_skill` | スキルを削除 | 不要 |
+| `import_skill_from_directory` | ワークスペースからスキルをインポート | 必要 |
+| `reload_skills` | スキルを再読み込み | 不要 |
+
+---
+
+## create_skill
+
+新しい管理スキルを作成します。
+
+### 使用場面
+
+- プロンプトのみのスキルを作成
+- 新しいタスク能力を素早く定義
+- 追加ファイルリソースが不要なスキル
+
+### パラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `name` | string | はい | スキル名（一意識別子） |
+| `instructions` | string | はい | SKILL.md 本文の命令 |
+| `display_name` | string | いいえ | 表示名 |
+| `description` | string | いいえ | スキルの説明 |
+
+### 例
+
+```json
+{
+  "name": "code-formatter",
+  "display_name": "コードフォーマッター",
+  "description": "様々なプログラミング言語のコードをフォーマット",
+  "instructions": "## 使用方法\n\n1. コード言語を識別\n2. 対応するフォーマットルールを適用\n3. フォーマット結果を返す\n\n## サポート言語\n\n- Python (black)\n- JavaScript (prettier)\n- Go (gofmt)"
+}
+```
+
+### 戻り値
+
+```json
+{
+  "created": true,
+  "skill": {
+    "name": "code-formatter",
+    "display_name": "コードフォーマッター",
+    "description": "様々なプログラミング言語のコードをフォーマット",
+    "instructions": "..."
+  }
+}
+```
+
+### エラー
+
+- `name is required`: スキル名が提供されていない
+- `instructions is required`: 命令内容が提供されていない
+- スキル名が既に存在する
+
+---
+
+## list_skills
+
+すべての管理スキルを一覧表示します。
+
+### 使用場面
+
+- 利用可能なスキルを確認
+- スキルが作成されたか確認
+- スキルリストを把握
+
+### パラメータ
+
+なし。
+
+### 例
+
+```json
+{}
+```
+
+### 戻り値
+
+```json
+{
+  "skills": [
+    {
+      "name": "python-analyzer",
+      "display_name": "Python プロジェクトアナライザー",
+      "description": "Python プロジェクト構造を分析"
+    },
+    {
+      "name": "code-reviewer",
+      "display_name": "コードレビューアシスタント",
+      "description": "コードをレビューし改善提案を提供"
+    }
+  ],
+  "skill_names": ["python-analyzer", "code-reviewer"],
+  "count": 2
+}
+```
+
+---
+
+## get_skill
+
+単一スキルの詳細情報を取得します。
+
+### 使用場面
+
+- スキルの完全な内容を確認
+- スキルの命令を確認
+- 更新準備前にチェック
+
+### パラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `name` | string | はい | スキル名 |
+
+### 例
+
+```json
+{
+  "name": "python-analyzer"
+}
+```
+
+### 戻り値
+
+```json
+{
+  "skill": {
+    "name": "python-analyzer",
+    "display_name": "Python プロジェクトアナライザー",
+    "description": "Python プロジェクト構造を分析",
+    "instructions": "## 使用場面\n...",
+    "package_root": "/path/to/skill",
+    "created_at": "2024-01-15T10:00:00Z",
+    "updated_at": "2024-01-20T15:30:00Z"
+  }
+}
+```
+
+### エラー
+
+- `name is required`: スキル名が提供されていない
+- `Skill "xxx" not found`: スキルが存在しない
+
+---
+
+## update_skill
+
+既存スキルの内容を更新します。
+
+### 使用場面
+
+- スキルの命令を修正
+- 表示名や説明を更新
+- スキルを反復改善
+
+### パラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `name` | string | はい | 更新するスキル名 |
+| `display_name` | string | いいえ | 新しい表示名 |
+| `description` | string | いいえ | 新しい説明 |
+| `instructions` | string | いいえ | 新しい命令内容 |
+
+### 例
+
+```json
+{
+  "name": "code-reviewer",
+  "description": "コードをレビューし改善提案を提供、複数のプログラミング言語とフレームワークをサポート",
+  "instructions": "## 使用場面\n\nユーザーがコードレビューをリクエストした場合に起動...\n\n## 新機能\n\n- フレームワーク固有のチェックをサポート"
+}
+```
+
+### 戻り値
+
+```json
+{
+  "updated": true,
+  "skill": {
+    "name": "code-reviewer",
+    "display_name": "コードレビューアシスタント",
+    "description": "コードをレビューし改善提案を提供、複数のプログラミング言語とフレームワークをサポート",
+    "instructions": "..."
+  }
+}
+```
+
+### エラー
+
+- `name is required`: スキル名が提供されていない
+
+---
+
+## delete_skill
+
+管理スキルを削除します。
+
+### 使用場面
+
+- 不要になったスキルを削除
+- テストスキルをクリーンアップ
+- スキル再作成前に旧バージョンを削除
+
+### パラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `name` | string | はい | 削除するスキル名 |
+
+### 例
+
+```json
+{
+  "name": "old-skill"
+}
+```
+
+### 戻り値
+
+```json
+{
+  "deleted": true,
+  "skill_name": "old-skill"
+}
+```
+
+### エラー
+
+- `name is required`: スキル名が提供されていない
+
+---
+
+## import_skill_from_directory
+
+サンドボックスワークスペースからスキルパッケージをインポートします。
+
+### 使用場面
+
+- スクリプトファイルを含むスキルをインポート
+- Git からクローンしたスキルリポジトリをインポート
+- 事前に準備した複雑なスキルをインポート
+
+### 前提条件
+
+- サンドボックス機能が有効
+- ターゲットディレクトリが `/workspace` 下に存在
+- ディレクトリに `SKILL.md` ファイルが含まれている
+
+### パラメータ
+
+| パラメータ | 型 | 必須 | 説明 |
+|------------|-----|------|------|
+| `path` | string | はい | サンドボックス内のディレクトリパス（`/workspace` 下である必要あり） |
+| `name` | string | いいえ | スキル名を上書き |
+| `display_name` | string | いいえ | 表示名を上書き |
+| `description` | string | いいえ | 説明を上書き |
+| `instructions` | string | いいえ | 命令内容を上書き |
+
+### ワークフロー
+
+```
+1. サンドボックスでスキルディレクトリを準備
+   /workspace/my-skill/
+   ├── SKILL.md
+   └── scripts/
+       └── main.py
+
+2. import_skill_from_directory を呼び出し
+
+3. スキルが管理スキルストレージにインポートされる
+   data/skills/my-skill/
+```
+
+### 例
+
+```json
+{
+  "path": "/workspace/my-skill",
+  "name": "data-processor",
+  "description": "データファイルを処理・変換"
+}
+```
+
+### 戻り値
+
+```json
+{
+  "imported": true,
+  "source_path": "/workspace/my-skill",
+  "skill": {
+    "name": "data-processor",
+    "display_name": "データ処理ツール",
+    "description": "データファイルを処理・変換",
+    "instructions": "...",
+    "package_root": "/path/to/data/skills/data-processor"
+  }
+}
+```
+
+### エラー
+
+- `path is required`: パスが提供されていない
+- `path must be under /workspace`: パスがワークスペース内にない
+- `Directory does not exist`: ディレクトリが存在しない
+- `No default workspace configured`: サンドボックスが設定されていない
+
+---
+
+## reload_skills
+
+ファイルシステムからスキルを再読み込みします。
+
+### 使用場面
+
+- スキルファイルを手動で修正後にリフレッシュ
+- 外部ツールでスキル作成後に同期
+- スキルリストが最新であることを確認
+
+### パラメータ
+
+なし。
+
+### 例
+
+```json
+{}
+```
+
+### 戻り値
+
+```json
+{
+  "reloaded": true,
+  "skill_names": ["python-analyzer", "code-reviewer", "data-processor"],
+  "count": 3
+}
+```
+
+---
+
+## 起動メカニズム
+
+上記の管理ツールに加え、Skills システムは起動メカニズムも提供します。
+
+### 起動マーカー
+
+LLM はレスポンスの先頭に特別なマーカーを出力してスキルを起動します：
+
+```
+[ACTIVATE_SKILL: skill-name]
+```
+
+### マルチスキル起動
+
+複数のスキルを同時に起動可能：
+
+```
+[ACTIVATE_SKILL: python-analyzer]
+[ACTIVATE_SKILL: report-generator]
+```
+
+### 起動後の効果
+
+1. スキル命令が System Prompt に注入される
+2. スキルパッケージが `/workspace/.skills/{skill-name}/` にマウントされる
+3. Agent は `exec`/`read`/`write`/`edit` でスキルファイルを操作可能
+
+### 制限
+
+- 現在の Pipeline にバインドされたスキルのみ起動可能
+- 起動はレスポンス生成中に発生し、マルチターン対話が必要
+- スキル起動後、元のマーカーはレスポンスから削除される
