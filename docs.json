@@ -220,6 +220,7 @@
                   "en/usage/platforms/telegram",
                   "en/usage/platforms/slack",
                   "en/usage/platforms/line",
+                  "en/usage/platforms/webpage",
                   "en/usage/platforms/kook",
                   "en/usage/platforms/lark",
                   "en/usage/platforms/dingtalk",
@@ -452,7 +453,8 @@
                   "zh/usage/platforms/discord",
                   "zh/usage/platforms/telegram",
                   "zh/usage/platforms/slack",
-                  "zh/usage/platforms/line"
+                  "zh/usage/platforms/line",
+                  "zh/usage/platforms/webpage"
                 ]
               },
               {
@@ -631,6 +633,7 @@
                   "ja/usage/platforms/telegram",
                   "ja/usage/platforms/slack",
                   "ja/usage/platforms/line",
+                  "ja/usage/platforms/webpage",
                   "ja/usage/platforms/kook",
                   "ja/usage/platforms/lark",
                   "ja/usage/platforms/dingtalk",
