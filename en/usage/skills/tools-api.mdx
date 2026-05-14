@@ -2,49 +2,48 @@
 title: "Skill Tools API"
 ---
 
-The Skills system provides a series of tools for Agents to create, manage, and use skills.
+The Skills system provides two tools for Agents to activate and register skills. The design follows Claude Code's progressive disclosure pattern, using Tool Call mechanism for skill activation.
 
 ## Tools Overview
 
 | Tool | Function | Needs Sandbox |
 |------|----------|---------------|
-| `create_skill` | Create new managed skill | No |
-| `list_skills` | List all managed skills | No |
-| `get_skill` | Get single skill details | No |
-| `update_skill` | Update existing skill | No |
-| `delete_skill` | Delete skill | No |
-| `import_skill_from_directory` | Import skill from workspace | Yes |
-| `reload_skills` | Reload skills | No |
+| `activate` | Activate a skill | Yes |
+| `register_skill` | Register skill from sandbox directory | Yes |
+
+<Note>
+These tools require a sandbox backend (Docker/Nsjail/E2B) to be available. If no backend is available, the tools will not be provided to the Agent.
+</Note>
 
 ---
 
-## create_skill
+## activate
 
-Create a new managed skill.
+Activate a skill, injecting the skill instructions into the current conversation context.
 
 ### Use Cases
 
-- Create prompt-only skills
-- Quickly define new task capabilities
-- Skills that don't need additional file resources
+- Activate existing skills to gain specialized capabilities
+- Get full instructions and runtime context of a skill
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `name` | string | Yes | Skill name (unique identifier) |
-| `instructions` | string | Yes | SKILL.md body instructions |
-| `display_name` | string | No | Display name |
-| `description` | string | No | Skill description |
+| `skill_name` | string | Yes | The skill name to activate (no arguments) |
+
+### How It Works
+
+1. Agent calls the `activate` tool with the skill name
+2. System returns the skill's SKILL.md content as Tool Result
+3. Skill package is mounted to `/workspace/.skills/{skill-name}/`
+4. Agent can use `exec`/`read`/`write`/`edit`/`glob`/`grep` to operate skill files
 
 ### Example
 
 ```json
 {
-  "name": "code-formatter",
-  "display_name": "Code Formatter",
-  "description": "Format code in various programming languages",
-  "instructions": "## Usage\n\n1. Identify code language\n2. Apply corresponding formatting rules\n3. Return formatted result\n\n## Supported Languages\n\n- Python (black)\n- JavaScript (prettier)\n- Go (gofmt)"
+  "skill_name": "pdf"
 }
 ```
 
@@ -52,211 +51,28 @@ Create a new managed skill.
 
 ```json
 {
-  "created": true,
-  "skill": {
-    "name": "code-formatter",
-    "display_name": "Code Formatter",
-    "description": "Format code in various programming languages",
-    "instructions": "..."
-  }
+  "activated": true,
+  "skill_name": "pdf",
+  "mount_path": "/workspace/.skills/pdf",
+  "content": "<command-message>The \"pdf\" skill is activated</command-message>\n<skill-activation>\n<skill-name>pdf</skill-name>\n<mount-path>/workspace/.skills/pdf</mount-path>\n<package-root>/path/to/skill</package-root>\n\n## Instructions\n...\n\n## Runtime Context\nThe skill package is mounted at /workspace/.skills/pdf. Use the standard tools to interact with it:\n- Use `read` to inspect files under /workspace/.skills/pdf\n- Use `exec` with workdir set to /workspace/.skills/pdf to run commands in that package\n- Use `write` and `edit` on that path when the instructions require updating files\n</skill-activation>"
 }
 ```
 
 ### Errors
 
-- `name is required`: Skill name not provided
-- `instructions is required`: Instructions not provided
-- Skill name already exists
-
----
-
-## list_skills
-
-List all managed skills.
-
-### Use Cases
-
-- View available skills
-- Confirm if a skill has been created
-- Understand the skill list
-
-### Parameters
-
-None.
-
-### Example
-
-```json
-{}
-```
-
-### Return Value
-
-```json
-{
-  "skills": [
-    {
-      "name": "python-analyzer",
-      "display_name": "Python Project Analyzer",
-      "description": "Analyze Python project structure"
-    },
-    {
-      "name": "code-reviewer",
-      "display_name": "Code Review Assistant",
-      "description": "Review code and provide improvement suggestions"
-    }
-  ],
-  "skill_names": ["python-analyzer", "code-reviewer"],
-  "count": 2
-}
-```
-
----
-
-## get_skill
-
-Get detailed information for a single skill.
-
-### Use Cases
-
-- View complete skill content
-- Confirm skill instructions
-- Check before preparing update
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | Yes | Skill name |
-
-### Example
-
-```json
-{
-  "name": "python-analyzer"
-}
-```
-
-### Return Value
-
-```json
-{
-  "skill": {
-    "name": "python-analyzer",
-    "display_name": "Python Project Analyzer",
-    "description": "Analyze Python project structure",
-    "instructions": "## Use Cases\n...",
-    "package_root": "/path/to/skill",
-    "created_at": "2024-01-15T10:00:00Z",
-    "updated_at": "2024-01-20T15:30:00Z"
-  }
-}
-```
-
-### Errors
-
-- `name is required`: Skill name not provided
+- `skill_name is required`: Skill name not provided
 - `Skill "xxx" not found`: Skill does not exist
 
 ---
 
-## update_skill
+## register_skill
 
-Update content of an existing skill.
-
-### Use Cases
-
-- Modify skill instructions
-- Update display name or description
-- Iteratively improve skills
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | Yes | Skill name to update |
-| `display_name` | string | No | New display name |
-| `description` | string | No | New description |
-| `instructions` | string | No | New instruction content |
-
-### Example
-
-```json
-{
-  "name": "code-reviewer",
-  "description": "Review code and provide improvement suggestions, supports multiple programming languages and frameworks",
-  "instructions": "## Use Cases\n\nActivate when user requests code review...\n\n## New Features\n\n- Support framework-specific checks"
-}
-```
-
-### Return Value
-
-```json
-{
-  "updated": true,
-  "skill": {
-    "name": "code-reviewer",
-    "display_name": "Code Review Assistant",
-    "description": "Review code and provide improvement suggestions, supports multiple programming languages and frameworks",
-    "instructions": "..."
-  }
-}
-```
-
-### Errors
-
-- `name is required`: Skill name not provided
-
----
-
-## delete_skill
-
-Delete a managed skill.
+Register a skill package from sandbox workspace directory to LangBot skill store.
 
 ### Use Cases
 
-- Remove skills no longer needed
-- Clean up test skills
-- Delete old version before recreating skill
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | Yes | Skill name to delete |
-
-### Example
-
-```json
-{
-  "name": "old-skill"
-}
-```
-
-### Return Value
-
-```json
-{
-  "deleted": true,
-  "skill_name": "old-skill"
-}
-```
-
-### Errors
-
-- `name is required`: Skill name not provided
-
----
-
-## import_skill_from_directory
-
-Import a skill package from sandbox workspace.
-
-### Use Cases
-
-- Import skills containing script files
-- Import skill repositories cloned from Git
-- Import pre-prepared complex skills
+- Register a skill after creating it in the sandbox
+- Import pre-prepared skill packages
 
 ### Prerequisites
 
@@ -268,8 +84,8 @@ Import a skill package from sandbox workspace.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `path` | string | Yes | Directory path in sandbox (must be under `/workspace`) |
-| `name` | string | No | Override skill name |
+| `path` | string | Yes | Directory path in sandbox (must be under `/workspace`, containing SKILL.md) |
+| `name` | string | No | Override skill name, defaults to name in SKILL.md or directory name |
 | `display_name` | string | No | Override display name |
 | `description` | string | No | Override description |
 | `instructions` | string | No | Override instruction content |
@@ -283,10 +99,10 @@ Import a skill package from sandbox workspace.
    └── scripts/
        └── main.py
 
-2. Call import_skill_from_directory
+2. Call register_skill
 
-3. Skill is imported to managed skill storage
-   data/skills/my-skill/
+3. Skill is registered to skill store
+   - Can be activated via activate tool
 ```
 
 ### Example
@@ -303,7 +119,8 @@ Import a skill package from sandbox workspace.
 
 ```json
 {
-  "imported": true,
+  "registered": true,
+  "skill_name": "data-processor",
   "source_path": "/workspace/my-skill",
   "skill": {
     "name": "data-processor",
@@ -320,71 +137,61 @@ Import a skill package from sandbox workspace.
 - `path is required`: Path not provided
 - `path must be under /workspace`: Path not in workspace
 - `Directory does not exist`: Directory does not exist
-- `No default workspace configured`: Sandbox not configured
-
----
-
-## reload_skills
-
-Reload skills from filesystem.
-
-### Use Cases
-
-- Refresh after manually modifying skill files
-- Sync after external tools create skills
-- Ensure skill list is up-to-date
-
-### Parameters
-
-None.
-
-### Example
-
-```json
-{}
-```
-
-### Return Value
-
-```json
-{
-  "reloaded": true,
-  "skill_names": ["python-analyzer", "code-reviewer", "data-processor"],
-  "count": 3
-}
-```
+- `SKILL.md not found in directory`: No SKILL.md file in directory
 
 ---
 
 ## Activation Mechanism
 
-Besides the management tools above, the Skills system also provides an activation mechanism.
+The Skills system uses Tool Call mechanism for skill activation, not text markers. This aligns with Claude Code's design.
 
-### Activation Marker
+### Activation Method
 
-LLM activates skills by outputting a special marker at the beginning of its response:
+Agent activates a skill by calling the `activate` tool:
 
-```
-[ACTIVATE_SKILL: skill-name]
-```
-
-### Multi-Skill Activation
-
-Multiple skills can be activated simultaneously:
-
-```
-[ACTIVATE_SKILL: python-analyzer]
-[ACTIVATE_SKILL: report-generator]
+```json
+{
+  "skill_name": "pdf"
+}
 ```
 
 ### Effects After Activation
 
-1. Skill instructions are injected into System Prompt
-2. Skill package is mounted to `/workspace/.skills/{skill-name}/`
-3. Agent can use `exec`/`read`/`write`/`edit` to operate skill files
+1. **Instruction Injection**: SKILL.md content is returned as Tool Result, injected into context
+2. **Path Mounting**: Skill package is mounted to `/workspace/.skills/{skill-name}/`
+3. **File Operations**: Agent can use standard tools to operate skill files
+   - `read`: Read skill files
+   - `exec`: Execute commands in skill directory
+   - `write`/`edit`: Modify skill files
 
-### Limitations
+### Design Advantages
 
-- Only skills bound to the current Pipeline can be activated
-- Activation occurs during response generation, requiring multi-turn dialogue
-- After skill activation, the original marker is removed from the response
+| Feature | Description |
+|---------|-------------|
+| **KV Cache Protection** | Skill instructions are loaded on-demand via Tool Result, not affecting conversation history cache efficiency |
+| **Progressive Disclosure** | Tool description only shows skill metadata (name, description), full instructions obtained after activation |
+| **Runtime Isolation** | Each activated skill has independent mount path, avoiding file conflicts |
+
+### Comparison with Text Markers
+
+| Aspect | Old Approach (Text Marker) | New Approach (Tool Call) |
+|--------|---------------------------|--------------------------|
+| Activation Method | `[ACTIVATE_SKILL: name]` | `activate` tool call |
+| Instruction Injection | Pre-injected into System Prompt | Dynamically loaded via Tool Result |
+| KV Cache | Affected | Protected |
+| Multi-Skill Support | Multiple markers | Multiple calls |
+
+---
+
+## Creating New Skills
+
+LangBot includes a built-in `create-skill` skill for guiding the creation of new skill packages:
+
+1. Activate the `create-skill` skill
+2. Follow the instructions to prepare skill files
+3. Use the `register_skill` tool to register the skill
+4. The new skill can then be used via `activate`
+
+<Note>
+Built-in skills are stored in `templates/skills/` directory and automatically copied to `data/skills/` on startup.
+</Note>

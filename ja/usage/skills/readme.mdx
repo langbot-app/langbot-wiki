@@ -2,13 +2,13 @@
 title: "スキルシステム (Skills)"
 ---
 
-Skills（スキル）は LangBot の動的スキルシステムで、AI Agent がオンデマンドで特定のタスクをアクティブ化して実行できるようにします。Skills を通じて、Agent が必要な時に専門分野の知識やツールを自動的に読み込むことができます。
+Skills（スキル）は LangBot の動的スキルシステムで、AI Agent が Tool Call メカニズムを通じてオンデマンドで特定のタスクを起動・実行できるようにします。Skills を通じて、Agent が必要な時に専門分野の知識やツールを自動的に読み込むことができます。
 
 ## Skills とは？
 
 Skills は軽量な拡張メカニズムで、Agent に以下の機能を提供します：
 
-- オンデマンドで専門分野の知識を読み込む
+- Tool Call でオンデマンドに専門分野の知識を読み込む
 - 特定タスクのワークフローを実行する
 - 定義済みのコードとリソースにアクセスする
 - 複数のスキルを動的に組み合わせる
@@ -34,113 +34,71 @@ Claude Code の Skills システムには重要な設計決定があります：
 この設計の理由：
 
 1. **KV Cache の保護**: System Prompt を直接変更すると、以前の KV Cache が無効になり、毎回再計算が必要になる
-2. **オンデマンド読み込み**: トリガー条件に一致した時だけスキルが注入され、不必要なトークン消費を削減
+2. **オンデマンド読み込み**: Agent が `activate` ツールを能動的に呼び出した時だけスキルが注入され、不必要なトークン消費を削減
 3. **増分コンテキスト**: Tool Result は増分コンテンツで、既存のキャッシュに影響しない
 
 ### LangBot の設計
 
-LangBot は**レイヤードアーキテクチャ**を採用し、Skills 管理と実行を分離しています：
+LangBot は Claude Code の設計パターンを完全に採用しています：
 
 ```
 ┌─────────────────────────────────────────┐
-│         Skills 管理レイヤー               │
-│  create_skill, list_skills, update...    │
-│  - サンドボックス非依存                   │
-│  - 純粋なメタデータ操作                   │
-│  - プロンプトのみのスキルに適用            │
+│         Agent (LLM)                      │
+│                                          │
+│  ユーザーリクエスト: "このPython          │
+│  プロジェクトを分析して"                   │
+│                                          │
+│  判断: skill: python-analyzer にマッチ    │
+│                                          │
+│  呼び出し: activate(skill_name="python-..│
+│                                          │
 └───────────────────┬─────────────────────┘
-                    │ 必要時
-┌───────────────────▼─────────────────────┐
-│      import_skill_from_directory         │
-│      - ワークスペースアクセスにサンドボックス必要 │
-│      - スクリプト含むスキルパッケージをインポート │
+                    │ Tool Call
+                    ▼
+┌─────────────────────────────────────────┐
+│           activate ツール                 │
+│                                          │
+│  戻り値: Tool Result                     │
+│  - SKILL.md 内容                         │
+│  - マウントパス情報                       │
+│                                          │
 └───────────────────┬─────────────────────┘
                     │
-┌───────────────────▼─────────────────────┐
-│         サンドボックス実行レイヤー         │
-│  exec, read, write, edit                 │
-│  - スキル内のスクリプトを実行              │
-│  - スキルパッケージファイルを操作          │
+                    ▼
+┌─────────────────────────────────────────┐
+│   Agent が継続実行（スキルコンテキスト付き）│
+│                                          │
+│  - exec/read/write/edit でスキルパッケージ│
+│    を操作                                │
+│  - スキル命令に従ってタスクを実行          │
+│  - activate を複数回呼び出し可能          │
+│                                          │
 └─────────────────────────────────────────┘
 ```
 
 ### なぜこの設計なのか？
 
-**1. 利用のハードルを下げる**
+**1. KV Cache 保護**
 
-プロンプトのみのスキル（命令のみ、スクリプトなし）はサンドボックス設定なしで作成・使用可能：
+スキル命令は Tool Result として増分コンテンツで返され、既存の KV Cache を無効化しません。
 
-```yaml
-# このスキルはサンドボックス不要
-name: code-reviewer
-instructions: |
-  コードレビュー時に注目：
-  - コードスタイルの一貫性
-  - 潜在的なセキュリティ脆弱性
-  - パフォーマンス最適化の提案
-```
+**2. プログレッシブディスクロージャー**
 
-**2. 関心事の分離**
+- `activate` ツール説明にはスキルメタデータ（名前、説明）のみ表示
+- 完全な命令は起動後に Tool Result で取得
+- Agent は必要に応じて起動するか選択可能
 
-| 操作タイプ | サンドボックス必要 | 理由 |
-|------------|-------------------|------|
-| プロンプトのみのスキル作成/更新 | 不要 | メタデータのみ、コード実行なし |
-| スクリプト含むスキルのインポート | 必要 | ファイルシステムアクセス必要 |
-| スキル内スクリプトの実行 | 必要 | 分離実行環境必要 |
+**3. 統一されたインタラクションパターン**
 
-**3. セキュリティ**
+- 他のツール呼び出しと一貫したセマンティクス
+- Agent 設計パターンにより適合
+- Function Calling をサポートするモデルに友好的
 
-- 単純な CRUD 操作は Agent にファイルシステムアクセス権限を与える必要がない
-- 必要な時だけサンドボックス分離を有効化
+**4. サンドボックスバックエンドが必要**
 
-**4. パフォーマンス**
-
-- 直接的なメモリ/データベース操作はサンドボックス操作より高速
-- 不要なサンドボックス起動オーバーヘッドを削減
-
-## 仕組み
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Agent (LLM)                              │
-│                                                              │
-│  ユーザーリクエスト: "このPythonプロジェクトを分析して"         │
-│                                                              │
-│  判断: skill: python-analyzer にマッチ                        │
-│                                                              │
-│  出力: [ACTIVATE_SKILL: python-analyzer]                     │
-│                                                              │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Skill Activation                           │
-│                                                              │
-│  1. 起動マーカーを検出（正規表現マッチ）                        │
-│  2. マーカーを削除、スキル命令を System Message として注入      │
-│  3. スキルパッケージを /workspace/.skills/{skill-name}/ にマウント │
-│                                                              │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Agent が継続実行（スキルコンテキスト付き）          │
-│                                                              │
-│  - exec/read/write/edit でスキルパッケージを操作               │
-│  - スキル命令に従ってタスクを実行                               │
-│  - 複数スキルを同時に起動して組み合わせ可能                      │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-<Note>
-**現在の実装**: LangBot はテキストマーカー `[ACTIVATE_SKILL:]` + System Message 注入メカニズムを使用しています。
-
-**TODO 将来の最適化**: Claude Code の設計に従い、Tool Call / Tool Result メカニズムへの移行を検討：
-- メリット: KV Cache を保護、Tool Result は増分コンテンツでキャッシュを無効化しない
-- メリット: ツール呼び出しのセマンティクスと一貫性、Agent 設計パターンにより適合
-- 現在の設計の理由: Function Calling をサポートしないモデルとの互換性、マーカーメカニズムは任意の LLM で動作
-</Note>
+`activate` と `register_skill` ツールはサンドボックスバックエンドが利用可能である必要があります：
+- スキルパッケージは `/workspace/.skills/{skill-name}/` にマウント
+- Agent は `exec`/`read`/`write`/`edit`/`glob`/`grep` でスキルファイルを操作
 
 ## Skill ファイル構造
 
@@ -192,43 +150,53 @@ description: Python プロジェクトの構造、コード品質、依存関係
 
 ## 起動メカニズム
 
-### 自動起動
+### Tool Call による起動
 
-LLM がユーザーリクエストがスキルにマッチすると判断した場合、レスポンスの先頭に起動マーカーを出力：
+Agent は `activate` ツールを呼び出してスキルを起動：
 
-```
-[ACTIVATE_SKILL: python-analyzer]
-```
-
-複数のスキルを同時に起動可能：
-
-```
-[ACTIVATE_SKILL: python-analyzer]
-[ACTIVATE_SKILL: report-generator]
+```json
+{
+  "skill_name": "python-analyzer"
+}
 ```
 
 ### 起動後の効果
 
-1. **命令注入**: スキルの `instructions` が System Prompt に注入される
-2. **パスマウント**: スキルパッケージが `/workspace/.skills/{skill-name}/` にマウントされる
-3. **ツールアクセス**: Agent は `exec`/`read`/`write`/`edit` でスキルファイルを操作可能
+1. **Tool Result 注入**: SKILL.md 内容が Tool Result として返され、コンテキストに注入
+2. **パスマウント**: スキルパッケージが `/workspace/.skills/{skill-name}/` にマウント
+3. **ツールアクセス**: Agent は `exec`/`read`/`write`/`edit`/`glob`/`grep` でスキルファイルを操作可能
+
+### 戻り内容の例
+
+```
+<command-message>The "python-analyzer" skill is activated</command-message>
+<skill-activation>
+<skill-name>python-analyzer</skill-name>
+<mount-path>/workspace/.skills/python-analyzer</mount-path>
+<package-root>/path/to/skill</package-root>
+
+## Instructions
+...SKILL.md 内容...
+
+## Runtime Context
+The skill package is mounted at /workspace/.skills/python-analyzer. Use the standard tools to interact with it:
+- Use `read` to inspect files under /workspace/.skills/python-analyzer
+- Use `exec` with workdir set to /workspace/.skills/python-analyzer to run commands
+- Use `write` and `edit` on that path when the instructions require updating files
+</skill-activation>
+```
 
 ## 組み込みツール
 
-Skills システムは Agent が使用する以下のツールを提供：
+Skills システムは Agent が使用する2つのツールを提供：
 
 | ツール | 機能 | サンドボックス必要 |
 |--------|------|-------------------|
-| `create_skill` | 新しい管理スキルを作成 | 不要 |
-| `list_skills` | すべての管理スキルを一覧 | 不要 |
-| `get_skill` | 単一スキルの詳細を取得 | 不要 |
-| `update_skill` | 既存スキルを更新 | 不要 |
-| `delete_skill` | スキルを削除 | 不要 |
-| `import_skill_from_directory` | ワークスペースからスキルをインポート | 必要 |
-| `reload_skills` | スキルを再読み込み | 不要 |
+| `activate` | スキルを起動 | 必要 |
+| `register_skill` | サンドボックスディレクトリからスキルを登録 | 必要 |
 
 <Note>
-`create_skill`、`list_skills`、`get_skill`、`update_skill`、`delete_skill` はサンドボックスに依存せず、プロンプトのみのスキルを直接操作可能。`import_skill_from_directory` はワークスペースディレクトリにアクセスするためにサンドボックスが必要。
+これらのツールはサンドボックスバックエンド（Docker/Nsjail/E2B）が利用可能である必要があります。バックエンドがない場合、ツールは Agent に提供されません。
 </Note>
 
 ## スキルタイプ
@@ -272,21 +240,6 @@ data-analyzer/
 └── requirements.txt
 ```
 
-## Pipeline へのバインド
-
-Pipeline 設定でスキルをバインドして、その Pipeline で利用可能にできます：
-
-```yaml
-# Pipeline 設定
-ai:
-  local-agent:
-    bound_skills:
-      - python-analyzer
-      - report-generator
-```
-
-バインドされたスキルは、その Pipeline の Agent で選択可能なスキルとして表示されます。
-
 ## クイックスタート
 
 ### 1. 最初のスキルを作成
@@ -317,72 +270,33 @@ description: シンプルなサンプルスキル
 3. 結果を返す
 ```
 
-### 2. Pipeline でバインド
+### 2. 起動をテスト
 
-Pipeline の AI 設定に追加：
+サンドボックスバックエンドが利用可能であることを確認し、スキルの説明にマッチするリクエストを Agent に送信。Agent は自動的に `activate` ツールを呼び出してスキルを起動します。
 
-```yaml
-bound_skills:
-  - my-first-skill
-```
+## 新しいスキルの作成
 
-### 3. 起動をテスト
+### 方法1: 組み込み create-skill スキルを使用
 
-スキルの説明にマッチするリクエストを Agent に送信し、スキルが正しく起動されるか確認。
+LangBot には新しいスキルパッケージの作成をガイドする `create-skill` スキルが組み込まれています：
 
-## スキル管理
+1. `activate(skill_name="create-skill")` を呼び出し
+2. 返された命令に従ってスキルファイルを準備
+3. `register_skill` ツールでスキルを登録
 
-### 既存スキルの確認
+### 方法2: 手動作成
 
-Agent は `list_skills` で全管理スキルを確認：
+1. サンドボックス `/workspace` 下にスキルディレクトリを作成
+2. `SKILL.md` と関連ファイルを記述
+3. `register_skill(path="/workspace/my-skill")` を呼び出して登録
 
-```
-list_skills()
-```
+## 組み込みスキル
 
-戻り値：
+LangBot は起動時に `templates/skills/` から `data/skills/` に組み込みスキルを自動的にコピーします：
 
-```json
-{
-  "skills": [
-    {
-      "name": "python-analyzer",
-      "display_name": "Python プロジェクトアナライザー",
-      "description": "Python プロジェクトを分析..."
-    }
-  ],
-  "count": 1
-}
-```
-
-### スキルの動的作成
-
-Agent は `create_skill` でスキルを動的に作成：
-
-```
-create_skill(
-  name="code-formatter",
-  display_name="コードフォーマッター",
-  description="様々なプログラミング言語のコードをフォーマット",
-  instructions="## 使用方法\n..."
-)
-```
-
-### ワークスペースからインポート
-
-スキルにスクリプトファイルが含まれる場合、サンドボックスで準備してからインポート：
-
-```
-# 1. サンドボックスでスキルディレクトリを作成
-exec("mkdir -p /workspace/my-skill/scripts")
-
-# 2. スキルファイルを書き込み
-write("/workspace/my-skill/SKILL.md", "---\nname: my-skill\n...")
-write("/workspace/my-skill/scripts/main.py", "# メインスクリプト")
-
-# 3. 管理スキルとしてインポート
-import_skill_from_directory(path="/workspace/my-skill")
-```
+| スキル | 説明 |
+|--------|------|
+| `create-skill` | 新しいスキル作成をガイドするスキル |
 
 ## ベストプラクティス
 
@@ -396,6 +310,7 @@ import_skill_from_directory(path="/workspace/my-skill")
 
 - スキルの用途と適用場面を明確に記述
 - LLM がいつ起動するか正しく判断できるよう支援
+- 説明は `activate` ツールの `<available_skills>` リストに表示
 
 ### 3. 命令設計
 

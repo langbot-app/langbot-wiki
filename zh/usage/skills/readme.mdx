@@ -2,13 +2,13 @@
 title: "技能系统 (Skills)"
 ---
 
-Skills（技能）是 LangBot 的动态技能系统，允许 AI Agent 按需激活和执行特定任务的能力。通过 Skills，您可以让 Agent 在需要时自动加载专业领域的知识和工具。
+Skills（技能）是 LangBot 的动态技能系统，允许 AI Agent 通过 Tool Call 机制按需激活和执行特定任务的能力。通过 Skills，您可以让 Agent 在需要时自动加载专业领域的知识和工具。
 
 ## 什么是 Skills？
 
 Skills 是一种轻量级的扩展机制，让 Agent 能够：
 
-- 按需加载专业领域知识
+- 通过 Tool Call 按需加载专业领域知识
 - 执行特定任务的工作流
 - 访问预定义的代码和资源
 - 动态组合多个技能
@@ -34,113 +34,69 @@ Claude Code 的 Skills 系统有一个关键设计决策：**技能内容通过 
 这种设计的原因是：
 
 1. **保护 KV Cache**：直接修改 System Prompt 会导致之前的 KV Cache 失效，每次都需要重新计算
-2. **按需加载**：技能只有在匹配触发条件时才会被注入，减少不必要的 token 消耗
+2. **按需加载**：技能只有在 Agent 主动调用 `activate` 工具时才会被注入，减少不必要的 token 消耗
 3. **增量上下文**：Tool Result 是增量内容，不会影响已有的缓存
 
 ### LangBot 的设计
 
-LangBot 采用**分层架构**，将 Skills 管理和执行分离：
+LangBot 完全采用了 Claude Code 的设计模式：
 
 ```
 ┌─────────────────────────────────────────┐
-│         Skills 管理层                    │
-│  create_skill, list_skills, update...   │
-│  - 不依赖沙箱                            │
-│  - 纯元数据操作                          │
-│  - 适合纯提示词技能                       │
+│         Agent (LLM)                      │
+│                                          │
+│  用户请求："帮我分析这个 Python 项目"     │
+│                                          │
+│  判断：匹配 skill: python-analyzer       │
+│                                          │
+│  调用：activate(skill_name="python-...") │
+│                                          │
 └───────────────────┬─────────────────────┘
-                    │ 需要
-┌───────────────────▼─────────────────────┐
-│      import_skill_from_directory        │
-│      - 需要沙箱访问工作区                 │
-│      - 导入包含脚本的技能包               │
+                    │ Tool Call
+                    ▼
+┌─────────────────────────────────────────┐
+│           activate 工具                  │
+│                                          │
+│  返回：Tool Result                       │
+│  - SKILL.md 内容                         │
+│ - 挂载路径信息                           │
+│                                          │
 └───────────────────┬─────────────────────┘
                     │
-┌───────────────────▼─────────────────────┐
-│         Sandbox 执行层                   │
-│  exec, read, write, edit               │
-│  - 执行技能中的脚本                       │
-│  - 操作技能包文件                         │
+                    ▼
+┌─────────────────────────────────────────┐
+│      Agent 继续执行（带技能上下文）        │
+│                                          │
+│  - 使用 exec/read/write/edit 操作技能包  │
+│  - 按照技能指令执行任务                   │
+│  - 可多次调用 activate 激活多个技能       │
+│                                          │
 └─────────────────────────────────────────┘
 ```
 
 ### 为什么这样设计？
 
-**1. 降低使用门槛**
+**1. KV Cache 保护**
 
-纯提示词技能（只有指令，无脚本）不需要配置沙箱即可创建和使用：
+技能指令通过 Tool Result 返回，是增量内容，不会使已有的 KV Cache 失效。
 
-```yaml
-# 这样的技能不需要沙箱
-name: code-reviewer
-instructions: |
-  审查代码时关注：
-  - 代码风格一致性
-  - 潜在的安全漏洞
-  - 性能优化建议
-```
+**2. 渐进式披露**
 
-**2. 分离关注点**
+- `activate` 工具描述中只显示技能元数据（名称、描述）
+- 完整指令在激活后通过 Tool Result 获取
+- Agent 可以根据需要选择是否激活
 
-| 操作类型 | 需要沙箱 | 原因 |
-|---------|---------|------|
-| 创建/更新纯提示词技能 | 否 | 只是元数据，不执行代码 |
-| 导入包含脚本的技能 | 是 | 需要访问文件系统 |
-| 执行技能中的脚本 | 是 | 需要隔离执行环境 |
+**3. 统一的交互模式**
 
-**3. 安全性**
+- 与其他工具调用语义一致
+- 更符合 Agent 设计模式
+- 对支持 Function Calling 的模型更友好
 
-- 简单的 CRUD 操作不需要给 Agent 文件系统访问权限
-- 只有需要时才启用沙箱隔离
+**4. 需要沙箱后端**
 
-**4. 性能**
-
-- 直接操作内存/数据库比沙箱操作更快
-- 减少不必要的沙箱启动开销
-
-## 工作原理
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Agent (LLM)                              │
-│                                                              │
-│  用户请求："帮我分析这个 Python 项目"                         │
-│                                                              │
-│  判断：匹配 skill: python-analyzer                           │
-│                                                              │
-│  输出：[ACTIVATE_SKILL: python-analyzer]                     │
-│                                                              │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Skill Activation                           │
-│                                                              │
-│  1. 检测激活标记（正则匹配）                                   │
-│  2. 移除标记，注入技能指令为 System Message                    │
-│  3. 技能包挂载到 /workspace/.skills/{skill-name}/            │
-│                                                              │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Agent 继续执行（带技能上下文）                    │
-│                                                              │
-│  - 使用 exec/read/write/edit 操作技能包                      │
-│  - 按照技能指令执行任务                                        │
-│  - 可激活多个技能组合使用                                      │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-<Note>
-**当前实现**：LangBot 使用文本标记 `[ACTIVATE_SKILL:]` + System Message 注入机制。
-
-**TODO 未来优化**：考虑改为 Tool Call / Tool Result 机制，参考 Claude Code 的设计：
-- 优点：保护 KV Cache，Tool Result 是增量内容不会使缓存失效
-- 优点：与工具调用语义一致，更符合 Agent 设计模式
-- 当前设计的原因：兼容不支持 Function Calling 的模型，标记机制对任意 LLM 都可用
-</Note>
+`activate` 和 `register_skill` 工具需要沙箱后端可用：
+- 技能包挂载到 `/workspace/.skills/{skill-name}/`
+- Agent 使用 `exec`/`read`/`write`/`edit`/`glob`/`grep` 操作技能文件
 
 ## Skill 文件结构
 
@@ -192,43 +148,53 @@ description: 分析 Python 项目结构、代码质量和依赖关系
 
 ## 激活机制
 
-### 自动激活
+### Tool Call 激活
 
-当 LLM 判断用户请求匹配某个技能时，会在响应开头输出激活标记：
+Agent 通过调用 `activate` 工具来激活技能：
 
-```
-[ACTIVATE_SKILL: python-analyzer]
-```
-
-多个技能可以同时激活：
-
-```
-[ACTIVATE_SKILL: python-analyzer]
-[ACTIVATE_SKILL: report-generator]
+```json
+{
+  "skill_name": "python-analyzer"
+}
 ```
 
 ### 激活后效果
 
-1. **注入指令**：技能的 `instructions` 被注入到 System Prompt
+1. **Tool Result 注入**：SKILL.md 内容作为 Tool Result 返回，注入到上下文
 2. **挂载路径**：技能包挂载到 `/workspace/.skills/{skill-name}/`
-3. **工具访问**：Agent 可以通过 `exec`/`read`/`write`/`edit` 操作技能文件
+3. **工具访问**：Agent 可以通过 `exec`/`read`/`write`/`edit`/`glob`/`grep` 操作技能文件
+
+### 返回内容示例
+
+```
+<command-message>The "python-analyzer" skill is activated</command-message>
+<skill-activation>
+<skill-name>python-analyzer</skill-name>
+<mount-path>/workspace/.skills/python-analyzer</mount-path>
+<package-root>/path/to/skill</package-root>
+
+## Instructions
+...SKILL.md 内容...
+
+## Runtime Context
+The skill package is mounted at /workspace/.skills/python-analyzer. Use the standard tools to interact with it:
+- Use `read` to inspect files under /workspace/.skills/python-analyzer
+- Use `exec` with workdir set to /workspace/.skills/python-analyzer to run commands
+- Use `write` and `edit` on that path when the instructions require updating files
+</skill-activation>
+```
 
 ## 内置工具
 
-Skills 系统提供以下工具供 Agent 使用：
+Skills 系统提供两个工具供 Agent 使用：
 
 | 工具 | 功能 | 需要沙箱 |
 |------|------|---------|
-| `create_skill` | 创建新的托管技能 | 否 |
-| `list_skills` | 列出所有托管技能 | 否 |
-| `get_skill` | 获取单个技能详情 | 否 |
-| `update_skill` | 更新现有技能 | 否 |
-| `delete_skill` | 删除技能 | 否 |
-| `import_skill_from_directory` | 从工作区导入技能 | 是 |
-| `reload_skills` | 重新加载技能 | 否 |
+| `activate` | 激活一个技能 | 是 |
+| `register_skill` | 从沙箱目录注册技能 | 是 |
 
 <Note>
-`create_skill`、`list_skills`、`get_skill`、`update_skill`、`delete_skill` 不依赖沙箱，可以直接操作纯提示词技能。`import_skill_from_directory` 需要沙箱来访问工作区目录。
+这两个工具需要沙箱后端（Docker/Nsjail/E2B）可用。如果没有任何后端可用，工具将不会提供给 Agent。
 </Note>
 
 ## 技能类型
@@ -272,21 +238,6 @@ data-analyzer/
 └── requirements.txt
 ```
 
-## 绑定到 Pipeline
-
-可以在 Pipeline 配置中绑定技能，使其在该 Pipeline 中可用：
-
-```yaml
-# Pipeline 配置
-ai:
-  local-agent:
-    bound_skills:
-      - python-analyzer
-      - report-generator
-```
-
-绑定的技能会在该 Pipeline 的 Agent 中显示为可选技能。
-
 ## 快速开始
 
 ### 1. 创建第一个技能
@@ -317,72 +268,33 @@ description: 一个简单的示例技能
 3. 返回结果
 ```
 
-### 2. 在 Pipeline 中绑定
+### 2. 测试激活
 
-在 Pipeline 的 AI 配置中添加：
+确保沙箱后端可用，然后向 Agent 发送匹配技能描述的请求，Agent 会自动调用 `activate` 工具激活技能。
 
-```yaml
-bound_skills:
-  - my-first-skill
-```
+## 创建新技能
 
-### 3. 测试激活
+### 方式一：使用内置 create-skill 技能
 
-向 Agent 发送匹配技能描述的请求，观察 Agent 是否正确激活技能。
+LangBot 内置了 `create-skill` 技能，用于引导创建新的技能包：
 
-## 技能管理
+1. 调用 `activate(skill_name="create-skill")`
+2. 按照返回的指令准备技能文件
+3. 使用 `register_skill` 工具注册技能
 
-### 查看已有技能
+### 方式二：手动创建
 
-Agent 可以使用 `list_skills` 查看所有托管技能：
+1. 在沙箱 `/workspace` 下创建技能目录
+2. 编写 `SKILL.md` 和相关文件
+3. 调用 `register_skill(path="/workspace/my-skill")` 注册
 
-```
-list_skills()
-```
+## 内置技能
 
-返回：
+LangBot 启动时会自动从 `templates/skills/` 复制内置技能到 `data/skills/`：
 
-```json
-{
-  "skills": [
-    {
-      "name": "python-analyzer",
-      "display_name": "Python 项目分析器",
-      "description": "分析 Python 项目..."
-    }
-  ],
-  "count": 1
-}
-```
-
-### 动态创建技能
-
-Agent 可以使用 `create_skill` 动态创建技能：
-
-```
-create_skill(
-  name="code-formatter",
-  display_name="代码格式化器",
-  description="格式化各种编程语言的代码",
-  instructions="## 使用方法\n..."
-)
-```
-
-### 从工作区导入
-
-如果技能包含脚本文件，先在沙箱中准备，再导入：
-
-```
-# 1. 在沙箱中创建技能目录
-exec("mkdir -p /workspace/my-skill/scripts")
-
-# 2. 写入技能文件
-write("/workspace/my-skill/SKILL.md", "---\nname: my-skill\n...")
-write("/workspace/my-skill/scripts/main.py", "# 主脚本")
-
-# 3. 导入到托管技能
-import_skill_from_directory(path="/workspace/my-skill")
-```
+| 技能 | 描述 |
+|------|------|
+| `create-skill` | 引导创建新技能的技能 |
 
 ## 最佳实践
 
@@ -396,6 +308,7 @@ import_skill_from_directory(path="/workspace/my-skill")
 
 - 清晰说明技能的用途和适用场景
 - 帮助 LLM 正确判断何时激活
+- 描述会显示在 `activate` 工具的 `<available_skills>` 列表中
 
 ### 3. 指令设计
 
