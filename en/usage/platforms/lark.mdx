@@ -2,6 +2,37 @@
 title: "Connect to Feishu Bot"
 ---
 
+## One-Click Setup (Recommended)
+
+LangBot supports one-click Feishu app creation with automatic credential filling — no manual copy-paste needed.
+
+1. Open LangBot WebUI, go to **Bots > Create Bot**
+2. Enter a bot name, select `Feishu` as the platform/adapter
+3. In the **One-Click Create App** section that appears, click the **Start** button
+
+![One-Click Create Feishu App](/images/zh/deploy/bots/lark/lark_oneclick_qrcode.png)
+
+4. Scan the QR code with Feishu. On your phone, you'll see the Feishu Open Platform's bot creation page
+5. Choose to **use an existing app** or **create a new one**:
+
+![Select on Phone](/images/zh/deploy/bots/lark/lark_select_or_create_bot.png)
+
+If you choose an existing app, a list of your apps will be shown:
+
+![Select Existing App](/images/zh/deploy/bots/lark/lark_select_existing.png)
+
+6. After authorization, the phone will show "Configuration Successful", and app_id / app_secret will be **auto-filled** in the LangBot WebUI
+
+![Config Success](/images/zh/deploy/bots/lark/lark_config_success.png)
+
+7. **Manually fill in the bot name** — it must match the Feishu bot name, otherwise the bot won't receive messages in groups
+
+![Fill Bot Name](/images/zh/deploy/bots/lark/lark_fill_bot_name.png)
+
+8. Click **Submit** to complete
+
+---
+
 ## Create Bot
 
 Go to the [Feishu Open Platform](https://open.feishu.cn/app), log in, and create an enterprise self-built application or store application. [(difference introduction)](https://open.feishu.cn/document/platform-overveiw/overview)
@@ -25,7 +56,7 @@ If card streaming permissions are required, additionally add the following card 
 If you need to change the default card template, you need to modify the card template in the platform adapter's code yourself.
 </Warning>
 
-## Connect to LangBot
+### Connect to LangBot
 
 Find `app_id` and `app_secret` on the `Credentials and Basic Information` page.
 
@@ -57,7 +88,7 @@ Note that in Webhook mode, LangBot needs to be deployed on a server with a publi
 **No public server?** [LangBot Cloud](https://space.langbot.app/cloud) includes built-in domain and HTTPS — get Lark bots working out of the box.
 </Tip>
 
-## Configure Event Subscription
+### Configure Event Subscription
 
 Go to the `Events and Callbacks` page, configure the subscription method as `Long Connection`:
 
@@ -85,7 +116,7 @@ Please start LangBot first, fill in the Webhook address obtained from LangBot he
 
 </Warning>
 
-## Publish Bot
+### Publish Bot
 
 Click `Create Version` at the top, fill in the version number and other information, click `Save` below.
 

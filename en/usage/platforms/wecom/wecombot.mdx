@@ -2,8 +2,36 @@
 title: "Deploying WeCom Intelligent Bot"
 ---
 
+## One-Click Setup (Recommended)
 
-## Creating a Bot
+LangBot supports one-click WeCom bot creation with automatic BotId and Secret filling — no manual copy-paste needed.
+
+1. Open LangBot WebUI, go to **Bots > Create Bot**
+2. Enter a bot name, select `WeCom Intelligent Bot` as the platform/adapter
+3. In the **One-Click Create Bot** section that appears, click the **Start** button
+
+![One-Click Create Bot](/images/zh/deploy/bots/wecom/wecombot/wecombot_oneclick.png)
+
+4. Scan the QR code with WeCom. On your phone, tap **One-Click Create Intelligent Bot**
+
+![Phone One-Click Create](/images/zh/deploy/bots/wecom/wecombot/wecombot_scan_create.png)
+
+5. After authorization, BotId and Secret will be **auto-filled** in the form
+6. **Manually fill in the bot name** — it must match the bot name in WeCom
+
+![Fill Bot Name](/images/zh/deploy/bots/wecom/wecombot/wecombot_fill_name.png)
+
+7. Click **Submit** to complete
+
+<Warning>
+WeCom Intelligent Bot **cannot use existing bots** for one-click setup — only new bots. To use an existing bot, refer to the manual configuration below.
+</Warning>
+
+---
+
+## Manual Configuration
+
+### Creating a Bot
 
 First, log in to the [WeCom Admin Console](https://work.weixin.qq.com/wework_admin/frame#/).
 
@@ -19,14 +47,14 @@ Click `Create Bot` and select `Manual Creation`, scroll to the bottom of the pag
 
 ![Create via API Mode](/images/zh/deploy/bots/wecom/wecombot/wecombot_3.png)
 
-## Long Connection Configuration
+### Long Connection Configuration
 
-### Enable Long Connection API Mode
+#### Enable Long Connection API Mode
 In the WeCom Admin Console, go to the Intelligent Bot configuration page, enable "API Mode" and select "Long Connection":
 
 ![Long Connection Mode](/images/zh/deploy/bots/wecom/wecombot/wecombot_9.png)
 
-### Obtaining Credentials
+#### Obtaining Credentials
 After enabling the Long Connection API mode, you need to obtain the following credentials to establish the connection:
 
 | Credential | Description |
@@ -41,7 +69,7 @@ Note:
 - Mode switching impact: API mode can only use one method (long connection or callback URL). Switching to "Callback URL" mode will invalidate existing long connections; conversely, switching from "Callback URL" to "Long Connection" mode will make the original callback URL no longer effective
 </Warning>
 
-### Configuring the Bot
+#### Configuring the Bot
 Start the LangBot main program, select the adapter `WeCom Intelligent Bot`, and fill in the configuration items.
 Enter the BotID, Secret, and bot name from the long connection into the fields, click save and enable.
 > The bot name must match the name of the newly created bot, otherwise the bot will not respond in group chats.
@@ -49,7 +77,7 @@ Enter the BotID, Secret, and bot name from the long connection into the fields, 
 ![Long Connection Configuration](/images/zh/deploy/bots/wecom/wecombot/wecombot_10.png)
 
 
-## URL Callback Configuration
+### URL Callback Configuration
 
 Click to randomly generate Token and EncodingAESKey, then fill in the basic bot information above. **Pay attention to setting the visibility scope**.
 
@@ -57,7 +85,7 @@ Click to randomly generate Token and EncodingAESKey, then fill in the basic bot 
 
 Click `My Company` in the left sidebar and save the Company ID at the bottom.
 
-### Configuring Callback URL
+#### Configuring Callback URL
 
 Start the LangBot main program, select the adapter `WeCom Intelligent Bot`, and fill in the configuration items.  
 Among them, the token is Token, the Encoding-AESKey is EncodingAESKey, and the Bot ID can be filled in as xxx (or filled in randomly, it will be changed later). After filling in, click  
@@ -80,14 +108,14 @@ Details page after successful creation:
 
 Copy the `Bot ID` and bot name from the WeCom robot details page, return to the LangBot management page, change the Bot ID of the deployed intelligent robot to the copied ID, fill in the bot name, and restart the robot.
 
-## Enable Streaming
+### Enable Streaming
 
 A streaming toggle has been added for locally deployed models or models that do not support streaming.
 
 ![Streaming Toggle](/images/zh/deploy/bots/wecom/wecombot/wecombot_12.png)
 
 
-## Start Using
+### Start Using
 
 Enter WeCom, click `➕`, as shown:
 
@@ -97,6 +125,6 @@ Click `Company-Created`, select the created bot, and enter the chat interface.
 
 Similarly, if you want to invite the bot to a group chat, click the add member button in the group chat and add the bot from there.
 
-## Effect Images
+### Effect Images
 
 ![Effect Image 1](/images/zh/deploy/bots/wecom/wecombot/wecombot_7.png)

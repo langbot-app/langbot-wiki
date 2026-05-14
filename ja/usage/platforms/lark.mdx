@@ -2,6 +2,37 @@
 title: "Feishu ボットに接続"
 ---
 
+## 一键設定（おすすめ）
+
+LangBot は Feishu アプリのワンクリック作成とクレデンシャルの自動入力に対応しています。手動でのコピペは不要です。
+
+1. LangBot WebUI を開き、**ボット > ボットを作成** に移動
+2. ボット名を入力し、プラットフォーム/アダプターで `飞书` を選択
+3. 表示される **一键创建应用** エリアで **開始** ボタンをクリック
+
+![一键创建飞书应用](/images/zh/deploy/bots/lark/lark_oneclick_qrcode.png)
+
+4. 飛書で QR コードをスキャンし、手机端で飞書開放平台のボット作成ページが表示されます
+5. **既存のアプリを使用** または **新規作成** を選択できます：
+
+![手机端で選択](/images/zh/deploy/bots/lark/lark_select_or_create_bot.png)
+
+既存のアプリを選択すると、アプリ一覧が表示されます：
+
+![既存アプリを選択](/images/zh/deploy/bots/lark/lark_select_existing.png)
+
+6. 認証成功後、手机端に「設定成功」と表示され、app_id と app_secret が LangBot WebUI に**自動入力**されます
+
+![設定成功](/images/zh/deploy/bots/lark/lark_config_success.png)
+
+7. **ボット名を手動で入力** — 飛書のボット名と一致させる必要があります。一致しない場合、グループ内でメッセージを受信できません
+
+![ボット名の入力](/images/zh/deploy/bots/lark/lark_fill_bot_name.png)
+
+8. **送信** をクリックして完了
+
+---
+
 ## ボットの作成
 
 [Feishu Open Platform](https://open.feishu.cn/app)にアクセスし、ログインして、企業の自己構築アプリケーションまたはストアアプリケーションを作成します。[(違いの紹介)](https://open.feishu.cn/document/platform-overveiw/overview)
@@ -25,7 +56,7 @@ title: "Feishu ボットに接続"
 デフォルトのカードテンプレートを変更する必要がある場合は、プラットフォームアダプターのコードでカードテンプレートを自分で修正する必要があります。
 </Warning>
 
-## LangBot に接続
+### LangBot に接続
 
 「認証情報と基本情報」ページで `app_id` と `app_secret` を見つけます。
 
@@ -57,7 +88,7 @@ Webhook モードでは、LangBot をパブリック IP を持つサーバーに
 **パブリックサーバーがありませんか？** [LangBot Cloud](https://space.langbot.app/cloud) にはドメインと HTTPS が含まれており、Lark ボットをすぐに使用できます。
 </Tip>
 
-## イベントサブスクリプションの設定
+### イベントサブスクリプションの設定
 
 「イベントとコールバック」ページに移動し、サブスクリプション方式を「長時間接続」として設定します：
 
@@ -85,7 +116,7 @@ Webhook モード設定方法：
 
 </Warning>
 
-## ボットの公開
+### ボットの公開
 
 上部の「バージョンを作成」をクリックし、バージョン番号とその他の情報を入力し、下部の「保存」をクリックします。
 

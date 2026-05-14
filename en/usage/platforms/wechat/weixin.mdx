@@ -6,43 +6,35 @@ title: "Connect Personal WeChat via OpenClaw"
 
 [OpenClaw](https://github.com/dingxiang-me/OpenClaw-Wechat) is an open-source AI Agent framework. Through the OpenClaw WeChat adapter, you can connect LangBot to your personal WeChat account, with support for group chats, streaming output, whitelist control, and more.
 
-## Prerequisites
+## Quick Scan Login (Recommended)
 
-- LangBot is deployed and running
-
-<Warning>
-Please make sure your mobile WeChat version is the latest **8.0.69** or above, otherwise the OpenClaw WeChat adapter may not work properly. You can check your version in WeChat under "Me" -> "Settings" -> "About WeChat".
-</Warning>
-
-## Configure in LangBot
-
-### 1. Create Adapter
-
-Launch the LangBot main program, create a new bot, fill in the bot name, select `OpenClaw 微信` as the platform/adapter, and click Submit.
-
-![Create WeChat Adapter](/images/zh/deploy/bots/wexin/wexin_01.png)
-
-### 2. Enable Adapter
-
-Enable the adapter and save the configuration.
-
-![Enable Adapter](/images/zh/deploy/bots/wexin/wexin_02.png)
-
-### 3. Scan QR Code to Log In
-
-Open the logs and check the log entry with an image icon to get the login QR code.
-
-![Open Logs to View QR Code](/images/zh/deploy/bots/wexin/wexin_03.png)
-
-Use your mobile WeChat to scan the QR code to complete the login.
+LangBot supports one-click scan login for WeChat, automatically filling in credentials — no manual token entry needed.
 
 <Warning>
-Before scanning, please confirm again that your WeChat version is the latest **8.0.69** or above, otherwise the scan may fail.
+Please make sure your mobile WeChat version is **8.0.69** or above, otherwise it may not work properly.
 </Warning>
 
-![Scan QR Code](/images/zh/deploy/bots/wexin/wexin_04.jpg)
+1. Open LangBot WebUI, go to **Bots > Create Bot**
+2. Enter a bot name, select `Personal WeChat Bot` as the platform/adapter
+3. In the **Scan Login** section that appears, click the **Start** button
 
-### 4. Confirm Successful Login
+![Select Scan Login](/images/zh/deploy/bots/wexin/wexin_scan_login.png)
+
+4. Scan the QR code with WeChat. On your phone, you'll see "Connect new OpenClaw to WeChat", tap **Continue**
+
+![Scan and Connect](/images/zh/deploy/bots/wexin/wexin_scan_connect.png)
+
+5. After authorization, the token and account ID will be **auto-filled** in the form
+
+![Config Auto Fill](/images/zh/deploy/bots/wexin/wexin_config_auto_fill.png)
+
+6. Click **Submit** to complete
+
+<Warning>
+If connection fails, please confirm your WeChat version is 8.0.69 or above.
+</Warning>
+
+### Confirm Successful Login
 
 After scanning successfully, your phone will enter the ClawBot chat page on WeChat.
 

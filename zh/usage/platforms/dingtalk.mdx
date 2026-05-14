@@ -4,7 +4,45 @@ title: "部署钉钉机器人"
 
 部署 LangBot 到钉钉。
 
-## 创建机器人
+## 一键配置（推荐）
+
+LangBot 支持一键创建钉钉应用并自动填写凭证，无需手动复制粘贴。
+
+1. 打开 LangBot WebUI，进入**机器人 > 创建机器人**
+2. 填写机器人名称，平台/适配器选择 `钉钉`
+3. 在下方出现的**一键创建应用**区域，点击右侧的 **开始** 按钮
+
+![一键创建应用](/images/zh/deploy/bots/dingtalk/dingtalk_oneclick_qrcode.png)
+
+4. 使用钉钉扫描弹出的二维码，手机端会提示选择加入的组织
+
+![选择组织](/images/zh/deploy/bots/dingtalk/dingtalk_select_org.png)
+
+5. 选择组织后，可以**创建新的**机器人或**选择已有的**机器人
+
+![创建或选择机器人](/images/zh/deploy/bots/dingtalk/dingtalk_create_or_select.png)
+
+6. 授权成功后，手机端会显示「配置成功」，同时 LangBot WebUI 中的 Client ID 和 Client Secret 会**自动填入**
+
+![配置成功](/images/zh/deploy/bots/dingtalk/dingtalk_config_success.png)
+
+7. **手动填写机器人名称**（名称需与钉钉中创建的机器人一致），以及**机器人代码**（识图、上传文件等功能必填，需前往钉钉开发者后台 > 机器人配置中获取）
+
+![填写机器人名称和代码](/images/zh/deploy/bots/dingtalk/dingtalk_fill_name_and_code.png)
+
+8. 点击**提交**，完成创建
+
+<Warning>
+一键配置完成后即可正常进行文字收发消息。但有以下限制：
+- **图片/文件收发**：需要填写机器人代码（RobotCode）才能支持，如一键配置时未填写，请前往钉钉开发者后台 > 机器人配置中获取并补填
+- **流式回复**：需要手动配置卡片模板ID才能开启，参考下方「配置机器人」中的卡片模板创建步骤
+</Warning>
+
+---
+
+## 手动配置
+
+### 创建机器人
 
 进入 [钉钉开发者后台](https://open-dev.dingtalk.com/?spm=ding_open_doc.document.0.0.74f445e5MkawbT#/)，登录并且进入组织。登录成功后进入开放平台，是这样的：
 ![钉钉开放平台](/images/zh/deploy/bots/dingtalk/dingtalk1.png)
@@ -14,7 +52,7 @@ title: "部署钉钉机器人"
 进入机器人的后台，比如我们有机器人 langbot2 ,那么它的管理页面是这样的：
 ![机器人页面](/images/zh/deploy/bots/dingtalk/dingtalk2.png)
 
-## 配置机器人
+### 配置机器人
 
 点击 `添加应用能力`，`其他应用能力`，`机器人`中的 `配置`，点击配置并且填写信息之后，如下图：
 ![机器人配置](/images/zh/deploy/bots/dingtalk/dingtalk3.png)
@@ -58,7 +96,7 @@ title: "部署钉钉机器人"
 ![复制模板id](../../../images/zh/deploy/bots/dingtalk/dingtalk15.png)
 
 
-## 填写配置信息
+### 填写配置信息
 
 点击`凭证与基础信息`，记录`Client ID` 和 `Client Secret`，
 点击`应用能力`，`机器人`，记录下 RobotCode 和 机器人名称。
@@ -75,7 +113,7 @@ title: "部署钉钉机器人"
 
 **启动 LangBot** 。
 
-## 添加机器人
+### 添加机器人
 
 本文使用钉钉 windows 桌面版举例，点击上方的`搜索`，`功能`，然后输入刚才机器人创建的名称，如图：
 ![robot_png](/images/zh/deploy/bots/dingtalk/dingtalk5.png)

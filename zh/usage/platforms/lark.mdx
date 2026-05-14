@@ -2,7 +2,40 @@
 title: "接入飞书机器人"
 ---
 
-## 创建机器人
+## 一键配置（推荐）
+
+LangBot 支持一键创建飞书应用并自动填写凭证，无需手动复制粘贴。
+
+1. 打开 LangBot WebUI，进入**机器人 > 创建机器人**
+2. 填写机器人名称，平台/适配器选择 `飞书`
+3. 在下方出现的**一键创建应用**区域，点击右侧的 **开始** 按钮
+
+![一键创建飞书应用](/images/zh/deploy/bots/lark/lark_oneclick_qrcode.png)
+
+4. 使用飞书扫描弹出的二维码，手机端会进入飞书开放平台的创建智能体应用页面
+5. 可以选择**已有应用**或**立即创建**新应用：
+
+![手机端选择](/images/zh/deploy/bots/lark/lark_select_or_create_bot.png)
+
+如果选择已有应用，会展示应用列表供你选择：
+
+![选择已有应用](/images/zh/deploy/bots/lark/lark_select_existing.png)
+
+6. 授权成功后，手机端会显示「配置成功」，同时 LangBot WebUI 中的应用ID、应用密钥等凭证会**自动填入**
+
+![配置成功](/images/zh/deploy/bots/lark/lark_config_success.png)
+
+7. **手动填写机器人名称**，名称必须与飞书机器人名称一致，否则机器人将无法在群内正常接收消息
+
+![手动填写机器人名称](/images/zh/deploy/bots/lark/lark_fill_bot_name.png)
+
+8. 点击**提交**，完成创建
+
+---
+
+## 手动配置
+
+### 创建机器人
 
 前往[飞书开放平台](https://open.feishu.cn/app)，登录后，创建企业自建应用/商店应用 [(区别介绍)](https://open.feishu.cn/document/platform-overveiw/overview)。
 
@@ -25,7 +58,7 @@ title: "接入飞书机器人"
 默认卡片模板如需更换，需要自己去平台适配器的代码中修改卡片模板
 </Warning>
 
-## 对接 LangBot
+### 对接 LangBot
 
 在`凭证与基础信息`页找到`app_id`和`app_secret`。
 
@@ -57,7 +90,7 @@ title: "接入飞书机器人"
 **没有公网服务器？** [LangBot Cloud](https://space.langbot.app/cloud) 自带域名和 HTTPS，无需自行配置，开箱即用飞书机器人。
 </Tip>
 
-## 配置事件订阅
+### 配置事件订阅
 
 前往`事件与回调`页，配置订阅方式为`长连接`：
 
@@ -85,7 +118,7 @@ Webhook 模式配置方式：
 
 </Warning>
 
-## 发布机器人
+### 发布机器人
 
 点击顶部`创建版本`，填写版本号等信息，点击下方`保存`。
 

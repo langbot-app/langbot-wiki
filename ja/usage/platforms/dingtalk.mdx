@@ -4,7 +4,45 @@ title: "DingTalk ボットのデプロイ"
 
 DingTalk に LangBot をデプロイします。
 
-## ボットの作成
+## 一键設定（おすすめ）
+
+LangBot は DingTalk アプリのワンクリック作成とクレデンシャルの自動入力に対応しています。手動でのコピペは不要です。
+
+1. LangBot WebUI を開き、**ボット > ボットを作成** に移動
+2. ボット名を入力し、プラットフォーム/アダプターで `钉钉` を選択
+3. 表示される **一键创建应用** エリアで **開始** ボタンをクリック
+
+![一键创建應用](/images/zh/deploy/bots/dingtalk/dingtalk_oneclick_qrcode.png)
+
+4. DingTalk で QR コードをスキャンし、手机端で组织を選択
+
+![組織を選択](/images/zh/deploy/bots/dingtalk/dingtalk_select_org.png)
+
+5. **新しいボットを作成** または **既存のボットを選択** できます
+
+![作成または選択](/images/zh/deploy/bots/dingtalk/dingtalk_create_or_select.png)
+
+6. 認証成功後、手机端に「設定成功」と表示され、Client ID と Client Secret が LangBot WebUI に**自動入力**されます
+
+![設定成功](/images/zh/deploy/bots/dingtalk/dingtalk_config_success.png)
+
+7. **ボット名を手動で入力**（DingTalk のボット名と一致させる必要があります）と**ロボットコード**（画像/ファイル機能に必須、DingTalk 開発者コンソール > ボット設定から取得）を入力
+
+![名前とコードの入力](/images/zh/deploy/bots/dingtalk/dingtalk_fill_name_and_code.png)
+
+8. **送信** をクリックして完了
+
+<Warning>
+一键設定後、テキストの送受信はすぐに利用できます。ただし：
+- **画像/ファイル対応**：ロボットコード（RobotCode）の入力が必要です。一键設定時に未入力の場合は、DingTalk 開発者コンソール > ボット設定から取得して入力してください
+- **ストリーミング返信**：カードテンプレート ID の手動設定が必要です。下記「ボットの設定」のカードテンプレート作成セクションを参照してください
+</Warning>
+
+---
+
+## 手動設定
+
+### ボットの作成
 
 [DingTalk 開発者バックエンド](https://open-dev.dingtalk.com/?spm=ding_open_doc.document.0.0.74f445e5MkawbT#/)にアクセスし、ログインして組織に入ります。ログインに成功したら、オープンプラットフォームに入ります。以下のように表示されます：
 ![DingTalk Open Platform](/images/zh/deploy/bots/dingtalk/dingtalk1.png)
@@ -14,7 +52,7 @@ DingTalk に LangBot をデプロイします。
 ボットのバックエンドに入ります。例えば、langbot2 という名前のボットがある場合、管理ページは以下のように表示されます：
 ![Bot Page](/images/zh/deploy/bots/dingtalk/dingtalk2.png)
 
-## ボットの設定
+### ボットの設定
 
 「アプリケーション機能を追加」、「その他のアプリケーション機能」、「ロボット」の「設定」をクリックし、設定をクリックして情報を入力します。以下のように：
 ![Bot Configuration](/images/zh/deploy/bots/dingtalk/dingtalk3.png)
@@ -57,7 +95,7 @@ DingTalk に LangBot をデプロイします。
 ![Save](../../../images/zh/deploy/bots/dingtalk/dingtalk14.png)
 ![Copy template ID](../../../images/zh/deploy/bots/dingtalk/dingtalk15.png)
 
-## 設定情報の入力
+### 設定情報の入力
 
 「認証情報と基本情報」をクリックし、「Client ID」と「Client Secret」を記録します。
 「アプリケーション機能」、「ロボット」をクリックし、RobotCode とロボット名を記録します。
@@ -73,7 +111,7 @@ DingTalk に LangBot をデプロイします。
 
 **LangBot を起動します**。
 
-## ボットの追加
+### ボットの追加
 
 この記事では DingTalk Windows デスクトップ版を例として使用します。上部の「検索」、「機能」をクリックし、先ほど作成したボットの名前を入力します。以下のように：
 ![robot_png](/images/zh/deploy/bots/dingtalk/dingtalk5.png)
