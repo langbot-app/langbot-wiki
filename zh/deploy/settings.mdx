@@ -112,6 +112,23 @@ monitoring:
         check_interval_hours: 1
         # 每个监控表单批删除的过期记录数量
         delete_batch_size: 1000
+box:
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', 或 'e2b'。BOX_BACKEND 环境变量优先。
+    runtime:
+        endpoint: ''  # 外部 Box Runtime 基础 URL，如 'ws://127.0.0.1:5410'。留空则使用本地自动管理的运行时。
+    local:
+        profile: 'default'
+        image: ''  # 自定义本地沙箱镜像。留空使用 profile 默认值。
+        host_root: './data/box'  # 本地工作区挂载的主机根目录。Docker 部署时使用 '/workspaces'。
+        default_workspace: ''  # 默认为 '<host_root>/default'。
+        allowed_mount_roots:  # 默认为 ['<host_root>']。
+            - './data/box'
+            - '/tmp'
+        workspace_quota_mb: null  # 可选磁盘配额覆盖 (>= 0)。null 表示使用 profile 默认值。
+    e2b:
+        api_key: ''  # 也可通过 E2B_API_KEY 环境变量设置。
+        api_url: ''  # 自托管部署的自定义 API URL。
+        template: ''  # 默认模板 ID（如 'base', 'python-3.11'）。
 space:
     # Space 服务 URL
     url: 'https://space.langbot.app'

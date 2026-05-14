@@ -35,7 +35,7 @@ Meanwhile, the sandbox provides security isolation:
 ┌─────────────────────────────────────────────────────────────┐
 │                    LangBot Main Process                      │
 │                                                              │
-│  Agent (LLM) ──> Native Tools (exec/read/write/edit)        │
+│  Agent (LLM) ──> Native Tools (exec/read/write/edit/glob/grep)  │
 │                           │                                  │
 │                     BoxService                               │
 │                           │                                  │
@@ -75,7 +75,7 @@ Use the `backend` config option: `local` auto-selects Docker or Nsjail; `docker`
 
 ## Built-in Tools
 
-The sandbox feature provides four built-in tools for agents:
+The sandbox feature provides six built-in tools for agents:
 
 | Tool | Function | Example |
 |------|----------|---------|
@@ -83,9 +83,12 @@ The sandbox feature provides four built-in tools for agents:
 | `read` | Read workspace file contents | Read `/workspace/data.json` |
 | `write` | Create or overwrite files | Write new config file |
 | `edit` | Edit existing files (string replacement) | Modify a function in code |
+| `glob` | Find files by pattern matching | Find `**/*.py` files |
+| `grep` | Search file contents by regex | Search for keywords in code |
 
 <Note>
-The `exec` tool runs commands inside the sandbox container; `read`/`write`/`edit` operate directly on the host directory mapped to `/workspace`.
+- The `exec` tool runs commands inside the sandbox container; `read`/`write`/`edit`/`glob`/`grep` operate directly on the host directory mapped to `/workspace`.
+- When no backend (Docker/Nsjail/E2B) is available, these tools will not be provided to the Agent.
 </Note>
 
 ## Scope and Lifecycle
@@ -128,7 +131,7 @@ Default working directory for different backends:
 | Nsjail | `/workspace` | Mounts host's `host_root` directory |
 | E2B | `/home/user/workspace` | Cloud sandbox writable directory |
 
-Agent operations via `exec`/`read`/`write`/`edit` tools all work on files under `/workspace`. E2B backend automatically maps paths to `/home/user/workspace`.
+Agent operations via `exec`/`read`/`write`/`edit`/`glob`/`grep` tools all work on files under `/workspace`. E2B backend automatically maps paths to `/home/user/workspace`.
 
 ### Mount Configuration
 
@@ -160,7 +163,7 @@ box:
 ```
 
 3. Start LangBot, sandbox feature is automatically enabled
-4. Agent will automatically have `exec`/`read`/`write`/`edit` tools
+4. Agent will automatically have `exec`/`read`/`write`/`edit`/`glob`/`grep` tools
 
 <Tip>
 Sandbox feature is automatically enabled—as long as the backend is available, the Agent will have the built-in tools. No manual activation in pipeline required.
