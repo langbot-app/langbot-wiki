@@ -408,10 +408,15 @@
               },
               {
                 "group": "配置机器人",
+                "icon": "robot",
                 "pages": [
                   "zh/usage/platforms/readme",
                   {
                     "group": "企业微信",
+                    "icon": {
+                      "name": "building-user",
+                      "style": "solid"
+                    },
                     "pages": [
                       "zh/usage/platforms/wecom/wecom",
                       "zh/usage/platforms/wecom/wecomcs",
@@ -420,6 +425,10 @@
                   },
                   {
                     "group": "微信",
+                    "icon": {
+                      "name": "weixin",
+                      "style": "brands"
+                    },
                     "pages": [
                       "zh/usage/platforms/wechat/weixin",
                       "zh/usage/platforms/wechat/wechatpad"
@@ -427,6 +436,10 @@
                   },
                   {
                     "group": "QQ 官方机器人",
+                    "icon": {
+                      "name": "qq",
+                      "style": "brands"
+                    },
                     "pages": [
                       "zh/usage/platforms/qq/official_webhook",
                       "zh/usage/platforms/qq/official"
@@ -434,6 +447,10 @@
                   },
                   {
                     "group": "QQ (OneBot v11)",
+                    "icon": {
+                      "name": "qq",
+                      "style": "brands"
+                    },
                     "pages": [
                       "zh/usage/platforms/qq/aiocqhttp/napcat",
                       "zh/usage/platforms/qq/aiocqhttp/lagrange",
@@ -446,6 +463,7 @@
                   "zh/usage/platforms/kook",
                   {
                     "group": "Satori (QQ 等多平台)",
+                    "icon": "robot",
                     "pages": [
                       "zh/usage/platforms/satori/llonebot"
                     ]
