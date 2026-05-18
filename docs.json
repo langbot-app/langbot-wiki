@@ -412,7 +412,7 @@
                   "zh/usage/platforms/readme",
                   {
                     "group": "企业微信",
-                    "icon": "/images/platforms/wecom.png",
+                    "icon": "/images/platforms/wecom.svg",
                     "pages": [
                       "zh/usage/platforms/wecom/wecom",
                       "zh/usage/platforms/wecom/wecomcs",
