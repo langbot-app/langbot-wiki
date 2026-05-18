@@ -408,15 +408,11 @@
               },
               {
                 "group": "配置机器人",
-                "icon": "robot",
                 "pages": [
                   "zh/usage/platforms/readme",
                   {
                     "group": "企业微信",
-                    "icon": {
-                      "name": "building-user",
-                      "style": "solid"
-                    },
+                    "icon": "/images/platforms/wecom.png",
                     "pages": [
                       "zh/usage/platforms/wecom/wecom",
                       "zh/usage/platforms/wecom/wecomcs",
