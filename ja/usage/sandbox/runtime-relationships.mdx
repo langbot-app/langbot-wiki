@@ -1,0 +1,75 @@
+---
+title: "ランタイムと拡張の関係"
+---
+
+LangBot にはプラグイン、MCP サーバー、Skills、コードサンドボックスがあります。いずれも Agent のワークフローに関わりますが、管理するランタイムと会話へ入るタイミングが異なります。
+
+## 要点
+
+**Sandbox は実行環境です。Box Runtime は sandbox ツール、stdio MCP のホスティング、skill store を実装します。Skills は Tool Call で有効化される軽量な能力パッケージです。プラグインは Plugin Runtime が管理する拡張プロセスです。**
+
+## コンポーネント対応表
+
+| コンポーネント | 管理元 | 主な用途 | Agent への入り方 |
+|----------------|--------|----------|------------------|
+| プラグイン | Plugin Runtime | プラグインツール、イベント、ページ、ナレッジコンポーネントなどの長期拡張 | パイプライン拡張で有効化され、プラグインシステムから公開される |
+| MCP サーバー | LangBot MCP Loader。stdio モードは Box Runtime でホスト可能 | 外部 MCP ツールを接続する | パイプライン拡張で有効化され、Agent ツールとして公開される |
+| Skills | Box Runtime skill store。Box が使えない場合のみローカル `data/skills` にフォールバック | 必要時に読み込む指示、スクリプト、テンプレート、リソース | Agent が `activate` を呼び出した後、Tool Result として返される |
+| Code Sandbox | Box Runtime | コマンド実行、ワークスペースの読み書き、stdio MCP プロセスのホスティング | Local Agent と Box backend が利用可能な場合に `exec/read/write/edit/glob/grep` を提供する |
+
+## 2 種類の Runtime
+
+### Plugin Runtime
+
+Plugin Runtime はプラグインプロセスを管理します。ライフサイクル、設定、カスタムページ、イベントリスナー、ナレッジコンポーネント、独立したツールコンポーネントが必要な場合はプラグインを使います。
+
+主な入口:
+
+- WebUI のプラグイン管理
+- プラグインマーケット
+- プラグイン開発ドキュメント
+
+### Box Runtime
+
+Box Runtime はコード実行環境を管理します。担当する内容は次のとおりです。
+
+- Docker/Nsjail/E2B sandbox backend の起動
+- `exec/read/write/edit/glob/grep` の提供
+- stdio MCP サーバーの長時間実行プロセスのホスティング
+- Box-backed Skills ストレージの管理
+
+Docker Compose デプロイでは、Box Runtime は通常 `langbot_box` という独立サービスとして動作します。
+
+## どれを使うべきか
+
+| やりたいこと | 推奨 |
+|--------------|------|
+| 長期的で設定可能なシステム能力を追加する | プラグイン |
+| 既存の MCP ツールサービスに接続する | MCP サーバー |
+| Agent に専門的なワークフロー、スクリプト、テンプレートを追加する | Skill |
+| Agent にコード実行、ファイル読み書き、依存関係インストールをさせる | Sandbox |
+
+## パイプラインでのバインド
+
+プラグイン、MCP サーバー、Skills はすべてパイプライン拡張です。インストールまたは作成した後、パイプラインで次のどちらかを設定します。
+
+- すべての拡張を有効化する
+- 指定したプラグイン、MCP サーバー、Skill だけをバインドする
+
+Skill のバインドは、Agent から見える Skill を制御するだけです。完全な Skill 指示は、Agent が `activate` を呼び出した後にだけ読み込まれます。
+
+<Note>
+Sandbox のネイティブツールと Skills は、現在は組み込みの Local Agent 向けです。Dify、n8n、Langflow、Coze などの外部 Runner を使う場合は、そのプラットフォーム側のツールと実行環境に従ってください。
+</Note>
+
+## トラブルシューティング
+
+| 症状 | まず確認すること |
+|------|------------------|
+| Agent に `exec/read/write` ツールがない | Box Runtime の状態、backend の可用性、パイプラインが Local Agent を使っているか |
+| Docker デプロイで sandbox が起動しない | `langbot_box` が `docker.sock` をマウントしているか、Box root の source/target パスが一致しているか |
+| ファイル操作に失敗する | `box.local.host_root`、`box.local.default_workspace`、`box.local.allowed_mount_roots` |
+| Skills が表示されない | `box.local.skills_root`、Box skill store、パイプラインの Skill バインド |
+| stdio MCP が起動しない | Box Runtime の状態、MCP command/args/env、依存関係インストールログ、`startup_timeout_sec` |
+| 強制 backend 設定が効かない | `BOX__BACKEND` と `BOX_BACKEND` の違い |
+

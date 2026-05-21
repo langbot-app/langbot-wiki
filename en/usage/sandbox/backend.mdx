@@ -16,7 +16,7 @@ Use the `backend` config option to select a backend:
 | `e2b` | Force E2B cloud sandbox |
 
 <Note>
-`backend` can also be set via the `BOX_BACKEND` environment variable, which takes precedence over `config.yaml`.
+`box.backend` can be set with the LangBot config override environment variable `BOX__BACKEND`. The Box Runtime also supports `BOX_BACKEND` as a runtime-only forced override, and it takes precedence over `box.backend`; in Docker Compose, set `BOX_BACKEND` on the `langbot_box` service when you need to force a backend.
 </Note>
 
 ### Auto-Selection Logic
@@ -43,18 +43,18 @@ The most recommended solution, providing complete container isolation.
 
 - Docker Engine 20.10+ installed
 - Docker daemon running
-- LangBot process has permission to execute `docker` commands
+- Box Runtime process has permission to execute `docker` commands
 
 ### How It Works
 
-LangBot creates and manages sandbox containers through Docker CLI:
+The Box Runtime creates and manages sandbox containers through Docker CLI:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Host System                              │
 │                                                                  │
 │  ┌─────────────────┐         ┌─────────────────────────────┐   │
-│  │  LangBot Process │         │  Sandbox Container (isolated) │   │
+│  │  Box Runtime    │         │  Sandbox Container (isolated) │   │
 │  │                 │         │                             │   │
 │  │  docker exec ───┼────────►│  python script.py           │   │
 │  │                 │         │                             │   │
@@ -67,25 +67,43 @@ LangBot creates and manages sandbox containers through Docker CLI:
 ```
 
 <Note>
-LangBot communicates with Docker daemon via `docker` CLI. In containerized deployments, you need to mount `docker.sock`.
+The Box Runtime communicates with Docker daemon via `docker` CLI. In containerized deployments, mount `docker.sock` on `langbot_box`.
 </Note>
 
 ### Containerized Deployment
 
-When LangBot runs in a Docker container, mount the host's Docker socket:
+When LangBot runs in a Docker container, run the Box Runtime as a separate `langbot_box` service. `langbot_box` mounts the host Docker socket and creates sandbox containers:
 
 ```yaml
 # docker-compose.yaml
 services:
+  langbot_box:
+    image: rockchin/langbot:latest
+    volumes:
+      # Keep source and target identical because langbot_box creates
+      # sandbox containers through the host Docker socket.
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock  # Required: allows creating sandbox containers
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-Mounting `docker.sock` gives the container ability to create other containers. Use only in trusted environments.
+Mounting `docker.sock` gives `langbot_box` the ability to create other containers. Use only in trusted environments.
 </Warning>
 
 ### Configuration Example
@@ -98,6 +116,7 @@ box:
     image: ''                    # Empty uses default image
     host_root: './data/box'      # Host working directory
     default_workspace: ''        # Default workspace
+    skills_root: 'skills'        # Skill package directory, defaults to <host_root>/skills
     allowed_mount_roots:         # Whitelist of mountable directories
       - './data/box'
       - '/tmp'

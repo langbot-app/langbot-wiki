@@ -12,7 +12,7 @@ The Skills system provides two tools for Agents to activate and register skills.
 | `register_skill` | Register skill from sandbox directory | Yes |
 
 <Note>
-These tools require a sandbox backend (Docker/Nsjail/E2B) to be available. If no backend is available, the tools will not be provided to the Agent.
+These tools require a sandbox backend (Docker/Nsjail/E2B) to be available. If no backend is available, the tools will not be provided to the Agent. `activate` can only see Skills allowed by the current pipeline binding.
 </Note>
 
 ---
@@ -34,7 +34,7 @@ Activate a skill, injecting the skill instructions into the current conversation
 
 ### How It Works
 
-1. Agent calls the `activate` tool with the skill name
+1. Agent calls the `activate` tool with the skill name, which must be visible to the current pipeline
 2. System returns the skill's SKILL.md content as Tool Result
 3. Skill package is mounted to `/workspace/.skills/{skill-name}/`
 4. Agent can use `exec`/`read`/`write`/`edit`/`glob`/`grep` to operate skill files
@@ -67,7 +67,7 @@ Activate a skill, injecting the skill instructions into the current conversation
 
 ## register_skill
 
-Register a skill package from sandbox workspace directory to LangBot skill store.
+Register a skill package from a sandbox workspace directory to the LangBot skill store. When the sandbox backend is available, the target store is owned by the Box Runtime and defaults to `<box.local.host_root>/skills`.
 
 ### Use Cases
 
@@ -78,13 +78,13 @@ Register a skill package from sandbox workspace directory to LangBot skill store
 
 - Sandbox feature is enabled
 - Target directory exists under `/workspace`
-- Directory contains `SKILL.md` file
+- The directory, or one of its subdirectories up to two levels deep, contains `SKILL.md`
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `path` | string | Yes | Directory path in sandbox (must be under `/workspace`, containing SKILL.md) |
+| `path` | string | Yes | Directory path in sandbox (must be under `/workspace`; this directory or a subdirectory up to two levels deep must contain SKILL.md) |
 | `name` | string | No | Override skill name, defaults to name in SKILL.md or directory name |
 | `display_name` | string | No | Override display name |
 | `description` | string | No | Override description |
@@ -103,6 +103,7 @@ Register a skill package from sandbox workspace directory to LangBot skill store
 
 3. Skill is registered to skill store
    - Can be activated via activate tool
+   - Defaults to the Box Runtime-managed skills root
 ```
 
 ### Example
@@ -127,7 +128,7 @@ Register a skill package from sandbox workspace directory to LangBot skill store
     "display_name": "Data Processing Tool",
     "description": "Process and transform data files",
     "instructions": "...",
-    "package_root": "/path/to/data/skills/data-processor"
+    "package_root": "/path/to/box/skills/data-processor"
   }
 }
 ```
@@ -137,7 +138,7 @@ Register a skill package from sandbox workspace directory to LangBot skill store
 - `path is required`: Path not provided
 - `path must be under /workspace`: Path not in workspace
 - `Directory does not exist`: Directory does not exist
-- `SKILL.md not found in directory`: No SKILL.md file in directory
+- `No SKILL.md found in ...`: No SKILL.md file in the directory or within two levels of subdirectories
 
 ---
 
@@ -185,13 +186,13 @@ Agent activates a skill by calling the `activate` tool:
 
 ## Creating New Skills
 
-LangBot includes a built-in `create-skill` skill for guiding the creation of new skill packages:
+There are two common ways to create new skills:
 
-1. Activate the `create-skill` skill
-2. Follow the instructions to prepare skill files
-3. Use the `register_skill` tool to register the skill
-4. The new skill can then be used via `activate`
+1. Use the WebUI Skills page to create, edit, import from GitHub, or upload a zip package
+2. Let the Agent prepare a skill directory under `/workspace`, then call `register_skill`
+
+After registration, the new skill can be used via `activate`.
 
 <Note>
-Built-in skills are stored in `templates/skills/` directory and automatically copied to `data/skills/` on startup.
+New skills are registered to the currently active skill store. When the sandbox backend is available, this is the Box Runtime-managed skills root; when Box is unavailable, local development falls back to `data/skills/`.
 </Note>

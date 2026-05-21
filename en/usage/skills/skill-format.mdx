@@ -5,7 +5,7 @@ title: "SKILL.md Format Reference"
 SKILL.md is the core file for defining skills, using YAML frontmatter format.
 
 <Note>
-LangBot's SKILL.md format follows the [Agent Skills Open Standard](https://agentskills.io/specification), a cross-platform skill definition specification initiated by Anthropic.
+LangBot's SKILL.md format follows the Agent Skills style: YAML frontmatter describes skill metadata, and the Markdown body stores skill instructions. The current implementation reads only top-level `name`, `display_name`, and `description` frontmatter fields.
 </Note>
 
 ## File Format
@@ -24,15 +24,16 @@ description: Skill description
 
 ## Frontmatter Fields
 
-### Required Fields
+### Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Unique identifier for the skill |
-| `description` | string | Brief description for LLM to determine activation |
+| `name` | string | Unique identifier for the skill. Required when creating/registering; direct directory scans can omit it and fall back to the directory name |
+| `description` | string | Brief description for LLM activation decisions. The current implementation allows an empty value, but providing it is strongly recommended |
+| `display_name` | string | Display name. The current implementation supports it as a top-level field |
 
 <Note>
-According to the Agent Skills standard, `description` is a required field. LangBot currently allows omission for backward compatibility, but it's recommended to always provide it.
+The `activate` tool's `<available_skills>` list shows only skill names and `description`. Missing descriptions do not block loading, but they make correct tool selection much less reliable.
 </Note>
 
 ### Field Details
@@ -45,11 +46,10 @@ The unique identifier for the skill, used for activation and reference.
 name: python-analyzer
 ```
 
-Naming rules (following Agent Skills standard):
+Current implementation rules:
 - 1-64 characters
-- Only lowercase letters (a-z), numbers (0-9), and hyphens (`-`)
-- Must start with a letter, cannot start or end with a hyphen
-- Cannot contain consecutive hyphens (`--`)
+- Only letters, numbers, hyphens (`-`), and underscores (`_`)
+- Prefer lowercase letters, numbers, and hyphens for cross-platform compatibility
 - Recommended to match the skill directory name
 
 #### `description`
@@ -61,7 +61,7 @@ description: Analyze Python project structure, code quality, and dependencies
 ```
 
 Writing guidelines:
-- Must be provided, max 1024 characters
+- Strongly recommended
 - Describe the skill's functionality and purpose
 - Explain applicable scenarios and trigger keywords
 - Help LLM determine when to activate
@@ -76,33 +76,13 @@ description: Extracts text and tables from PDF files, fills PDF forms, and merge
 description: Helps with PDFs.
 ```
 
-### Optional Fields
+### Fields Not Read Today
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `license` | string | License name or reference |
-| `compatibility` | string | Environment requirements (product, system packages, network access, etc.) |
-| `metadata` | object | Custom key-value metadata |
-| `allowed-tools` | string | Pre-approved tool list (experimental) |
-
-#### `metadata`
-
-Custom key-value metadata for storing additional properties.
-
-```yaml
-metadata:
-  display_name: Python Project Analyzer
-  author: my-org
-  version: "1.0"
-```
-
-<Note>
-LangBot currently supports top-level `display_name` field as a convenience. Future versions will migrate to the standard `metadata.display_name` format, with both being compatible.
-</Note>
+Fields such as `license`, `compatibility`, `metadata`, and `allowed-tools` can remain in the file for human readers or future compatibility, but the current LangBot/Box Skill Store does not read them. Use top-level `display_name` for the display name.
 
 ## Instruction Body
 
-The content after the frontmatter is the skill's instructions, which will be injected into the Agent's System Prompt.
+The content after the frontmatter is the skill's instructions. After the Agent calls `activate`, these instructions are returned as a Tool Result into the current conversation context.
 
 ### Recommended Structure
 
@@ -315,22 +295,22 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 
 ## File Location
 
-Skill files should be placed in the following location:
+When the sandbox backend is available, Skill files should be placed under the Box Runtime-managed skills root:
 
 ```
-data/skills/
+<box.local.host_root>/skills/
 ├── {skill-name}/
 │   └── SKILL.md
 ```
 
-LangBot automatically scans all skills in the `data/skills/` directory at startup.
+By default, `box.local.skills_root` is `skills`, so the actual path is `<box.local.host_root>/skills`. The legacy `data/skills/` directory is scanned only as a local-development fallback when Box is unavailable.
 
 ## Multi-File Skills
 
 For skills containing multiple files:
 
 ```
-data/skills/
+<box.local.host_root>/skills/
 └── my-skill/
     ├── SKILL.md           # Required
     ├── scripts/           # Optional: scripts
@@ -345,7 +325,7 @@ Agent can access these files through `/workspace/.skills/{skill-name}/`.
 
 ## Relationship with Agent Skills Standard
 
-LangBot's SKILL.md format follows the [Agent Skills Open Standard](https://agentskills.io/specification), a cross-platform skill definition specification initiated by Anthropic.
+LangBot's SKILL.md format follows the Agent Skills style, but the supported fields are those implemented by LangBot/Box Skill Store.
 
 ### Standard Directory Structure
 
@@ -371,18 +351,12 @@ Agent Skills standard adopts progressive loading to optimize context usage:
 
 ### LangBot Compatibility Notes
 
-LangBot currently supports top-level `display_name` field as a convenience, but this is not an Agent Skills standard field.
-
-Future versions will:
-- Support `metadata.display_name` standard format
-- Both top-level `display_name` and `metadata.display_name` will be compatible
-- Recommended to use standard format for new skills:
+The current implementation reads top-level `name`, `display_name`, and `description`, and does not read `metadata.display_name`. Use this format for new skills:
 
 ```yaml
 ---
 name: my-skill
+display_name: My Skill
 description: Skill description
-metadata:
-  display_name: My Skill
 ---
 ```

@@ -18,6 +18,7 @@ box:
     image: ''
     host_root: './data/box'
     default_workspace: ''
+    skills_root: 'skills'
     allowed_mount_roots:
       - './data/box'
       - '/tmp'
@@ -108,7 +109,7 @@ box:
 
 | 值 | 说明 |
 |-----|------|
-| `./data/box` | 相对于 LangBot 数据目录 |
+| `./data/box` | 相对于 LangBot 进程工作目录 |
 | `/var/lib/langbot/box` | 绝对路径 |
 
 默认值：`./data/box`
@@ -123,6 +124,21 @@ box:
 | `my-workspace` | 使用 `<host_root>/my-workspace` |
 
 默认值：空
+
+### `local.skills_root`
+
+Box Runtime 管理的 Skill 包目录。
+
+| 值 | 说明 |
+|-----|------|
+| `skills` | 使用 `<host_root>/skills` |
+| `/var/lib/langbot/skills` | 使用绝对路径 |
+
+默认值：`skills`
+
+<Note>
+沙箱后端可用时，Skills 由 Box Runtime 管理，默认不会从 LangBot 主进程的 `data/skills` 加载。只有 Box 不可用的本地开发场景才会回退到旧的 `data/skills` 目录。
+</Note>
 
 ### `local.allowed_mount_roots`
 
@@ -199,42 +215,64 @@ E2B API Key。
 
 所有配置项都可以通过环境变量设置：
 
-| 环境变量 | 配置项 |
-|---------|--------|
-| `BOX__BACKEND` | `box.backend` |
-| `BOX__LOCAL__PROFILE` | `box.local.profile` |
-| `BOX__LOCAL__IMAGE` | `box.local.image` |
-| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
-| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
-| `BOX__E2B__API_URL` | `box.e2b.api_url` |
-| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+| 环境变量 | 配置项/作用 |
+|---------|-------------|
+| `BOX__BACKEND` | 写入 LangBot 配置 `box.backend` |
+| `BOX__LOCAL__PROFILE` | 写入 `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | 写入 `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | 写入 `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | 写入 `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | 写入 `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | 写入 `box.local.allowed_mount_roots`，使用逗号分隔 |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | 写入 `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | 写入 `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | 写入 `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | 写入 `box.e2b.template` |
+| `BOX_BACKEND` | Box Runtime 后端强制覆盖，优先级高于 `box.backend` |
+| `LANGBOT_BOX_LOCAL_HOST_ROOT` | 直接传给 Box Runtime 的 `local.host_root` |
+| `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE` | 直接传给 Box Runtime 的 `local.default_workspace` |
+| `LANGBOT_BOX_LOCAL_SKILLS_ROOT` | 直接传给 Box Runtime 的 `local.skills_root` |
+| `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` | 直接传给 Box Runtime 的挂载白名单，使用逗号分隔 |
 
 <Note>
 E2B SDK 还支持 `E2B_API_KEY` 和 `E2B_API_URL` 环境变量，优先级高于 `config.yaml`。
+Docker Compose 部署时通常使用 `LANGBOT_BOX_LOCAL_*` 变量同时配置 `langbot` 和 `langbot_box` 服务。
 </Note>
 
 ---
 
 ## Docker Compose 示例
 
-使用 Docker Compose 部署时的完整配置：
+使用 Docker Compose 部署时，Box Runtime 应作为独立的 `langbot_box` 服务运行，并与 `langbot` 使用同一个主机 Box 根目录：
 
 ```yaml
 # docker-compose.yaml
 services:
+  langbot_box:
+    image: rockchin/langbot:latest
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock  # 允许访问 Docker
     environment:
-      - BOX__LOCAL__PROFILE=default
-      - BOX__LOCAL__HOST_ROOT=/app/data/box
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-沙箱需要访问 Docker daemon，请确保正确挂载 `docker.sock`。
+`langbot_box` 需要访问 Docker daemon，请只在受信任环境中挂载 `docker.sock`。由于 `langbot_box` 会用主机 Docker socket 创建沙箱容器，Box 根目录的宿主机路径和容器内路径需要保持一致。
 </Warning>
 
 ---

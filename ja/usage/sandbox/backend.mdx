@@ -16,7 +16,7 @@ LangBotは3つのサンドボックスバックエンドをサポートしてい
 | `e2b` | E2Bクラウドサンドボックスを強制 |
 
 <Note>
-`backend`は環境変数`BOX_BACKEND`でも設定可能で、`config.yaml`より優先されます。
+`box.backend` は LangBot 設定上書き環境変数 `BOX__BACKEND` で設定できます。Box Runtime は実行時専用の強制上書きとして `BOX_BACKEND` もサポートしており、これは `box.backend` より優先されます。Docker Compose でバックエンドを強制する場合は、`BOX_BACKEND` を `langbot_box` サービスに設定してください。
 </Note>
 
 ### 自動選択ロジック
@@ -43,18 +43,18 @@ LangBotは3つのサンドボックスバックエンドをサポートしてい
 
 - Docker Engine 20.10+がインストール済み
 - Docker daemonが実行中
-- LangBotプロセスが`docker`コマンドを実行する権限を持つ
+- Box Runtime プロセスが `docker` コマンドを実行する権限を持つ
 
 ### 仕組み
 
-LangBotはDocker CLIを通じてサンドボックスコンテナを作成・管理：
+Box Runtime は Docker CLI を通じてサンドボックスコンテナを作成・管理：
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         ホストシステム                            │
 │                                                                  │
 │  ┌─────────────────┐         ┌─────────────────────────────┐   │
-│  │  LangBot プロセス │         │  サンドボックスコンテナ（分離）  │   │
+│  │  Box Runtime     │         │  サンドボックスコンテナ（分離）  │   │
 │  │                 │         │                             │   │
 │  │  docker exec ───┼────────►│  python script.py           │   │
 │  │                 │         │                             │   │
@@ -67,25 +67,43 @@ LangBotはDocker CLIを通じてサンドボックスコンテナを作成・管
 ```
 
 <Note>
-LangBotは`docker` CLIを通じてDocker daemonと通信します。コンテナ化デプロイでは`docker.sock`をマウントする必要があります。
+Box Runtime は `docker` CLI を通じて Docker daemon と通信します。コンテナ化デプロイでは `langbot_box` に `docker.sock` をマウントします。
 </Note>
 
 ### コンテナ化デプロイ
 
-LangBotがDockerコンテナで実行される場合、ホストのDockerソケットをマウント：
+LangBot が Docker コンテナで実行される場合、Box Runtime を独立した `langbot_box` サービスとして実行します。`langbot_box` がホスト Docker socket をマウントし、サンドボックスコンテナを作成します：
 
 ```yaml
 # docker-compose.yaml
 services:
+  langbot_box:
+    image: rockchin/langbot:latest
+    volumes:
+      # langbot_box はホスト Docker socket 経由でサンドボックスコンテナを作成するため、
+      # ソースパスとターゲットパスを同一にします。
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock  # 必須：サンドボックスコンテナ作成を許可
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-`docker.sock`をマウントすると、コンテナが他のコンテナを作成できるようになります。信頼できる環境でのみ使用してください。
+`docker.sock` をマウントすると、`langbot_box` が他のコンテナを作成できるようになります。信頼できる環境でのみ使用してください。
 </Warning>
 
 ### 設定例
@@ -98,6 +116,7 @@ box:
     image: ''                    # 空の場合デフォルトイメージ使用
     host_root: './data/box'      # ホストワーキングディレクトリ
     default_workspace: ''        # デフォルトワークスペース
+    skills_root: 'skills'        # Skill パッケージディレクトリ。デフォルトは <host_root>/skills
     allowed_mount_roots:         # マウント可能なディレクトリのホワイトリスト
       - './data/box'
       - '/tmp'

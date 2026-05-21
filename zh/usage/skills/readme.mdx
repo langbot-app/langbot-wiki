@@ -100,10 +100,10 @@ LangBot 完全采用了 Claude Code 的设计模式：
 
 ## Skill 文件结构
 
-每个 Skill 是一个包含 `SKILL.md` 文件的目录：
+每个 Skill 是一个包含 `SKILL.md` 文件的目录。沙箱后端可用时，Skill 包由 Box Runtime 管理，默认存放在 `box.local.skills_root`，也就是 `<box.local.host_root>/skills`：
 
 ```
-data/skills/
+<box.local.host_root>/skills/
 ├── my-skill/
 │   ├── SKILL.md           # 必需：技能定义文件
 │   ├── scripts/           # 可选：脚本文件
@@ -113,6 +113,10 @@ data/skills/
 └── another-skill/
     └── SKILL.md
 ```
+
+<Note>
+只有在 Box Runtime 不可用的本地开发场景，LangBot 才会回退到旧的 `data/skills/` 目录。
+</Note>
 
 ### SKILL.md 格式
 
@@ -242,10 +246,10 @@ data-analyzer/
 
 ### 1. 创建第一个技能
 
-在 `data/skills/` 目录下创建技能：
+可以在 WebUI 的 Skills 页面创建，也可以先在沙箱 `/workspace` 下准备技能包，再用 `register_skill` 注册。手动准备时：
 
 ```bash
-mkdir -p data/skills/my-first-skill
+mkdir -p /workspace/my-first-skill
 ```
 
 创建 `SKILL.md`：
@@ -268,33 +272,34 @@ description: 一个简单的示例技能
 3. 返回结果
 ```
 
-### 2. 测试激活
+### 2. 注册并测试激活
 
-确保沙箱后端可用，然后向 Agent 发送匹配技能描述的请求，Agent 会自动调用 `activate` 工具激活技能。
+调用 `register_skill(path="/workspace/my-first-skill")` 注册技能。确保沙箱后端可用，然后向 Agent 发送匹配技能描述的请求，Agent 会自动调用 `activate` 工具激活技能。
+
+### 3. 在流水线中启用 Skill
+
+Skill 属于流水线扩展。创建、导入或注册后，需要在流水线扩展配置中允许它：
+
+- 开启“启用所有技能”
+- 或绑定指定 Skill
+
+绑定只决定 Agent 能看到哪些 Skill。完整的 `SKILL.md` 指令不会预先进入上下文，只有当 Agent 调用 `activate` 后才会通过 Tool Result 注入。
+
+<Note>
+Skills 当前面向内置 Agent 使用，并依赖 Tool Call 和沙箱后端。外部 Runner 使用自己的工具和上下文机制。
+</Note>
 
 ## 创建新技能
 
-### 方式一：使用内置 create-skill 技能
+### 方式一：使用 WebUI 或导入
 
-LangBot 内置了 `create-skill` 技能，用于引导创建新的技能包：
+在 WebUI 的 Skills 页面可以创建、编辑、从 GitHub 导入或上传 zip 包。沙箱后端可用时，这些技能会写入 Box Runtime 管理的 skill store。
 
-1. 调用 `activate(skill_name="create-skill")`
-2. 按照返回的指令准备技能文件
-3. 使用 `register_skill` 工具注册技能
-
-### 方式二：手动创建
+### 方式二：让 Agent 在沙箱中创建
 
 1. 在沙箱 `/workspace` 下创建技能目录
 2. 编写 `SKILL.md` 和相关文件
 3. 调用 `register_skill(path="/workspace/my-skill")` 注册
-
-## 内置技能
-
-LangBot 启动时会自动从 `templates/skills/` 复制内置技能到 `data/skills/`：
-
-| 技能 | 描述 |
-|------|------|
-| `create-skill` | 引导创建新技能的技能 |
 
 ## 最佳实践
 
@@ -321,6 +326,15 @@ LangBot 启动时会自动从 `templates/skills/` 复制内置技能到 `data/sk
 - 脚本放在 `scripts/` 目录
 - 模板放在 `templates/` 目录
 - 保持结构清晰
+
+## 常见问题
+
+| 现象 | 检查项 |
+|------|--------|
+| Skill 列表为空 | Box Runtime 是否可用，`box.local.skills_root` 是否指向正确目录 |
+| Agent 没有调用 `activate` | 描述是否足够明确，流水线是否绑定该 Skill，模型是否支持函数调用 |
+| 激活后找不到文件 | 确认文件在 Skill 包内，并使用 `/workspace/.skills/{skill-name}/` 路径访问 |
+| `register_skill` 失败 | 目标路径必须在 `/workspace` 下，目录或两层以内子目录需要包含 `SKILL.md` |
 
 ## 下一步
 

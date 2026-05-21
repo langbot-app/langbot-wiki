@@ -113,14 +113,15 @@ monitoring:
         # 各監視テーブルで 1 回に削除する期限切れ行数
         delete_batch_size: 1000
 box:
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', または 'e2b'。BOX_BACKEND 環境変数が優先。
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', または 'e2b'。BOX_BACKEND は Box Runtime の上書き、BOX__BACKEND はこの設定を書き込みます。
     runtime:
         endpoint: ''  # 外部 Box Runtime ベース URL（例: 'ws://127.0.0.1:5410'）。空の場合はローカル自動管理ランタイムを使用。
     local:
         profile: 'default'
         image: ''  # カスタムローカルサンドボックスイメージ。空の場合はプロファイルデフォルトを使用。
-        host_root: './data/box'  # ローカルワークスペースマウント用のホストルートディレクトリ。Docker デプロイ時は '/workspaces' を使用。
+        host_root: './data/box'  # ローカルワークスペースマウント用のホストルートディレクトリ。Docker デプロイ時は langbot_box にマウントする絶対ホストパスを使用。
         default_workspace: ''  # デフォルトは '<host_root>/default'。
+        skills_root: 'skills'  # Box が管理する Skill パッケージディレクトリ。相対パスは host_root 配下に解決されます。
         allowed_mount_roots:  # 空の場合はデフォルトで ['<host_root>']。
             - './data/box'
             - '/tmp'
@@ -159,5 +160,12 @@ space:
 - `STORAGE__CLEANUP__LOG_RETENTION_DAYS` は `storage.cleanup.log_retention_days` を表します
 - `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` は `monitoring.auto_cleanup.retention_days` を表します
 - `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` は `plugin.binary_storage.max_value_bytes` を表します
+- `BOX__BACKEND` は `box.backend` を表します
+- `BOX__LOCAL__HOST_ROOT` は `box.local.host_root` を表します
+- `BOX__LOCAL__SKILLS_ROOT` は `box.local.skills_root` を表します
 
 起動時、LangBot はすべての環境変数を読み取り、対応する設定を `config.yaml` に適用して `data/config.yaml` ファイルに書き込みます。
+
+<Note>
+Box Runtime 自体も `BOX_BACKEND` と `LANGBOT_BOX_LOCAL_*` 環境変数をサポートしています。Docker Compose デプロイでは通常、`langbot` と `langbot_box` の両方に `LANGBOT_BOX_LOCAL_HOST_ROOT`、`LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE`、`LANGBOT_BOX_LOCAL_SKILLS_ROOT`、`LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` を設定します。
+</Note>

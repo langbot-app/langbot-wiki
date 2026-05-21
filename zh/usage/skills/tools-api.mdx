@@ -12,7 +12,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 | `register_skill` | 从沙箱目录注册技能 | 是 |
 
 <Note>
-这两个工具需要沙箱后端（Docker/Nsjail/E2B）可用才能使用。如果没有任何后端可用，工具将不会提供给 Agent。
+这两个工具需要沙箱后端（Docker/Nsjail/E2B）可用才能使用。如果没有任何后端可用，工具将不会提供给 Agent。`activate` 只能看到当前流水线绑定范围内的 Skill。
 </Note>
 
 ---
@@ -34,7 +34,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 
 ### 工作原理
 
-1. Agent 调用 `activate` 工具，传入技能名称
+1. Agent 调用 `activate` 工具，传入技能名称（技能必须在当前流水线可见）
 2. 系统返回技能的 SKILL.md 内容作为 Tool Result
 3. 技能包挂载到 `/workspace/.skills/{skill-name}/`
 4. Agent 可使用 `exec`/`read`/`write`/`edit`/`glob`/`grep` 操作技能文件
@@ -67,7 +67,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 
 ## register_skill
 
-从沙箱工作区目录注册技能包到 LangBot 技能存储。
+从沙箱工作区目录注册技能包到 LangBot 技能存储。沙箱后端可用时，目标存储由 Box Runtime 管理，默认位于 `<box.local.host_root>/skills`。
 
 ### 使用场景
 
@@ -78,13 +78,13 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 
 - 沙箱功能已启用
 - 目标目录存在于 `/workspace` 下
-- 目录包含 `SKILL.md` 文件
+- 目录或其两层以内的子目录包含 `SKILL.md` 文件
 
 ### 参数
 
 | 参数 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `path` | string | 是 | 沙箱内的目录路径（必须在 `/workspace` 下，包含 SKILL.md） |
+| `path` | string | 是 | 沙箱内的目录路径（必须在 `/workspace` 下；该目录或两层以内子目录需包含 SKILL.md） |
 | `name` | string | 否 | 覆盖技能名称，默认使用 SKILL.md 中的名称或目录名 |
 | `display_name` | string | 否 | 覆盖显示名称 |
 | `description` | string | 否 | 覆盖描述 |
@@ -103,6 +103,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 
 3. 技能被注册到技能存储
    - 可通过 activate 工具激活使用
+   - 默认写入 Box Runtime 管理的 skills root
 ```
 
 ### 示例
@@ -127,7 +128,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
     "display_name": "数据处理工具",
     "description": "处理和转换数据文件",
     "instructions": "...",
-    "package_root": "/path/to/data/skills/data-processor"
+    "package_root": "/path/to/box/skills/data-processor"
   }
 }
 ```
@@ -137,7 +138,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 - `path is required`: 未提供路径
 - `path must be under /workspace`: 路径不在工作区内
 - `Directory does not exist`: 目录不存在
-- `SKILL.md not found in directory`: 目录中没有 SKILL.md 文件
+- `No SKILL.md found in ...`: 目录及其两层以内子目录中没有 SKILL.md 文件
 
 ---
 
@@ -185,13 +186,13 @@ Agent 通过调用 `activate` 工具来激活技能：
 
 ## 创建新技能
 
-LangBot 内置 `create-skill` 技能，用于引导创建新的技能包：
+创建新技能有两种常用方式：
 
-1. 激活 `create-skill` 技能
-2. 按照指令准备技能文件
-3. 使用 `register_skill` 工具注册技能
-4. 新技能即可通过 `activate` 使用
+1. 在 WebUI 的 Skills 页面创建、编辑、从 GitHub 导入或上传 zip 包
+2. 让 Agent 在 `/workspace` 下准备技能目录，然后调用 `register_skill` 注册
+
+注册后，新技能即可通过 `activate` 使用。
 
 <Note>
-内置技能存放在 `templates/skills/` 目录，启动时自动复制到 `data/skills/`。
+新技能会注册到当前启用的 skill store。沙箱后端可用时是 Box Runtime 管理的 skills root；Box 不可用的本地开发场景才会回退到 `data/skills/`。
 </Note>

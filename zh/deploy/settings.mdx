@@ -113,14 +113,15 @@ monitoring:
         # 每个监控表单批删除的过期记录数量
         delete_batch_size: 1000
 box:
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', 或 'e2b'。BOX_BACKEND 环境变量优先。
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', 或 'e2b'。BOX_BACKEND 是 Box Runtime 强制覆盖；BOX__BACKEND 可写入此配置。
     runtime:
         endpoint: ''  # 外部 Box Runtime 基础 URL，如 'ws://127.0.0.1:5410'。留空则使用本地自动管理的运行时。
     local:
         profile: 'default'
         image: ''  # 自定义本地沙箱镜像。留空使用 profile 默认值。
-        host_root: './data/box'  # 本地工作区挂载的主机根目录。Docker 部署时使用 '/workspaces'。
+        host_root: './data/box'  # 本地工作区挂载的主机根目录。Docker 部署时应使用可被 langbot_box 挂载的绝对主机路径。
         default_workspace: ''  # 默认为 '<host_root>/default'。
+        skills_root: 'skills'  # Box 管理的 Skill 包目录。相对路径会解析到 host_root 下。
         allowed_mount_roots:  # 默认为 ['<host_root>']。
             - './data/box'
             - '/tmp'
@@ -159,5 +160,12 @@ space:
 - `STORAGE__CLEANUP__LOG_RETENTION_DAYS` 代表 `storage.cleanup.log_retention_days`
 - `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` 代表 `monitoring.auto_cleanup.retention_days`
 - `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` 代表 `plugin.binary_storage.max_value_bytes`
+- `BOX__BACKEND` 代表 `box.backend`
+- `BOX__LOCAL__HOST_ROOT` 代表 `box.local.host_root`
+- `BOX__LOCAL__SKILLS_ROOT` 代表 `box.local.skills_root`
 
 在启动时，LangBot 会读取所有环境变量，将对应的配置应用到 `config.yaml` 中并写入到 `data/config.yaml` 文件中。
+
+<Note>
+Box Runtime 本身还支持 `BOX_BACKEND` 和 `LANGBOT_BOX_LOCAL_*` 环境变量。Docker Compose 部署时通常在 `langbot` 和 `langbot_box` 两个服务中同时设置 `LANGBOT_BOX_LOCAL_HOST_ROOT`、`LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE`、`LANGBOT_BOX_LOCAL_SKILLS_ROOT` 和 `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS`。
+</Note>

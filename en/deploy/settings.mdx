@@ -113,14 +113,15 @@ monitoring:
         # Number of expired rows to delete per table batch
         delete_batch_size: 1000
 box:
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. BOX_BACKEND env var takes precedence.
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. BOX_BACKEND is a Box Runtime override; BOX__BACKEND writes this config.
     runtime:
         endpoint: ''  # External Box Runtime base URL, e.g. 'ws://127.0.0.1:5410'. Leave empty for local auto-managed runtime.
     local:
         profile: 'default'
         image: ''  # Custom local sandbox image. Leave empty to use the profile default.
-        host_root: './data/box'  # Base host directory for local workspace mounts. For Docker deployment, use '/workspaces'.
+        host_root: './data/box'  # Base host directory for local workspace mounts. Docker deployments should use an absolute host path mounted by langbot_box.
         default_workspace: ''  # Defaults to '<host_root>/default'.
+        skills_root: 'skills'  # Box-owned Skill package directory. Relative paths are resolved under host_root.
         allowed_mount_roots:  # Defaults to ['<host_root>'] when left empty.
             - './data/box'
             - '/tmp'
@@ -159,5 +160,12 @@ The configuration in `config.yaml` can be set via environment variables. Environ
 - `STORAGE__CLEANUP__LOG_RETENTION_DAYS` represents `storage.cleanup.log_retention_days`
 - `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` represents `monitoring.auto_cleanup.retention_days`
 - `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` represents `plugin.binary_storage.max_value_bytes`
+- `BOX__BACKEND` represents `box.backend`
+- `BOX__LOCAL__HOST_ROOT` represents `box.local.host_root`
+- `BOX__LOCAL__SKILLS_ROOT` represents `box.local.skills_root`
 
 On startup, LangBot reads all environment variables, applies the corresponding configuration to `config.yaml`, and writes it to `data/config.yaml`.
+
+<Note>
+The Box Runtime itself also supports `BOX_BACKEND` and `LANGBOT_BOX_LOCAL_*` environment variables. Docker Compose deployments usually set `LANGBOT_BOX_LOCAL_HOST_ROOT`, `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE`, `LANGBOT_BOX_LOCAL_SKILLS_ROOT`, and `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` on both the `langbot` and `langbot_box` services.
+</Note>

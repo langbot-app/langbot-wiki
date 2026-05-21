@@ -18,6 +18,7 @@ box:
     image: ''
     host_root: './data/box'
     default_workspace: ''
+    skills_root: 'skills'
     allowed_mount_roots:
       - './data/box'
       - '/tmp'
@@ -108,7 +109,7 @@ Sandbox workspace files will be stored under this directory.
 
 | Value | Description |
 |-------|-------------|
-| `./data/box` | Relative to LangBot data directory |
+| `./data/box` | Relative to the LangBot process working directory |
 | `/var/lib/langbot/box` | Absolute path |
 
 Default: `./data/box`
@@ -123,6 +124,21 @@ Default workspace name.
 | `my-workspace` | Use `<host_root>/my-workspace` |
 
 Default: Empty
+
+### `local.skills_root`
+
+Box Runtime-owned Skill package directory.
+
+| Value | Description |
+|-------|-------------|
+| `skills` | Use `<host_root>/skills` |
+| `/var/lib/langbot/skills` | Use an absolute path |
+
+Default: `skills`
+
+<Note>
+When the sandbox backend is available, Skills are owned by the Box Runtime and are not loaded from the LangBot main process `data/skills` directory by default. The legacy `data/skills` directory is only used as a fallback for local development when Box is unavailable.
+</Note>
 
 ### `local.allowed_mount_roots`
 
@@ -199,42 +215,64 @@ Default E2B template ID.
 
 All configuration items can be set via environment variables:
 
-| Environment Variable | Config Item |
-|---------------------|-------------|
-| `BOX__BACKEND` | `box.backend` |
-| `BOX__LOCAL__PROFILE` | `box.local.profile` |
-| `BOX__LOCAL__IMAGE` | `box.local.image` |
-| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
-| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
-| `BOX__E2B__API_URL` | `box.e2b.api_url` |
-| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+| Environment Variable | Config Item / Effect |
+|---------------------|----------------------|
+| `BOX__BACKEND` | Writes LangBot config `box.backend` |
+| `BOX__LOCAL__PROFILE` | Writes `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | Writes `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | Writes `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | Writes `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | Writes `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | Writes `box.local.allowed_mount_roots`, comma-separated |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | Writes `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | Writes `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | Writes `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | Writes `box.e2b.template` |
+| `BOX_BACKEND` | Forces the Box Runtime backend and takes precedence over `box.backend` |
+| `LANGBOT_BOX_LOCAL_HOST_ROOT` | Passes `local.host_root` directly to the Box Runtime |
+| `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE` | Passes `local.default_workspace` directly to the Box Runtime |
+| `LANGBOT_BOX_LOCAL_SKILLS_ROOT` | Passes `local.skills_root` directly to the Box Runtime |
+| `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` | Passes the mount allowlist directly to the Box Runtime, comma-separated |
 
 <Note>
 E2B SDK also supports `E2B_API_KEY` and `E2B_API_URL` environment variables, which take precedence over `config.yaml`.
+Docker Compose deployments usually configure both `langbot` and `langbot_box` with `LANGBOT_BOX_LOCAL_*` variables.
 </Note>
 
 ---
 
 ## Docker Compose Example
 
-Complete configuration for Docker Compose deployment:
+With Docker Compose, run the Box Runtime as a separate `langbot_box` service and share the same host Box root with `langbot`:
 
 ```yaml
 # docker-compose.yaml
 services:
+  langbot_box:
+    image: rockchin/langbot:latest
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Docker access
     environment:
-      - BOX__LOCAL__PROFILE=default
-      - BOX__LOCAL__HOST_ROOT=/app/data/box
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-Sandbox requires access to Docker daemon. Ensure `docker.sock` is correctly mounted.
+`langbot_box` needs access to the Docker daemon. Mount `docker.sock` only in trusted environments. Because `langbot_box` uses the host Docker socket to create sandbox containers, the host path and container path for the Box root must be identical.
 </Warning>
 
 ---

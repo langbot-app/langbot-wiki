@@ -26,17 +26,47 @@ cd LangBot/docker
 docker compose up
 ```
 
+当前 Docker Compose 会启动三个主要服务：
+
+| 服务 | 作用 |
+|------|------|
+| `langbot` | LangBot 主服务，提供 WebUI、API、消息平台接入 |
+| `langbot_plugin_runtime` | Plugin Runtime，管理插件进程 |
+| `langbot_box` | Box Runtime，提供代码沙箱、stdio MCP 托管和 Box-backed Skills 存储 |
+
+`langbot_box` 会通过主机 Docker socket 创建沙箱容器。Compose 默认使用 `${PWD}/data/box` 作为 Box 根目录，并把它以相同路径挂载进 `langbot_box`：
+
+```yaml
+services:
+  langbot_box:
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+```
+
+<Warning>
+由于 `langbot_box` 使用主机 Docker socket 创建沙箱容器，Box 根目录的宿主机路径和容器内路径需要保持一致。若要改目录，请使用绝对路径设置 `LANGBOT_BOX_ROOT`，例如 `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose up`。
+</Warning>
+
 <Info>
   - 如果你的主机位于中国大陆，可以考虑把 `docker-compose.yaml` 文件中的镜像名称改为`docker.langbot.app/langbot-public/rockchin/langbot:latest`以使用我们提供的镜像源。
   - 推荐[设置 Docker 容器代理](https://docker.github.net.cn/network/proxy/)，以便保证 LangBot 在运行期间的网络访问通畅。
+  - 如果需要禁用或强制沙箱后端，请参考[代码沙箱配置](/zh/usage/sandbox/config)。
 </Info>
 
 首次启动会输出创建配置文件的提示，请继续按照文件配置。
 
 容器会映射`5300`端口供 WebUI 使用，您可以访问`http://127.0.0.1:5300`查看 WebUI。\
-还会映射`2280-2290`端口供使用 OneBot 协议的消息平台适配器反向连接。
+还会映射`2280-2285`端口供使用 OneBot 协议的消息平台适配器反向连接。
 
 完成 LangBot 部署后，请继续阅读：
 
-- [配置机器人文档](/zh/deploy/platforms/readme)。
-- [配置模型文档](/zh/deploy/models/readme)。
+- [配置机器人文档](/zh/usage/platforms/readme)。
+- [配置模型文档](/zh/usage/models/readme)。
+- [代码沙箱文档](/zh/usage/sandbox/readme)。
+- [技能系统文档](/zh/usage/skills/readme)。

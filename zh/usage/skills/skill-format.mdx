@@ -5,7 +5,7 @@ title: "SKILL.md 格式参考"
 SKILL.md 是定义技能的核心文件，使用 YAML frontmatter 格式。
 
 <Note>
-LangBot 的 SKILL.md 格式遵循 [Agent Skills 开放标准](https://agentskills.io/specification)，这是一个由 Anthropic 发起的跨平台技能定义规范。
+LangBot 的 SKILL.md 格式参考 Agent Skills 风格：使用 YAML frontmatter 描述技能元数据，正文保存技能指令。当前实现只读取顶层 `name`、`display_name`、`description` 三个 frontmatter 字段。
 </Note>
 
 ## 文件格式
@@ -24,15 +24,16 @@ description: 技能描述
 
 ## Frontmatter 字段
 
-### 必需字段
+### 字段
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `name` | string | 技能的唯一标识符 |
-| `description` | string | 简短描述，用于 LLM 判断是否激活 |
+| `name` | string | 技能的唯一标识符。创建/注册时必需；直接扫描已有目录时可省略并回退为目录名 |
+| `description` | string | 简短描述，用于 LLM 判断是否激活。当前实现允许为空，但强烈建议提供 |
+| `display_name` | string | 显示名称。当前实现支持顶层字段 |
 
 <Note>
-根据 Agent Skills 标准，`description` 是必需字段。LangBot 当前兼容旧格式允许省略，但建议始终提供。
+`activate` 工具的 `<available_skills>` 列表只展示技能名和 `description`。缺少描述不会阻止加载，但会显著降低 Agent 正确选择技能的概率。
 </Note>
 
 ### 字段详解
@@ -45,11 +46,10 @@ description: 技能描述
 name: python-analyzer
 ```
 
-命名规则（遵循 Agent Skills 标准）：
+当前实现的命名规则：
 - 1-64 个字符
-- 只能包含小写字母（a-z）、数字（0-9）和连字符（`-`）
-- 必须以字母开头，不能以连字符开头或结尾
-- 不能包含连续的连字符（`--`）
+- 只能包含字母、数字、连字符（`-`）和下划线（`_`）
+- 建议使用小写字母、数字和连字符，便于跨平台兼容
 - 建议与技能目录名匹配
 
 #### `description`
@@ -61,7 +61,7 @@ description: 分析 Python 项目结构、代码质量和依赖关系
 ```
 
 编写建议：
-- 必须提供，最大 1024 字符
+- 强烈建议提供
 - 描述技能的功能和用途
 - 说明适用的场景和触发关键词
 - 帮助 LLM 判断何时激活
@@ -76,33 +76,13 @@ description: 从 PDF 文件提取文本和表格，填充 PDF 表单，合并多
 description: 帮助处理 PDF。
 ```
 
-### 可选字段
+### 当前未读取的字段
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `license` | string | 许可证名称或引用 |
-| `compatibility` | string | 环境要求（产品、系统包、网络访问等） |
-| `metadata` | object | 自定义键值对元数据 |
-| `allowed-tools` | string | 预批准的工具列表（实验性） |
-
-#### `metadata`
-
-自定义键值对元数据，可用于存储额外属性。
-
-```yaml
-metadata:
-  display_name: Python 项目分析器
-  author: my-org
-  version: "1.0"
-```
-
-<Note>
-LangBot 当前支持顶层 `display_name` 字段作为便捷方式。未来版本将迁移到标准 `metadata.display_name` 格式，两者将同时兼容。
-</Note>
+`license`、`compatibility`、`metadata`、`allowed-tools` 等字段可以保留在文件中供人类阅读或未来兼容，但当前 LangBot/Box Skill Store 不会读取这些字段。显示名称请使用顶层 `display_name`。
 
 ## 指令正文
 
-Frontmatter 之后的内容是技能的指令，会被注入到 Agent 的 System Prompt 中。
+Frontmatter 之后的内容是技能的指令。Agent 调用 `activate` 后，这些指令会作为 Tool Result 返回到当前对话上下文中。
 
 ### 结构建议
 
@@ -315,22 +295,22 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 
 ## 文件位置
 
-Skill 文件应放置在以下位置：
+沙箱后端可用时，Skill 文件应放置在 Box Runtime 管理的 skills root 中：
 
 ```
-data/skills/
+<box.local.host_root>/skills/
 ├── {skill-name}/
 │   └── SKILL.md
 ```
 
-LangBot 启动时会自动扫描 `data/skills/` 目录下的所有技能。
+默认情况下，`box.local.skills_root` 为 `skills`，因此实际路径是 `<box.local.host_root>/skills`。Box 不可用的本地开发场景才会回退扫描 `data/skills/`。
 
 ## 多文件技能
 
 对于包含多个文件的技能：
 
 ```
-data/skills/
+<box.local.host_root>/skills/
 └── my-skill/
     ├── SKILL.md           # 必需
     ├── scripts/           # 可选：脚本
@@ -345,7 +325,7 @@ Agent 可以通过 `/workspace/.skills/{skill-name}/` 访问这些文件。
 
 ## 与 Agent Skills 标准的关系
 
-LangBot 的 SKILL.md 格式遵循 [Agent Skills 开放标准](https://agentskills.io/specification)，这是由 Anthropic 发起的跨平台技能定义规范。
+LangBot 的 SKILL.md 格式参考 Agent Skills 风格，但当前实现以 LangBot/Box Skill Store 支持的字段为准。
 
 ### 标准目录结构
 
@@ -371,18 +351,12 @@ Agent Skills 标准采用渐进式加载，优化上下文使用：
 
 ### LangBot 兼容性说明
 
-LangBot 当前支持顶层 `display_name` 字段作为便捷方式，但这不是 Agent Skills 标准字段。
-
-未来版本将：
-- 支持 `metadata.display_name` 标准格式
-- 顶层 `display_name` 和 `metadata.display_name` 将同时兼容
-- 建议新技能使用标准格式：
+当前实现读取顶层 `name`、`display_name`、`description`，不会读取 `metadata.display_name`。建议新技能使用以下格式：
 
 ```yaml
 ---
 name: my-skill
+display_name: 我的技能
 description: 技能描述
-metadata:
-  display_name: 我的技能
 ---
 ```

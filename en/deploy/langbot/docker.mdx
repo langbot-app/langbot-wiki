@@ -26,10 +26,39 @@ Start the container:
 docker compose up
 ```
 
+The current Docker Compose file starts three main services:
+
+| Service | Purpose |
+|---------|---------|
+| `langbot` | Main LangBot service for WebUI, API, and messaging platform adapters |
+| `langbot_plugin_runtime` | Plugin Runtime, which manages plugin processes |
+| `langbot_box` | Box Runtime, which provides code sandboxing, stdio MCP hosting, and Box-backed Skills storage |
+
+`langbot_box` creates sandbox containers through the host Docker socket. Compose uses `${PWD}/data/box` as the default Box root and mounts it into `langbot_box` at the same path:
+
+```yaml
+services:
+  langbot_box:
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+```
+
+<Warning>
+Because `langbot_box` uses the host Docker socket to create sandbox containers, the Box root path must be identical on the host and inside `langbot_box`. To change it, set `LANGBOT_BOX_ROOT` to an absolute path, for example `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose up`.
+</Warning>
+
 The container maps port `5300` for WebUI access. You can visit `http://127.0.0.1:5300` to view the WebUI.\
-It also maps ports `2280-2290` for reserved for message platform adapters.
+It also maps ports `2280-2285` reserved for message platform adapters.
 
 After completing the LangBot deployment, please continue reading:
 
-- [Bot Configuration Documentation](/en/deploy/platforms/readme).
-- [Model Configuration Documentation](/en/deploy/models/readme).
+- [Bot Configuration Documentation](/en/usage/platforms/readme).
+- [Model Configuration Documentation](/en/usage/models/readme).
+- [Code Sandbox Documentation](/en/usage/sandbox/readme).
+- [Skills Documentation](/en/usage/skills/readme).

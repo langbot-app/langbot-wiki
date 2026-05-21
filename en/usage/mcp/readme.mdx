@@ -2,15 +2,26 @@
 title: "Using MCP Servers"
 ---
 
+LangBot can use tools from MCP servers. Add an MCP server, then let a model with Tool Call support invoke those tools during Agent execution.
 
-LangBot supports using tools from MCP servers. You can add MCP servers to leverage the tool calling capabilities in large language models for better handling of LLM requests.
-
-<Info title="- MCP service supports HTTP Streamable, SSE and stdio modes.">
+<Info title="MCP service supports HTTP Streamable, SSE, and stdio modes.">
 - MCP servers recommended acquisition channels:
   - [ModelScope](https://modelscope.cn/mcp)
   - https://mcp.so
   - https://composio.dev/toolkits
 </Info>
+
+## Runtime Modes
+
+| Mode | Best for | Runtime relationship |
+|------|----------|----------------------|
+| HTTP Streamable | Remote MCP services using Streamable HTTP | LangBot connects directly to the remote URL |
+| SSE | Remote MCP services using SSE | LangBot connects directly to the remote URL |
+| stdio | MCP servers started by local commands | When Box Runtime is available, LangBot hosts the stdio process inside Box |
+
+<Note>
+MCP tools require the pipeline to use `Local Agent` and a model with function calling enabled. External runners such as Dify, n8n, Langflow, and Coze use their own tool mechanisms.
+</Note>
 
 ## Enable Function Calling for Models
 
@@ -34,8 +45,71 @@ After adding, click the switch on the card to connect to the MCP server. Click t
 
 <img width="400px" src="/images/zh/deploy/mcp/mcp05.png" alt="detailed server" />
 
+## stdio MCP and Box Runtime
+
+When an MCP Server uses `stdio` mode and Box Runtime is available, LangBot starts and hosts the MCP process inside Box:
+
+1. Create or reuse the shared MCP Box session
+2. If a local project path can be inferred from the command or arguments, stage it into the shared workspace
+3. If the project contains `requirements.txt`, `pyproject.toml`, `setup.py`, or `setup.cfg`, install dependencies first
+4. Connect to the process stdin/stdout through the WebSocket relay
+5. Add MCP tools to the Agent tool list after the server initializes successfully
+
+Advanced stdio MCP configs can include a `box` override:
+
+```json
+{
+  "mode": "stdio",
+  "extra_args": {
+    "command": "python",
+    "args": ["server.py"],
+    "env": {},
+    "box": {
+      "host_path": "/path/to/mcp-project",
+      "network": "on",
+      "host_path_mode": "ro",
+      "startup_timeout_sec": 120,
+      "image": "python:3.11-slim"
+    }
+  }
+}
+```
+
+Common fields:
+
+| Field | Description |
+|-------|-------------|
+| `host_path` | Host project directory for the MCP server. It must be under `box.local.allowed_mount_roots` |
+| `network` | Whether network is allowed, often needed for dependency installation |
+| `host_path_mode` | Mount mode, default `ro` |
+| `startup_timeout_sec` | Startup and dependency install wait time, default 120 seconds |
+| `image` | Runtime image used by the Docker backend |
+
+<Warning>
+When stdio MCP runs inside Box, dependency installation and process startup are controlled by the sandbox profile, network permission, resource limits, and mount whitelist.
+</Warning>
+
+## Enable in Pipelines
+
+After an MCP Server is created and connected, allow it in the pipeline extension settings:
+
+- Enable all MCP Servers
+- Or bind selected MCP Servers
+
+If the pipeline uses a selected binding list, unbound MCP tools are not exposed to that pipeline's Agent.
+
 ## Effect
 
 You need to select `Local Agent` as the runner in the pipeline settings and use a model that supports function calling.
 
 <img width="1000px" src="/images/zh/deploy/mcp/mcp04.png" alt="dialog with mcp" />
+
+## Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| MCP connection fails | URL, command, arguments, and environment variables |
+| stdio MCP stays connecting | Box Runtime availability and whether `startup_timeout_sec` is too short |
+| Dependency installation fails | Whether the sandbox allows network and whether dependency files are correct |
+| Local files cannot be accessed | Whether `host_path` exists and is under `allowed_mount_roots` |
+| Agent cannot see MCP tools | Local Agent runner, function calling, MCP connection status, and pipeline binding |

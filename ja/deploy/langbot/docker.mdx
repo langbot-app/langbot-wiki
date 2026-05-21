@@ -25,10 +25,39 @@ cd LangBot/docker
 docker compose up
 ```
 
+現在の Docker Compose は、主に次の 3 つのサービスを起動します。
+
+| サービス | 役割 |
+|----------|------|
+| `langbot` | WebUI、API、メッセージプラットフォーム接続を提供する LangBot 本体 |
+| `langbot_plugin_runtime` | プラグインプロセスを管理する Plugin Runtime |
+| `langbot_box` | コードサンドボックス、stdio MCP ホスティング、Box-backed Skills ストレージを提供する Box Runtime |
+
+`langbot_box` はホストの Docker socket を使って sandbox コンテナを作成します。Compose はデフォルトで `${PWD}/data/box` を Box root とし、同じパスで `langbot_box` にマウントします。
+
+```yaml
+services:
+  langbot_box:
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+```
+
+<Warning>
+`langbot_box` はホストの Docker socket を使って sandbox コンテナを作成するため、Box root のホスト側パスと `langbot_box` 内のパスを一致させる必要があります。変更する場合は、`LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose up` のように絶対パスを指定してください。
+</Warning>
+
 コンテナはWebUIアクセス用にポート`5300`をマッピングします。`http://127.0.0.1:5300`にアクセスしてWebUIを表示できます。
-また、メッセージプラットフォームアダプター用に予約されたポート`2280-2290`もマッピングします。
+また、メッセージプラットフォームアダプター用に予約されたポート`2280-2285`もマッピングします。
 
 LangBotのデプロイ完了後、引き続き以下をお読みください:
 
-- [ボット設定ドキュメント](/en/deploy/platforms/readme)
-- [モデル設定ドキュメント](/en/deploy/models/readme)
+- [ボット設定ドキュメント](/ja/usage/platforms/readme)
+- [モデル設定ドキュメント](/ja/usage/models/readme)
+- [コードサンドボックスドキュメント](/ja/usage/sandbox/readme)
+- [Skills ドキュメント](/ja/usage/skills/readme)

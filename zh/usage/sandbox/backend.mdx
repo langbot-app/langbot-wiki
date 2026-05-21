@@ -16,7 +16,7 @@ LangBot 支持三种沙箱后端，根据您的部署环境选择合适的方案
 | `e2b` | 强制使用 E2B 云端沙箱 |
 
 <Note>
-`backend` 也可以通过环境变量 `BOX_BACKEND` 设置，优先级高于 `config.yaml`。
+`box.backend` 可以通过 LangBot 配置覆盖环境变量 `BOX__BACKEND` 设置。Box Runtime 还支持 `BOX_BACKEND` 作为运行时强制覆盖，且优先级高于 `box.backend`；Docker Compose 中如需强制后端，应把 `BOX_BACKEND` 设置到 `langbot_box` 服务。
 </Note>
 
 ### 自动选择逻辑
@@ -43,18 +43,18 @@ LangBot 支持三种沙箱后端，根据您的部署环境选择合适的方案
 
 - 安装 Docker Engine 20.10+
 - Docker daemon 正在运行
-- LangBot 进程有权限执行 `docker` 命令
+- Box Runtime 进程有权限执行 `docker` 命令
 
 ### 工作原理
 
-LangBot 通过 Docker CLI 创建和管理沙箱容器：
+Box Runtime 通过 Docker CLI 创建和管理沙箱容器：
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         主机系统                                 │
 │                                                                  │
 │  ┌─────────────────┐         ┌─────────────────────────────┐   │
-│  │  LangBot 进程    │         │  沙箱容器 (隔离环境)          │   │
+│  │  Box Runtime    │         │  沙箱容器 (隔离环境)          │   │
 │  │                 │         │                             │   │
 │  │  docker exec ───┼────────►│  python script.py           │   │
 │  │                 │         │                             │   │
@@ -67,25 +67,42 @@ LangBot 通过 Docker CLI 创建和管理沙箱容器：
 ```
 
 <Note>
-LangBot 通过 `docker` CLI 与 Docker daemon 通信。在容器化部署时，需要挂载 `docker.sock`。
+Box Runtime 通过 `docker` CLI 与 Docker daemon 通信。在容器化部署时，需要为 `langbot_box` 挂载 `docker.sock`。
 </Note>
 
 ### 容器化部署
 
-当 LangBot 运行在 Docker 容器中时，需要将主机的 Docker socket 挂载进去：
+当 LangBot 运行在 Docker 容器中时，Box Runtime 应作为独立的 `langbot_box` 服务运行。由 `langbot_box` 挂载主机 Docker socket 并负责创建沙箱容器：
 
 ```yaml
 # docker-compose.yaml
 services:
+  langbot_box:
+    image: rockchin/langbot:latest
+    volumes:
+      # 使用主机 Docker socket 创建沙箱容器时，源路径和目标路径需要保持一致
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock  # 必需：允许创建沙箱容器
+    environment:
+      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
+      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
+      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-挂载 `docker.sock` 赋予容器创建其他容器的能力。请确保在受信任的环境中使用。
+挂载 `docker.sock` 赋予 `langbot_box` 创建其他容器的能力。请确保在受信任的环境中使用。
 </Warning>
 
 ### 配置示例
@@ -98,6 +115,7 @@ box:
     image: ''                    # 留空使用默认镜像
     host_root: './data/box'      # 主机工作目录
     default_workspace: ''        # 默认工作空间
+    skills_root: 'skills'        # Skill 包目录，默认 <host_root>/skills
     allowed_mount_roots:         # 允许挂载的目录白名单
       - './data/box'
       - '/tmp'

@@ -1,0 +1,75 @@
+---
+title: "运行时与扩展关系"
+---
+
+LangBot 里同时存在插件、MCP、Skills 和代码沙箱。它们共享 Agent 的 Tool Call 能力，但职责不同，运行时也不同。
+
+## 一句话区分
+
+**Sandbox 是执行环境，Box Runtime 是实现 sandbox/stdio MCP/skill store 的运行时；Skills 是通过 Tool Call 激活的轻量能力包，插件是由 Plugin Runtime 管理的扩展进程。**
+
+## 组件关系
+
+| 组件 | 由谁管理 | 主要作用 | 什么时候进入 Agent |
+|------|----------|----------|--------------------|
+| 插件 | Plugin Runtime | 提供插件组件、插件工具、知识库组件等长期扩展 | 在流水线扩展中启用后，由插件系统暴露能力 |
+| MCP Server | LangBot MCP Loader；stdio 模式可由 Box Runtime 托管 | 接入外部 MCP 工具 | 在流水线扩展中启用后，工具进入 Agent 可用工具列表 |
+| Skills | Box Runtime skill store；Box 不可用时回退本地 `data/skills` | 提供按需加载的指令、脚本、模板和资源 | Agent 调用 `activate` 后，通过 Tool Result 注入上下文 |
+| Code Sandbox | Box Runtime | 执行命令、读写工作区文件、托管 stdio MCP 进程 | 使用内置 Agent 且 Box 后端可用时提供 `exec/read/write/edit/glob/grep` |
+
+## 两套 Runtime
+
+### Plugin Runtime
+
+Plugin Runtime 管理插件进程。插件适合长期运行、需要生命周期、配置页、事件监听、知识库组件或独立工具组件的扩展。
+
+常见入口：
+
+- WebUI 的插件管理
+- 插件市场
+- 插件开发文档
+
+### Box Runtime
+
+Box Runtime 管理代码执行环境。它负责：
+
+- 启动 Docker/Nsjail/E2B 沙箱后端
+- 为 Agent 提供 `exec/read/write/edit/glob/grep`
+- 托管 stdio MCP Server 的长驻进程
+- 管理 Box-backed Skills 存储
+
+Docker Compose 部署时，Box Runtime 通常是独立的 `langbot_box` 服务。
+
+## 选择哪种扩展
+
+| 需求 | 推荐方式 |
+|------|----------|
+| 给 Agent 增加一个长期可配置的系统能力 | 插件 |
+| 接入已有 MCP 工具服务 | MCP Server |
+| 给 Agent 增加一段专业工作流、脚本或模板 | Skill |
+| 让 Agent 运行代码、读写临时文件、安装依赖 | Sandbox |
+
+## 流水线绑定口径
+
+插件、MCP Server 和 Skills 都属于流水线扩展。安装或创建之后，还需要在流水线扩展配置中决定：
+
+- 启用全部扩展
+- 或只绑定指定插件、MCP Server、Skill
+
+Skills 的绑定只控制 Agent 能看到哪些技能；真正的技能指令仍然要等 Agent 调用 `activate` 后才进入上下文。
+
+<Note>
+Sandbox 内置工具和 Skills 当前面向内置 Agent 使用。使用 Dify、n8n、Langflow、Coze 等外部 Runner 时，应以对应平台自己的工具和执行环境为准。
+</Note>
+
+## 排障入口
+
+| 现象 | 优先检查 |
+|------|----------|
+| Agent 没有 `exec/read/write` 工具 | Box Runtime 是否可用、后端是否可用、流水线是否使用内置 Agent |
+| Docker 部署下沙箱启动失败 | `langbot_box` 是否挂载 `docker.sock`，Box 根目录源路径和目标路径是否一致 |
+| 读写文件失败 | `box.local.host_root`、`box.local.default_workspace`、`box.local.allowed_mount_roots` |
+| Skill 不显示 | `box.local.skills_root`、Box skill store、流水线 Skills 绑定 |
+| stdio MCP 启动失败 | Box Runtime 状态、MCP 命令/参数/env、依赖安装日志、`startup_timeout_sec` |
+| 后端强制配置不生效 | 区分 `BOX__BACKEND` 和 `BOX_BACKEND` |
+

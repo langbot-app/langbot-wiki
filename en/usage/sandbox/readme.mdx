@@ -89,6 +89,7 @@ The sandbox feature provides six built-in tools for agents:
 <Note>
 - The `exec` tool runs commands inside the sandbox container; `read`/`write`/`edit`/`glob`/`grep` operate directly on the host directory mapped to `/workspace`.
 - When no backend (Docker/Nsjail/E2B) is available, these tools will not be provided to the Agent.
+- These native tools are designed for the built-in Local Agent. External runners such as Dify, n8n, Langflow, and Coze use their own tool mechanisms.
 </Note>
 
 ## Scope and Lifecycle
@@ -141,12 +142,14 @@ Configure host mounts in `config.yaml`:
 box:
   local:
     host_root: './data/box'           # Host working directory
+    skills_root: 'skills'             # Skill package directory, defaults to <host_root>/skills
     allowed_mount_roots:              # Whitelist of directories Agent can mount
       - './data/box'
       - '/tmp'
 ```
 
 - `host_root`: Default working directory, mapped to `/workspace` in sandbox
+- `skills_root`: Box Runtime-owned Skill package directory. Relative paths are resolved under `host_root`; default is `<host_root>/skills`
 - `allowed_mount_roots`: Whitelist of directories Agent can request to mount
 
 ## Quick Start
@@ -160,17 +163,20 @@ box:
   local:
     profile: 'default'
     host_root: './data/box'
+    skills_root: 'skills'
 ```
 
 3. Start LangBot, sandbox feature is automatically enabled
-4. Agent will automatically have `exec`/`read`/`write`/`edit`/`glob`/`grep` tools
+4. Select Local Agent in the pipeline and use a model with function calling support
+5. Agent will automatically have `exec`/`read`/`write`/`edit`/`glob`/`grep` tools
 
 <Tip>
-Sandbox feature is automatically enabled—as long as the backend is available, the Agent will have the built-in tools. No manual activation in pipeline required.
+Sandbox feature is automatically enabled. As long as the backend is available, Local Agent receives the built-in tools. No separate sandbox switch is required in the pipeline.
 </Tip>
 
 ## Next Steps
 
 - [Backend Configuration](./backend) - Detailed backend configuration
+- [Runtimes and Extensions](./runtime-relationships) - How Sandbox, Box Runtime, MCP, Skills, and plugins relate
 - [Security Profiles](./profiles) - Use profiles to control security policies
 - [Configuration Reference](./config) - Complete configuration options

@@ -286,9 +286,18 @@
                     "group": "Code Sandbox",
                     "pages": [
                       "en/usage/sandbox/readme",
+                      "en/usage/sandbox/runtime-relationships",
                       "en/usage/sandbox/backend",
                       "en/usage/sandbox/profiles",
                       "en/usage/sandbox/config"
+                    ]
+                  },
+                  {
+                    "group": "Skills",
+                    "pages": [
+                      "en/usage/skills/readme",
+                      "en/usage/skills/skill-format",
+                      "en/usage/skills/tools-api"
                     ]
                   }
                 ]
@@ -497,6 +506,7 @@
                     "group": "代码沙箱",
                     "pages": [
                       "zh/usage/sandbox/readme",
+                      "zh/usage/sandbox/runtime-relationships",
                       "zh/usage/sandbox/backend",
                       "zh/usage/sandbox/profiles",
                       "zh/usage/sandbox/config"
@@ -735,9 +745,18 @@
                     "group": "コードサンドボックス",
                     "pages": [
                       "ja/usage/sandbox/readme",
+                      "ja/usage/sandbox/runtime-relationships",
                       "ja/usage/sandbox/backend",
                       "ja/usage/sandbox/profiles",
                       "ja/usage/sandbox/config"
+                    ]
+                  },
+                  {
+                    "group": "Skills",
+                    "pages": [
+                      "ja/usage/skills/readme",
+                      "ja/usage/skills/skill-format",
+                      "ja/usage/skills/tools-api"
                     ]
                   }
                 ]

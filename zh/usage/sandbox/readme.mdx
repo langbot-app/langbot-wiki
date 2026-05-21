@@ -89,6 +89,7 @@ LangBot 支持多种沙箱后端：
 <Note>
 - `exec` 工具在沙箱容器内执行命令；`read`/`write`/`edit`/`glob`/`grep` 直接操作主机上映射到 `/workspace` 的目录。
 - 当没有任何后端（Docker/Nsjail/E2B）可用时，这些工具将不会提供给 Agent。
+- 这些内置工具面向内置 Agent 使用。使用 Dify、n8n、Langflow、Coze 等外部 Runner 时，应以外部平台自己的工具机制为准。
 </Note>
 
 ## 沙箱作用域与生命周期
@@ -141,12 +142,14 @@ Agent 通过 `exec`/`read`/`write`/`edit` 工具操作的都是 `/workspace` 目
 box:
   local:
     host_root: './data/box'           # 主机上的工作目录
+    skills_root: 'skills'             # Skill 包目录，默认 <host_root>/skills
     allowed_mount_roots:              # 允许 Agent 挂载的目录白名单
       - './data/box'
       - '/tmp'
 ```
 
 - `host_root`：默认的工作目录，映射到沙箱内的 `/workspace`
+- `skills_root`：Box Runtime 管理的 Skill 包目录。相对路径会解析到 `host_root` 下，默认是 `<host_root>/skills`
 - `allowed_mount_roots`：Agent 可以请求额外挂载的目录白名单
 
 ## 快速开始
@@ -160,17 +163,20 @@ box:
   local:
     profile: 'default'
     host_root: './data/box'
+    skills_root: 'skills'
 ```
 
 3. 启动 LangBot，沙箱功能自动启用
-4. Agent 将自动获得 `exec`/`read`/`write`/`edit`/`glob`/`grep` 工具
+4. 在流水线中选择内置 Agent，并使用支持函数调用的模型
+5. Agent 将自动获得 `exec`/`read`/`write`/`edit`/`glob`/`grep` 工具
 
 <Tip>
-沙箱功能是自动启用的——只要后端可用，Agent 就会获得内置工具。无需在流水线中手动开启。
+沙箱功能是自动启用的——只要后端可用，内置 Agent 就会获得内置工具。无需在流水线中单独开启 sandbox。
 </Tip>
 
 ## 下一步
 
 - [配置后端](./backend) - 了解各后端的详细配置
+- [运行时与扩展关系](./runtime-relationships) - 区分 Sandbox、Box Runtime、MCP、Skills 和插件
 - [安全预设](./profiles) - 使用 Profile 控制安全策略
 - [配置参考](./config) - 完整的配置项说明

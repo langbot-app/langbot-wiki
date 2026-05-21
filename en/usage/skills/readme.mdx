@@ -102,10 +102,10 @@ Skill instructions are returned through Tool Result as incremental content, not 
 
 ## Skill File Structure
 
-Each Skill is a directory containing a `SKILL.md` file:
+Each Skill is a directory containing a `SKILL.md` file. When the sandbox backend is available, Skill packages are owned by the Box Runtime and are stored under `box.local.skills_root`, which defaults to `<box.local.host_root>/skills`:
 
 ```
-data/skills/
+<box.local.host_root>/skills/
 ├── my-skill/
 │   ├── SKILL.md           # Required: skill definition file
 │   ├── scripts/           # Optional: script files
@@ -115,6 +115,10 @@ data/skills/
 └── another-skill/
     └── SKILL.md
 ```
+
+<Note>
+LangBot only falls back to the legacy `data/skills/` directory for local development when the Box Runtime is unavailable.
+</Note>
 
 ### SKILL.md Format
 
@@ -244,10 +248,10 @@ data-analyzer/
 
 ### 1. Create Your First Skill
 
-Create a skill in the `data/skills/` directory:
+Create a skill from the WebUI Skills page, or prepare a skill package under sandbox `/workspace` and register it with `register_skill`. For manual preparation:
 
 ```bash
-mkdir -p data/skills/my-first-skill
+mkdir -p /workspace/my-first-skill
 ```
 
 Create `SKILL.md`:
@@ -270,33 +274,34 @@ This is an example skill demonstrating basic skill functionality.
 3. Return results
 ```
 
-### 2. Test Activation
+### 2. Register and Test Activation
 
-Ensure sandbox backend is available, then send a request matching the skill description to the Agent. The Agent will automatically call the `activate` tool to activate the skill.
+Call `register_skill(path="/workspace/my-first-skill")` to register the skill. Ensure the sandbox backend is available, then send a request matching the skill description to the Agent. The Agent will automatically call the `activate` tool to activate the skill.
+
+### 3. Enable the Skill in a Pipeline
+
+Skills are pipeline extensions. After creating, importing, or registering a Skill, allow it in the pipeline extension settings:
+
+- Enable all Skills
+- Or bind selected Skills
+
+Binding only controls which Skills are visible to the Agent. The full `SKILL.md` instructions are not preloaded into context; they are returned as Tool Result only after the Agent calls `activate`.
+
+<Note>
+Skills are currently designed for the built-in Local Agent and depend on Tool Call plus a sandbox backend. External runners use their own tool and context mechanisms.
+</Note>
 
 ## Creating New Skills
 
-### Method 1: Use Built-in create-skill Skill
+### Method 1: Use WebUI or Import
 
-LangBot includes a built-in `create-skill` skill for guiding the creation of new skill packages:
+The WebUI Skills page can create, edit, import from GitHub, or upload zip packages. When the sandbox backend is available, these skills are written to the Box Runtime-managed skill store.
 
-1. Call `activate(skill_name="create-skill")`
-2. Follow the returned instructions to prepare skill files
-3. Use the `register_skill` tool to register the skill
-
-### Method 2: Manual Creation
+### Method 2: Let the Agent Create in the Sandbox
 
 1. Create skill directory under sandbox `/workspace`
 2. Write `SKILL.md` and related files
 3. Call `register_skill(path="/workspace/my-skill")` to register
-
-## Built-in Skills
-
-LangBot automatically copies built-in skills from `templates/skills/` to `data/skills/` on startup:
-
-| Skill | Description |
-|-------|-------------|
-| `create-skill` | Skill for guiding creation of new skills |
 
 ## Best Practices
 
@@ -323,6 +328,15 @@ LangBot automatically copies built-in skills from `templates/skills/` to `data/s
 - Put scripts in `scripts/` directory
 - Put templates in `templates/` directory
 - Keep structure clear
+
+## Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| Skill list is empty | Box Runtime availability and whether `box.local.skills_root` points to the expected directory |
+| Agent does not call `activate` | Skill description clarity, pipeline Skill binding, and model function calling support |
+| Files are missing after activation | Ensure files are inside the Skill package and use `/workspace/.skills/{skill-name}/` paths |
+| `register_skill` fails | Target path must be under `/workspace`, and the directory or subdirectories up to depth 2 must contain `SKILL.md` |
 
 ## Next Steps
 
