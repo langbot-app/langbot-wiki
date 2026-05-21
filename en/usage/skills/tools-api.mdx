@@ -194,5 +194,5 @@ There are two common ways to create new skills:
 After registration, the new skill can be used via `activate`.
 
 <Note>
-New skills are registered to the currently active skill store. When the sandbox backend is available, this is the Box Runtime-managed skills root; when Box is unavailable, local development falls back to `data/skills/`.
+New skills are registered to the Box Runtime-managed skills root. Box is the sole source of skills — when Box is unavailable, new skills cannot be added, and there is no local `data/skills/` fallback.
 </Note>

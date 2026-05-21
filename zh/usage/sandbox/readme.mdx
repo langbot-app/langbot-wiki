@@ -171,7 +171,7 @@ box:
 5. Agent 将自动获得 `exec`/`read`/`write`/`edit`/`glob`/`grep` 工具
 
 <Tip>
-沙箱功能是自动启用的——只要后端可用，内置 Agent 就会获得内置工具。无需在流水线中单独开启 sandbox。
+沙箱功能默认启用（`box.enabled: true`）——只要后端可用，内置 Agent 就会获得内置工具，无需在流水线中单独开启 sandbox。如需完全关闭沙箱，可设置 `box.enabled: false`。
 </Tip>
 
 ## 下一步

@@ -117,7 +117,7 @@ Each Skill is a directory containing a `SKILL.md` file. When the sandbox backend
 ```
 
 <Note>
-LangBot only falls back to the legacy `data/skills/` directory for local development when the Box Runtime is unavailable.
+Skills are entirely managed by the Box Runtime skill store, which is the sole source of skills. When the Box Runtime is unavailable, the skill list is simply empty — there is no local fallback that reads from `data/skills/`.
 </Note>
 
 ### SKILL.md Format

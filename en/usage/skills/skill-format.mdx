@@ -303,7 +303,7 @@ When the sandbox backend is available, Skill files should be placed under the Bo
 │   └── SKILL.md
 ```
 
-By default, `box.local.skills_root` is `skills`, so the actual path is `<box.local.host_root>/skills`. The legacy `data/skills/` directory is scanned only as a local-development fallback when Box is unavailable.
+By default, `box.local.skills_root` is `skills`, so the actual path is `<box.local.host_root>/skills`. Skills are read only from the directory managed by the Box Runtime — there is no local `data/skills/` fallback.
 
 ## Multi-File Skills
 

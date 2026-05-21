@@ -171,7 +171,7 @@ box:
 5. Agent will automatically have `exec`/`read`/`write`/`edit`/`glob`/`grep` tools
 
 <Tip>
-Sandbox feature is automatically enabled. As long as the backend is available, Local Agent receives the built-in tools. No separate sandbox switch is required in the pipeline.
+The sandbox feature is enabled by default (`box.enabled: true`). As long as the backend is available, Local Agent receives the built-in tools, and no separate sandbox switch is required in the pipeline. To fully disable the sandbox, set `box.enabled: false`.
 </Tip>
 
 ## Next Steps

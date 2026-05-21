@@ -194,5 +194,5 @@ Agent 通过调用 `activate` 工具来激活技能：
 注册后，新技能即可通过 `activate` 使用。
 
 <Note>
-新技能会注册到当前启用的 skill store。沙箱后端可用时是 Box Runtime 管理的 skills root；Box 不可用的本地开发场景才会回退到 `data/skills/`。
+新技能会注册到 Box Runtime 管理的 skills root。Box 是技能的唯一来源——Box 不可用时无法新增技能，也不存在 `data/skills/` 本地回退。
 </Note>

@@ -72,33 +72,34 @@ Box Runtime 通过 `docker` CLI 与 Docker daemon 通信。在容器化部署时
 
 ### 容器化部署
 
-当 LangBot 运行在 Docker 容器中时，Box Runtime 应作为独立的 `langbot_box` 服务运行。由 `langbot_box` 挂载主机 Docker socket 并负责创建沙箱容器：
+当 LangBot 运行在 Docker 容器中时，Box Runtime 作为独立的 `langbot_box` 服务运行，由它挂载主机 Docker socket 并负责创建沙箱容器。`langbot_box` 是**可选服务**，通过 compose profile 控制——需要 `docker compose --profile box up`（或 `--profile all`）才会启动：
 
 ```yaml
 # docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
+    # 可选服务：通过 compose profile 控制是否启动
+    profiles: ["box", "all"]
     volumes:
       # 使用主机 Docker socket 创建沙箱容器时，源路径和目标路径需要保持一致
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+    # langbot_box 不读取 config.yaml 或环境变量，配置由 langbot 通过 INIT RPC 下发。
+    # 不要在此添加 BOX__* / LANGBOT_BOX_* 变量——它们会被忽略。
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
     environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      # 统一环境变量覆盖约定；这些 box.local.* 配置会由 langbot
+      # 通过 INIT RPC 转发给 Box Runtime。
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>

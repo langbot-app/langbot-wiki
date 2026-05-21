@@ -194,5 +194,5 @@ Agent は `activate` ツールを呼び出してスキルを起動：
 登録後、新しいスキルは `activate` で使用できます。
 
 <Note>
-新しいスキルは現在有効な skill store に登録されます。サンドボックスバックエンドが利用可能な場合は Box Runtime 管理の skills root、Box が利用できないローカル開発時は `data/skills/` にフォールバックします。
+新しいスキルは Box Runtime が管理する skills root に登録されます。Box がスキルの唯一の供給元です——Box が利用できない場合はスキルを新規追加できず、`data/skills/` のローカルフォールバックも存在しません。
 </Note>

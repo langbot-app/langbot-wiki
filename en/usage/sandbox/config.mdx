@@ -10,6 +10,7 @@ Sandbox configuration is in the `box` section of `data/config.yaml`:
 
 ```yaml
 box:
+  enabled: true
   backend: 'local'
   runtime:
     endpoint: ''
@@ -32,6 +33,19 @@ box:
 ---
 
 ## Top-Level Configuration
+
+### `enabled`
+
+Master switch for the sandbox runtime.
+
+| Value | Description |
+|-------|-------------|
+| `true` | Enable the sandbox (default) |
+| `false` | Fully disable the sandbox |
+
+Default: `true`
+
+When set to `false`, LangBot does not connect to a remote Box Runtime and does not start a local stdio Box subprocess. All sandbox-dependent features turn off as a result: the built-in tools (`exec`/`read`/`write`/`edit`/`glob`/`grep`), the `activate` skill tool, skill creation/editing, and stdio-mode MCP servers. Skills can still be listed read-only, and http/sse-mode MCP servers are unaffected.
 
 ### `backend`
 
@@ -137,7 +151,7 @@ Box Runtime-owned Skill package directory.
 Default: `skills`
 
 <Note>
-When the sandbox backend is available, Skills are owned by the Box Runtime and are not loaded from the LangBot main process `data/skills` directory by default. The legacy `data/skills` directory is only used as a fallback for local development when Box is unavailable.
+Skills are entirely owned by the Box Runtime, which is the sole source of skills. When Box is unavailable (disabled via configuration or a failed connection), the skill list is simply empty — there is no local fallback that reads from `data/skills`.
 </Note>
 
 ### `local.allowed_mount_roots`
@@ -213,62 +227,63 @@ Default E2B template ID.
 
 ## Environment Variables
 
-All configuration items can be set via environment variables:
+LangBot uses a unified environment-variable override convention: `SECTION__SUBSECTION__KEY` (separated by double underscores) overrides the matching field in `config.yaml`. The `box` configuration can be set this way:
 
-| Environment Variable | Config Item / Effect |
-|---------------------|----------------------|
-| `BOX__BACKEND` | Writes LangBot config `box.backend` |
-| `BOX__LOCAL__PROFILE` | Writes `box.local.profile` |
-| `BOX__LOCAL__IMAGE` | Writes `box.local.image` |
-| `BOX__LOCAL__HOST_ROOT` | Writes `box.local.host_root` |
-| `BOX__LOCAL__DEFAULT_WORKSPACE` | Writes `box.local.default_workspace` |
-| `BOX__LOCAL__SKILLS_ROOT` | Writes `box.local.skills_root` |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | Writes `box.local.allowed_mount_roots`, comma-separated |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | Writes `box.local.workspace_quota_mb` |
-| `BOX__E2B__API_KEY` | Writes `box.e2b.api_key` |
-| `BOX__E2B__API_URL` | Writes `box.e2b.api_url` |
-| `BOX__E2B__TEMPLATE` | Writes `box.e2b.template` |
+| Environment Variable | Config Item |
+|---------------------|-------------|
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`, comma-separated |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
 | `BOX_BACKEND` | Forces the Box Runtime backend and takes precedence over `box.backend` |
-| `LANGBOT_BOX_LOCAL_HOST_ROOT` | Passes `local.host_root` directly to the Box Runtime |
-| `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE` | Passes `local.default_workspace` directly to the Box Runtime |
-| `LANGBOT_BOX_LOCAL_SKILLS_ROOT` | Passes `local.skills_root` directly to the Box Runtime |
-| `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` | Passes the mount allowlist directly to the Box Runtime, comma-separated |
 
 <Note>
 E2B SDK also supports `E2B_API_KEY` and `E2B_API_URL` environment variables, which take precedence over `config.yaml`.
-Docker Compose deployments usually configure both `langbot` and `langbot_box` with `LANGBOT_BOX_LOCAL_*` variables.
+
+The Box Runtime process (the `langbot_box` service in containerized deployments) **does not read** `config.yaml` or environment variables — its configuration is pushed by the LangBot main process over INIT RPC. The `BOX__*` and similar environment variables therefore only need to be set on the `langbot` service.
 </Note>
 
 ---
 
 ## Docker Compose Example
 
-With Docker Compose, run the Box Runtime as a separate `langbot_box` service and share the same host Box root with `langbot`:
+With Docker Compose, run the Box Runtime as a separate `langbot_box` service. It is an **optional service** gated behind a compose profile — it only starts when you run `docker compose --profile box up` (or `--profile all`). `langbot_box` shares the same host Box root with `langbot`:
 
 ```yaml
 # docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
+    # Optional service: whether it starts is controlled by a compose profile
+    profiles: ["box", "all"]
     volumes:
+      # Keep source and target identical because langbot_box creates
+      # sandbox containers through the host Docker socket.
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+    # langbot_box does not read config.yaml or environment variables; its
+    # config is pushed by langbot over INIT RPC. Do not add BOX__* /
+    # LANGBOT_BOX_* variables here — they would be ignored.
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
     environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      # Unified environment-variable override convention; these box.local.*
+      # settings are forwarded to the Box Runtime by langbot over INIT RPC.
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>

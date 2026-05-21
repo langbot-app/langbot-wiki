@@ -10,6 +10,7 @@ title: "設定リファレンス"
 
 ```yaml
 box:
+  enabled: true
   backend: 'local'
   runtime:
     endpoint: ''
@@ -32,6 +33,19 @@ box:
 ---
 
 ## トップレベル設定
+
+### `enabled`
+
+サンドボックスランタイムのマスタースイッチ。
+
+| 値 | 説明 |
+|-----|------|
+| `true` | サンドボックスを有効化（デフォルト） |
+| `false` | サンドボックスを完全に無効化 |
+
+デフォルト：`true`
+
+`false` に設定すると、LangBot はリモート Box Runtime に接続せず、ローカルの stdio Box サブプロセスも起動しません。サンドボックスに依存するすべての機能が無効になります：内蔵ツール（`exec`/`read`/`write`/`edit`/`glob`/`grep`）、`activate` スキルツール、スキルの新規作成・編集、および stdio モードの MCP Server。Skills は読み取り専用での一覧表示は可能で、http/sse モードの MCP Server は影響を受けません。
 
 ### `backend`
 
@@ -137,7 +151,7 @@ Box Runtime が管理する Skill パッケージディレクトリ。
 デフォルト：`skills`
 
 <Note>
-サンドボックスバックエンドが利用可能な場合、Skills は Box Runtime が管理し、通常は LangBot メインプロセスの `data/skills` からは読み込まれません。従来の `data/skills` ディレクトリは、Box が利用できないローカル開発時のフォールバックとしてのみ使われます。
+Skills は完全に Box Runtime が管理し、Box がスキルの唯一の供給元です。Box が利用できない場合（設定で無効化されている、または接続に失敗した場合）、スキル一覧は空になります——`data/skills` から読み込むローカルフォールバックは存在しません。
 </Note>
 
 ### `local.allowed_mount_roots`
@@ -213,62 +227,62 @@ E2B API Key。
 
 ## 環境変数
 
-すべての設定項目は環境変数で設定可能：
+LangBot は統一された環境変数の上書き規約を採用しています：`SECTION__SUBSECTION__KEY`（ダブルアンダースコア区切り）が `config.yaml` の対応するフィールドを上書きします。`box` 設定項目は次のように設定できます：
 
-| 環境変数 | 設定項目 / 効果 |
+| 環境変数 | 対応する設定項目 |
 |---------------------|----------------------|
-| `BOX__BACKEND` | LangBot 設定 `box.backend` に書き込み |
-| `BOX__LOCAL__PROFILE` | `box.local.profile` に書き込み |
-| `BOX__LOCAL__IMAGE` | `box.local.image` に書き込み |
-| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` に書き込み |
-| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` に書き込み |
-| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` に書き込み |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots` に書き込み。カンマ区切り |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` に書き込み |
-| `BOX__E2B__API_KEY` | `box.e2b.api_key` に書き込み |
-| `BOX__E2B__API_URL` | `box.e2b.api_url` に書き込み |
-| `BOX__E2B__TEMPLATE` | `box.e2b.template` に書き込み |
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`。カンマ区切り |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
 | `BOX_BACKEND` | Box Runtime バックエンドを強制し、`box.backend` より優先 |
-| `LANGBOT_BOX_LOCAL_HOST_ROOT` | `local.host_root` を Box Runtime に直接渡す |
-| `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE` | `local.default_workspace` を Box Runtime に直接渡す |
-| `LANGBOT_BOX_LOCAL_SKILLS_ROOT` | `local.skills_root` を Box Runtime に直接渡す |
-| `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` | マウント許可リストを Box Runtime に直接渡す。カンマ区切り |
 
 <Note>
 E2B SDKは`E2B_API_KEY`と`E2B_API_URL`環境変数もサポートしており、`config.yaml`より優先されます。
-Docker Compose デプロイでは通常、`langbot` と `langbot_box` の両方を `LANGBOT_BOX_LOCAL_*` 変数で設定します。
+
+Box Runtime プロセス（コンテナ化デプロイ時の `langbot_box` サービス）は `config.yaml` や環境変数を**読み込みません**。その設定は LangBot メインプロセスが INIT RPC を通じて下げ渡します。したがって `BOX__*` などの環境変数は `langbot` サービスにのみ設定すれば十分です。
 </Note>
 
 ---
 
 ## Docker Compose例
 
-Docker Compose では、Box Runtime を独立した `langbot_box` サービスとして実行し、`langbot` と同じホスト上の Box ルートを共有します：
+Docker Compose では、Box Runtime を独立した `langbot_box` サービスとして実行します。これは**オプションサービス**であり、compose profile で制御されます——`docker compose --profile box up`（または `--profile all`）で起動する必要があります。`langbot_box` は `langbot` と同じホスト上の Box ルートを共有します：
 
 ```yaml
 # docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
+    # オプションサービス：compose profile で起動の有無を制御
+    profiles: ["box", "all"]
     volumes:
+      # langbot_box はホスト Docker socket 経由でサンドボックスコンテナを作成するため、
+      # ソースパスとターゲットパスを同一にします。
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+    # langbot_box は config.yaml や環境変数を読み込みません。設定は langbot が INIT RPC で下げ渡します。
+    # ここに BOX__* / LANGBOT_BOX_* 変数を追加しないでください——無視されます。
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
     environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      # 統一された環境変数の上書き規約。これらの box.local.* 設定は langbot が
+      # INIT RPC を通じて Box Runtime へ転送します。
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>

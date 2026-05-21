@@ -10,6 +10,7 @@ title: "配置参考"
 
 ```yaml
 box:
+  enabled: true
   backend: 'local'
   runtime:
     endpoint: ''
@@ -32,6 +33,19 @@ box:
 ---
 
 ## 顶层配置
+
+### `enabled`
+
+沙箱运行时总开关。
+
+| 值 | 说明 |
+|-----|------|
+| `true` | 启用沙箱（默认） |
+| `false` | 完全禁用沙箱 |
+
+默认值：`true`
+
+设为 `false` 时，LangBot 不会连接远程 Box Runtime，也不会启动本地 stdio Box 子进程。所有依赖沙箱的功能都会随之关闭：内置工具（`exec`/`read`/`write`/`edit`/`glob`/`grep`）、`activate` 技能工具、技能的新增/编辑、以及 stdio 模式的 MCP Server。Skills 仍可只读列出，http/sse 模式的 MCP Server 不受影响。
 
 ### `backend`
 
@@ -137,7 +151,7 @@ Box Runtime 管理的 Skill 包目录。
 默认值：`skills`
 
 <Note>
-沙箱后端可用时，Skills 由 Box Runtime 管理，默认不会从 LangBot 主进程的 `data/skills` 加载。只有 Box 不可用的本地开发场景才会回退到旧的 `data/skills` 目录。
+Skills 完全由 Box Runtime 管理，Box 是技能的唯一来源。Box 不可用时（被配置禁用或连接失败），技能列表为空——不存在从 `data/skills` 读取的本地回退。
 </Note>
 
 ### `local.allowed_mount_roots`
@@ -213,62 +227,61 @@ E2B API Key。
 
 ## 环境变量
 
-所有配置项都可以通过环境变量设置：
+LangBot 使用统一的环境变量覆盖约定：`SECTION__SUBSECTION__KEY`（双下划线分隔）会覆盖 `config.yaml` 中对应的字段。`box` 配置项可以这样设置：
 
-| 环境变量 | 配置项/作用 |
-|---------|-------------|
-| `BOX__BACKEND` | 写入 LangBot 配置 `box.backend` |
-| `BOX__LOCAL__PROFILE` | 写入 `box.local.profile` |
-| `BOX__LOCAL__IMAGE` | 写入 `box.local.image` |
-| `BOX__LOCAL__HOST_ROOT` | 写入 `box.local.host_root` |
-| `BOX__LOCAL__DEFAULT_WORKSPACE` | 写入 `box.local.default_workspace` |
-| `BOX__LOCAL__SKILLS_ROOT` | 写入 `box.local.skills_root` |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | 写入 `box.local.allowed_mount_roots`，使用逗号分隔 |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | 写入 `box.local.workspace_quota_mb` |
-| `BOX__E2B__API_KEY` | 写入 `box.e2b.api_key` |
-| `BOX__E2B__API_URL` | 写入 `box.e2b.api_url` |
-| `BOX__E2B__TEMPLATE` | 写入 `box.e2b.template` |
+| 环境变量 | 对应配置项 |
+|---------|-----------|
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`，使用逗号分隔 |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
 | `BOX_BACKEND` | Box Runtime 后端强制覆盖，优先级高于 `box.backend` |
-| `LANGBOT_BOX_LOCAL_HOST_ROOT` | 直接传给 Box Runtime 的 `local.host_root` |
-| `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE` | 直接传给 Box Runtime 的 `local.default_workspace` |
-| `LANGBOT_BOX_LOCAL_SKILLS_ROOT` | 直接传给 Box Runtime 的 `local.skills_root` |
-| `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` | 直接传给 Box Runtime 的挂载白名单，使用逗号分隔 |
 
 <Note>
 E2B SDK 还支持 `E2B_API_KEY` 和 `E2B_API_URL` 环境变量，优先级高于 `config.yaml`。
-Docker Compose 部署时通常使用 `LANGBOT_BOX_LOCAL_*` 变量同时配置 `langbot` 和 `langbot_box` 服务。
+
+Box Runtime 进程（容器化部署时的 `langbot_box` 服务）**不读取** `config.yaml` 或环境变量，其配置由 LangBot 主进程通过 INIT RPC 下发。因此 `BOX__*` 等环境变量只需配置在 `langbot` 服务上。
 </Note>
 
 ---
 
 ## Docker Compose 示例
 
-使用 Docker Compose 部署时，Box Runtime 应作为独立的 `langbot_box` 服务运行，并与 `langbot` 使用同一个主机 Box 根目录：
+使用 Docker Compose 部署时，Box Runtime 作为独立的 `langbot_box` 服务运行。它是**可选服务**，通过 compose profile 控制——需要用 `docker compose --profile box up`（或 `--profile all`）才会启动。`langbot_box` 与 `langbot` 使用同一个主机 Box 根目录：
 
 ```yaml
 # docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
+    # 可选服务：通过 compose profile 控制是否启动
+    profiles: ["box", "all"]
     volumes:
+      # 使用主机 Docker socket 创建沙箱容器时，源路径和目标路径需保持一致
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.box", "--mode", "ws"]
+    # langbot_box 不读取 config.yaml 或环境变量，配置由 langbot 通过 INIT RPC 下发。
+    # 不要在此添加 BOX__* / LANGBOT_BOX_* 变量——它们会被忽略。
+    command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
     volumes:
       - ./data:/app/data
     environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      # 统一环境变量覆盖约定；这些 box.local.* 配置会由 langbot
+      # 通过 INIT RPC 转发给 Box Runtime。
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>

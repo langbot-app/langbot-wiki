@@ -303,7 +303,7 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 │   └── SKILL.md
 ```
 
-デフォルトでは `box.local.skills_root` は `skills` なので、実際のパスは `<box.local.host_root>/skills` です。従来の `data/skills/` は、Box が利用できないローカル開発時のフォールバックとしてのみスキャンされます。
+デフォルトでは `box.local.skills_root` は `skills` なので、実際のパスは `<box.local.host_root>/skills` です。スキルは Box Runtime が管理するディレクトリからのみ読み込まれ、`data/skills/` のローカルフォールバックは存在しません。
 
 ## マルチファイルスキル
 

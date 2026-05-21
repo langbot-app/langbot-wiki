@@ -115,7 +115,7 @@ LangBot 完全采用了 Claude Code 的设计模式：
 ```
 
 <Note>
-只有在 Box Runtime 不可用的本地开发场景，LangBot 才会回退到旧的 `data/skills/` 目录。
+技能完全由 Box Runtime 的 skill store 管理，Box 是技能的唯一来源。Box Runtime 不可用时技能列表为空——不存在从 `data/skills/` 读取的本地回退。
 </Note>
 
 ### SKILL.md 格式
