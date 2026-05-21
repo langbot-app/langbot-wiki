@@ -16,7 +16,7 @@ Use the `backend` config option to select a backend:
 | `e2b` | Force E2B cloud sandbox |
 
 <Note>
-`box.backend` can be set with the LangBot config override environment variable `BOX__BACKEND`. The Box Runtime also supports `BOX_BACKEND` as a runtime-only forced override, and it takes precedence over `box.backend`; in Docker Compose, set `BOX_BACKEND` on the `langbot_box` service when you need to force a backend.
+`box.backend` can be set with the LangBot config override environment variable `BOX__BACKEND`. In containerized deployments, set `box.local.*` overrides on the `langbot` service; LangBot forwards them to Box Runtime through the INIT RPC. Do not set `LANGBOT_BOX_*` / `BOX__*` directly on `langbot_box`, because the Box Runtime does not read them from its own environment.
 </Note>
 
 ### Auto-Selection Logic
@@ -72,32 +72,37 @@ The Box Runtime communicates with Docker daemon via `docker` CLI. In containeriz
 
 ### Containerized Deployment
 
-When LangBot runs in a Docker container, the Box Runtime runs as a separate `langbot_box` service, which mounts the host Docker socket and creates sandbox containers. `langbot_box` is an **optional service** controlled by a compose profile — it only starts when you run `docker compose --profile box up` (or `--profile all`):
+When LangBot runs in a Docker container, run the Box Runtime as a separate `langbot_box` service. `langbot_box` mounts the host Docker socket and creates sandbox containers:
 
 ```yaml
 # docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
-    # Optional service: whether it starts is controlled by a compose profile
+    container_name: langbot_box
     profiles: ["box", "all"]
     volumes:
       # Keep source and target identical because langbot_box creates
       # sandbox containers through the host Docker socket.
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      # Mount the socket for your container runtime:
+      # - /var/run/podman/podman.sock:/var/run/podman/podman.sock   # Podman
       - /var/run/docker.sock:/var/run/docker.sock
-    # langbot_box does not read config.yaml or environment variables; its
-    # config is pushed by langbot over INIT RPC. Do not add BOX__* /
-    # LANGBOT_BOX_* variables here — they would be ignored.
+    restart: on-failure
+    environment:
+      - TZ=Asia/Shanghai
+      # Box Runtime does not read box.local.* from config/env directly;
+      # LangBot sends these settings through the INIT RPC.
     command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
+    container_name: langbot
     volumes:
       - ./data:/app/data
+    restart: on-failure
     environment:
-      # Unified environment-variable override convention; these box.local.*
-      # settings are forwarded to the Box Runtime by langbot over INIT RPC.
+      - TZ=Asia/Shanghai
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - BOX__LOCAL__DEFAULT_WORKSPACE=default
       - BOX__LOCAL__SKILLS_ROOT=skills
@@ -269,8 +274,8 @@ box:
 |---------|--------|--------|-----|
 | Full isolation | ✅ | ⚠️ Partial | ✅ |
 | Custom images | ✅ | ❌ | ✅ (templates) |
-| Network isolation | ✅ | ✅ | ✅ |
-| Resource limits | ✅ | ✅ | ✅ |
+| Network control | ✅ | ✅/depends on nsjail setup | ⚠️ Depends on E2B/CubeSandbox template |
+| Resource limits | ✅ | ✅/best effort | ⚠️ Depends on provider/template |
 | Linux support | ✅ | ✅ | ✅ |
 | macOS support | ✅ | ❌ | ✅ |
 | Windows support | ✅ | ❌ | ✅ |

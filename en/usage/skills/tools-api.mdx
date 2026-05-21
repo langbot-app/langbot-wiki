@@ -12,7 +12,7 @@ The Skills system provides two tools for Agents to activate and register skills.
 | `register_skill` | Register skill from sandbox directory | Yes |
 
 <Note>
-These tools require a sandbox backend (Docker/Nsjail/E2B) to be available. If no backend is available, the tools will not be provided to the Agent. `activate` can only see Skills allowed by the current pipeline binding.
+Both tools require Box Runtime and a sandbox backend. Pipeline binding controls which Skill index is injected into the Local Agent prompt; in the current implementation, `activate` resolves skills by global Skill name and does not enforce binding at invocation time.
 </Note>
 
 ---
@@ -34,10 +34,10 @@ Activate a skill, injecting the skill instructions into the current conversation
 
 ### How It Works
 
-1. Agent calls the `activate` tool with the skill name, which must be visible to the current pipeline
-2. System returns the skill's SKILL.md content as Tool Result
-3. Skill package is mounted to `/workspace/.skills/{skill-name}/`
-4. Agent can use `exec`/`read`/`write`/`edit`/`glob`/`grep` to operate skill files
+1. The Agent calls `activate` with a skill name
+2. The system returns the Skill's SKILL.md content as a Tool Result
+3. The Skill is marked as activated and addressed through `/workspace/.skills/{skill-name}/`
+4. `read`/`glob`/`grep` can inspect visible Skills; `exec`/`write`/`edit` against a Skill package require activation
 
 ### Example
 
@@ -139,6 +139,7 @@ Register a skill package from a sandbox workspace directory to the LangBot skill
 - `path must be under /workspace`: Path not in workspace
 - `Directory does not exist`: Directory does not exist
 - `No SKILL.md found in ...`: No SKILL.md file in the directory or within two levels of subdirectories
+- `Multiple skill directories found...`: The target path contains more than one Skill package; point `path` to one specific Skill directory
 
 ---
 
@@ -158,12 +159,9 @@ Agent activates a skill by calling the `activate` tool:
 
 ### Effects After Activation
 
-1. **Instruction Injection**: SKILL.md content is returned as Tool Result, injected into context
-2. **Path Mounting**: Skill package is mounted to `/workspace/.skills/{skill-name}/`
-3. **File Operations**: Agent can use standard tools to operate skill files
-   - `read`: Read skill files
-   - `exec`: Execute commands in skill directory
-   - `write`/`edit`: Modify skill files
+1. **Instruction Injection**: SKILL.md content is returned as a Tool Result and injected into context
+2. **Activation marker**: The Skill is marked as activated and exposed through `/workspace/.skills/{skill-name}/`
+3. **File Operations**: `read`/`glob`/`grep` can inspect visible Skills; `exec`/`write`/`edit` against a Skill package require activation
 
 ### Design Advantages
 
@@ -194,5 +192,5 @@ There are two common ways to create new skills:
 After registration, the new skill can be used via `activate`.
 
 <Note>
-New skills are registered to the Box Runtime-managed skills root. Box is the sole source of skills — when Box is unavailable, new skills cannot be added, and there is no local `data/skills/` fallback.
+New skills are registered to the Box Runtime-managed skill store. If Box Runtime or its backend is unavailable, skill create/import/edit/register operations are unavailable; LangBot does not fall back to `data/skills/`.
 </Note>

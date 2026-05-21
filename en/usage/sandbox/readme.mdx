@@ -27,7 +27,7 @@ Meanwhile, the sandbox provides security isolation:
 | **Code Execution** | Run user-provided code snippets and return results |
 | **File Operations** | Read, edit documents, manage project files |
 | **MCP Server** | Run MCP tool services in isolated environment |
-| **Automation** | Execute scheduled scripts, system maintenance tasks |
+| **Automation** | Execute ad-hoc scripts or commands requested by the Agent |
 
 ## How It Works
 
@@ -113,7 +113,7 @@ Sandbox Session lifecycle rules:
 | Condition | Behavior |
 |------|------|
 | Idle timeout | Automatically cleaned up after 5 minutes (300 seconds) of inactivity |
-| Running processes | Not cleaned up, waits for processes to finish |
+| Running Box-managed processes | Not cleaned up; for example, waits for stdio MCP processes to exit |
 | `persistent: true` | Never automatically cleaned up |
 
 <Warning>
@@ -142,14 +142,14 @@ Configure host mounts in `config.yaml`:
 box:
   local:
     host_root: './data/box'           # Host working directory
-    skills_root: 'skills'             # Skill package directory, defaults to <host_root>/skills
+    skills_root: 'skills'             # Skill package directory, defaults to host_root/skills
     allowed_mount_roots:              # Whitelist of directories Agent can mount
       - './data/box'
       - '/tmp'
 ```
 
 - `host_root`: Default working directory, mapped to `/workspace` in sandbox
-- `skills_root`: Box Runtime-owned Skill package directory. Relative paths are resolved under `host_root`; default is `<host_root>/skills`
+- `skills_root`: Box Runtime-owned Skill package directory. Relative paths are resolved under `host_root`; default is `host_root/skills`
 - `allowed_mount_roots`: Whitelist of directories Agent can request to mount
 
 ## Quick Start

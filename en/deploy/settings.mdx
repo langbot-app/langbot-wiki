@@ -113,9 +113,10 @@ monitoring:
         # Number of expired rows to delete per table batch
         delete_batch_size: 1000
 box:
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. BOX_BACKEND is a Box Runtime override; BOX__BACKEND writes this config.
+    enabled: true  # Master switch for Box Runtime. When false, Box-dependent features such as sandbox tools, Skill add/edit, and stdio MCP are disabled.
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. BOX__BACKEND writes this config; BOX_BACKEND is a Runtime-level forced override.
     runtime:
-        endpoint: ''  # External Box Runtime base URL, e.g. 'ws://127.0.0.1:5410'. Leave empty for local auto-managed runtime.
+        endpoint: ''  # External Box Runtime base URL, e.g. 'ws://127.0.0.1:5410'. When empty, non-Docker deployments use a locally managed Runtime; Docker deployments connect to langbot_box:5410 on the Compose network.
     local:
         profile: 'default'
         image: ''  # Custom local sandbox image. Leave empty to use the profile default.
@@ -167,5 +168,5 @@ The configuration in `config.yaml` can be set via environment variables. Environ
 On startup, LangBot reads all environment variables, applies the corresponding configuration to `config.yaml`, and writes it to `data/config.yaml`.
 
 <Note>
-The Box Runtime itself also supports `BOX_BACKEND` and `LANGBOT_BOX_LOCAL_*` environment variables. Docker Compose deployments usually set `LANGBOT_BOX_LOCAL_HOST_ROOT`, `LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE`, `LANGBOT_BOX_LOCAL_SKILLS_ROOT`, and `LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` on both the `langbot` and `langbot_box` services.
+Set Box-related configuration on the `langbot` service with the unified `BOX__LOCAL__*` environment variables. LangBot applies them to `data/config.yaml` on startup and sends the Box configuration to `langbot_box` through INIT RPC. Do not set `LANGBOT_BOX_*` or `BOX__*` on the `langbot_box` service; they are not read directly there. Use `BOX_BACKEND` only when intentionally forcing the Box Runtime backend.
 </Note>

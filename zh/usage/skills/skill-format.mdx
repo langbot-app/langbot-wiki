@@ -298,19 +298,19 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 沙箱后端可用时，Skill 文件应放置在 Box Runtime 管理的 skills root 中：
 
 ```
-<box.local.host_root>/skills/
+box.local.host_root/skills/
 ├── {skill-name}/
 │   └── SKILL.md
 ```
 
-默认情况下，`box.local.skills_root` 为 `skills`，因此实际路径是 `<box.local.host_root>/skills`。技能只从 Box Runtime 管理的目录读取，不存在 `data/skills/` 本地回退。
+默认情况下，`box.local.skills_root` 为相对路径 `skills`，会解析到 `box.local.host_root` 下，因此常见实际路径是 `box.local.host_root/skills`。当前实现不会在 Box 不可用时自动回退扫描 `data/skills/`。
 
 ## 多文件技能
 
 对于包含多个文件的技能：
 
 ```
-<box.local.host_root>/skills/
+box.local.host_root/skills/
 └── my-skill/
     ├── SKILL.md           # 必需
     ├── scripts/           # 可选：脚本

@@ -25,31 +25,32 @@ cd LangBot/docker
 docker compose up
 ```
 
-現在の Docker Compose は、主に次の 3 つのサービスを起動します。
+デフォルトでは `langbot` と `langbot_plugin_runtime` が起動します。コードサンドボックス、stdio MCP ホスティング、Skill の追加/編集など Box Runtime に依存する機能を使う場合は、次を実行します：
 
-| サービス | 役割 |
-|----------|------|
-| `langbot` | WebUI、API、メッセージプラットフォーム接続を提供する LangBot 本体 |
-| `langbot_plugin_runtime` | プラグインプロセスを管理する Plugin Runtime |
-| `langbot_box` | コードサンドボックス、stdio MCP ホスティング、Box-backed Skills ストレージを提供する Box Runtime |
+```bash
+docker compose --profile box up
+```
 
-`langbot_box` はホストの Docker socket を使って sandbox コンテナを作成します。Compose はデフォルトで `${PWD}/data/box` を Box root とし、同じパスで `langbot_box` にマウントします。
+これにより `langbot_box` も起動します。`langbot_box` はホスト Docker socket 経由でサンドボックスコンテナを作成するため、Box root のホスト側パスとコンテナ内パスは同一である必要があります：
 
 ```yaml
 services:
+  langbot:
+    environment:
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+
   langbot_box:
+    profiles: ["box", "all"]
     volumes:
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - LANGBOT_BOX_LOCAL_HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE=default
-      - LANGBOT_BOX_LOCAL_SKILLS_ROOT=skills
-      - LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-`langbot_box` はホストの Docker socket を使って sandbox コンテナを作成するため、Box root のホスト側パスと `langbot_box` 内のパスを一致させる必要があります。変更する場合は、`LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose up` のように絶対パスを指定してください。
+`langbot_box` は `LANGBOT_BOX_*` や `BOX__*` 環境変数を直接読み取りません。`BOX__LOCAL__*` は `langbot` に設定し、LangBot が INIT RPC 経由で Box Runtime に渡します。Box root を変更する場合は `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile box up` のように絶対パスを指定してください。
 </Warning>
 
 コンテナはWebUIアクセス用にポート`5300`をマッピングします。`http://127.0.0.1:5300`にアクセスしてWebUIを表示できます。

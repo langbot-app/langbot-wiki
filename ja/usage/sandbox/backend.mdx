@@ -16,7 +16,7 @@ LangBotは3つのサンドボックスバックエンドをサポートしてい
 | `e2b` | E2Bクラウドサンドボックスを強制 |
 
 <Note>
-`box.backend` は LangBot 設定上書き環境変数 `BOX__BACKEND` で設定できます。Box Runtime は実行時専用の強制上書きとして `BOX_BACKEND` もサポートしており、これは `box.backend` より優先されます。Docker Compose でバックエンドを強制する場合は、`BOX_BACKEND` を `langbot_box` サービスに設定してください。
+`box.backend` は LangBot 設定上書き環境変数 `BOX__BACKEND` で設定できます。コンテナ化デプロイでは、`box.local.*` の上書きは `langbot` サービスに設定し、LangBot が INIT RPC 経由で Box Runtime に渡します。`LANGBOT_BOX_*` / `BOX__*` を `langbot_box` サービスに直接設定しても、Box Runtime は自身の環境変数から読み取りません。
 </Note>
 
 ### 自動選択ロジック
@@ -72,31 +72,37 @@ Box Runtime は `docker` CLI を通じて Docker daemon と通信します。コ
 
 ### コンテナ化デプロイ
 
-LangBot が Docker コンテナで実行される場合、Box Runtime を独立した `langbot_box` サービスとして実行します。`langbot_box` がホスト Docker socket をマウントし、サンドボックスコンテナを作成します。`langbot_box` は**オプションサービス**であり、compose profile で制御されます——`docker compose --profile box up`（または `--profile all`）で起動する必要があります：
+LangBot が Docker コンテナで実行される場合、Box Runtime を独立した `langbot_box` サービスとして実行します。`langbot_box` がホスト Docker socket をマウントし、サンドボックスコンテナを作成します：
 
 ```yaml
 # docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
-    # オプションサービス：compose profile で起動の有無を制御
+    container_name: langbot_box
     profiles: ["box", "all"]
     volumes:
       # langbot_box はホスト Docker socket 経由でサンドボックスコンテナを作成するため、
       # ソースパスとターゲットパスを同一にします。
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      # 利用するコンテナランタイムの socket をマウントします：
+      # - /var/run/podman/podman.sock:/var/run/podman/podman.sock   # Podman
       - /var/run/docker.sock:/var/run/docker.sock
-    # langbot_box は config.yaml や環境変数を読み込みません。設定は langbot が INIT RPC で下げ渡します。
-    # ここに BOX__* / LANGBOT_BOX_* 変数を追加しないでください——無視されます。
+    restart: on-failure
+    environment:
+      - TZ=Asia/Shanghai
+      # Box Runtime は box.local.* を config/env から直接読みません。
+      # これらの設定は LangBot から INIT RPC 経由で渡されます。
     command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
+    container_name: langbot
     volumes:
       - ./data:/app/data
+    restart: on-failure
     environment:
-      # 統一された環境変数の上書き規約。これらの box.local.* 設定は langbot が
-      # INIT RPC を通じて Box Runtime へ転送します。
+      - TZ=Asia/Shanghai
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - BOX__LOCAL__DEFAULT_WORKSPACE=default
       - BOX__LOCAL__SKILLS_ROOT=skills
@@ -268,8 +274,8 @@ box:
 |---------|--------|--------|-----|
 | 完全分離 | ✅ | ⚠️ 一部 | ✅ |
 | カスタムイメージ | ✅ | ❌ | ✅ (テンプレート) |
-| ネットワーク分離 | ✅ | ✅ | ✅ |
-| リソース制限 | ✅ | ✅ | ✅ |
+| ネットワーク制御 | ✅ | ✅/nsjail 設定に依存 | ⚠️ E2B/CubeSandbox テンプレートに依存 |
+| リソース制限 | ✅ | ✅/best effort | ⚠️ プロバイダー/テンプレートに依存 |
 | Linux対応 | ✅ | ✅ | ✅ |
 | macOS対応 | ✅ | ❌ | ✅ |
 | Windows対応 | ✅ | ❌ | ✅ |

@@ -298,19 +298,19 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 サンドボックスバックエンドが利用可能な場合、スキルファイルは Box Runtime が管理する skills root に配置します：
 
 ```
-<box.local.host_root>/skills/
+box.local.host_root/skills/
 ├── {skill-name}/
 │   └── SKILL.md
 ```
 
-デフォルトでは `box.local.skills_root` は `skills` なので、実際のパスは `<box.local.host_root>/skills` です。スキルは Box Runtime が管理するディレクトリからのみ読み込まれ、`data/skills/` のローカルフォールバックは存在しません。
+デフォルトでは `box.local.skills_root` は相対パス `skills` です。相対パスは `box.local.host_root` 配下に解決されるため、通常の実効パスは `box.local.host_root/skills` です。Box が利用できない場合でも `data/skills/` への自動フォールバックはありません。
 
 ## マルチファイルスキル
 
 複数のファイルを含むスキルの場合：
 
 ```
-<box.local.host_root>/skills/
+box.local.host_root/skills/
 └── my-skill/
     ├── SKILL.md           # 必須
     ├── scripts/           # オプション: スクリプト

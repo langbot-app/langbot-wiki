@@ -298,19 +298,19 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 When the sandbox backend is available, Skill files should be placed under the Box Runtime-managed skills root:
 
 ```
-<box.local.host_root>/skills/
+box.local.host_root/skills/
 ├── {skill-name}/
 │   └── SKILL.md
 ```
 
-By default, `box.local.skills_root` is `skills`, so the actual path is `<box.local.host_root>/skills`. Skills are read only from the directory managed by the Box Runtime — there is no local `data/skills/` fallback.
+By default, `box.local.skills_root` is the relative path `skills`. Relative paths are resolved under `box.local.host_root`, so the usual effective path is `box.local.host_root/skills`. LangBot does not automatically fall back to `data/skills/` when Box is unavailable.
 
 ## Multi-File Skills
 
 For skills containing multiple files:
 
 ```
-<box.local.host_root>/skills/
+box.local.host_root/skills/
 └── my-skill/
     ├── SKILL.md           # Required
     ├── scripts/           # Optional: scripts

@@ -117,7 +117,7 @@ Each Skill is a directory containing a `SKILL.md` file. When the sandbox backend
 ```
 
 <Note>
-Skills are entirely managed by the Box Runtime skill store, which is the sole source of skills. When the Box Runtime is unavailable, the skill list is simply empty — there is no local fallback that reads from `data/skills/`.
+In the current implementation, Skills are loaded only from the Box Runtime-managed skill store. If Box Runtime or its backend is unavailable, the skill cache is empty and skill create/import/edit/register operations are unavailable; LangBot does not automatically fall back to `data/skills/`.
 </Note>
 
 ### SKILL.md Format
@@ -166,9 +166,9 @@ Agent activates a skill by calling the `activate` tool:
 
 ### Effects After Activation
 
-1. **Tool Result Injection**: SKILL.md content is returned as Tool Result, injected into context
-2. **Path Mounting**: Skill package is mounted to `/workspace/.skills/{skill-name}/`
-3. **Tool Access**: Agent can use `exec`/`read`/`write`/`edit`/`glob`/`grep` to operate skill files
+1. **Tool Result Injection**: SKILL.md content is returned as Tool Result and injected into context
+2. **Activation marker**: The Skill is marked as activated and addressed through `/workspace/.skills/{skill-name}/`
+3. **Tool Access**: `read`/`glob`/`grep` can inspect visible Skills; `exec`/`write`/`edit` against a Skill package require activation
 
 ### Return Content Example
 
@@ -276,7 +276,7 @@ This is an example skill demonstrating basic skill functionality.
 
 ### 2. Register and Test Activation
 
-Call `register_skill(path="/workspace/my-first-skill")` to register the skill. Ensure the sandbox backend is available, then send a request matching the skill description to the Agent. The Agent will automatically call the `activate` tool to activate the skill.
+Call `register_skill(path="/workspace/my-first-skill")` to register the skill. Ensure the sandbox backend is available, then send a request matching the skill description to the Agent. A model with Tool Call support will usually choose to call `activate` based on the prompt.
 
 ### 3. Enable the Skill in a Pipeline
 

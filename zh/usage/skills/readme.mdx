@@ -115,7 +115,7 @@ LangBot 完全采用了 Claude Code 的设计模式：
 ```
 
 <Note>
-技能完全由 Box Runtime 的 skill store 管理，Box 是技能的唯一来源。Box Runtime 不可用时技能列表为空——不存在从 `data/skills/` 读取的本地回退。
+当前实现中，Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端不可用时，Skill 列表为空，创建、导入、编辑和 `register_skill` 不可用；不会自动回退扫描 `data/skills/`。
 </Note>
 
 ### SKILL.md 格式
@@ -165,8 +165,8 @@ Agent 通过调用 `activate` 工具来激活技能：
 ### 激活后效果
 
 1. **Tool Result 注入**：SKILL.md 内容作为 Tool Result 返回，注入到上下文
-2. **挂载路径**：技能包挂载到 `/workspace/.skills/{skill-name}/`
-3. **工具访问**：Agent 可以通过 `exec`/`read`/`write`/`edit`/`glob`/`grep` 操作技能文件
+2. **激活标记**：该 Skill 被记录为已激活，后续可在 `/workspace/.skills/{skill-name}/` 访问
+3. **工具访问**：`read`/`glob`/`grep` 可读取可见 Skill；对 Skill 包执行 `exec`/`write`/`edit` 需要先激活
 
 ### 返回内容示例
 
@@ -274,7 +274,7 @@ description: 一个简单的示例技能
 
 ### 2. 注册并测试激活
 
-调用 `register_skill(path="/workspace/my-first-skill")` 注册技能。确保沙箱后端可用，然后向 Agent 发送匹配技能描述的请求，Agent 会自动调用 `activate` 工具激活技能。
+调用 `register_skill(path="/workspace/my-first-skill")` 注册技能。确保沙箱后端可用，然后向 Agent 发送匹配技能描述的请求；支持 Tool Call 的模型通常会根据提示调用 `activate`。
 
 ### 3. 在流水线中启用 Skill
 

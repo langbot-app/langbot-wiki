@@ -15,9 +15,9 @@ LangBot can use tools from MCP servers. Add an MCP server, then let a model with
 
 | Mode | Best for | Runtime relationship |
 |------|----------|----------------------|
-| HTTP Streamable | Remote MCP services using Streamable HTTP | LangBot connects directly to the remote URL |
+| Streamable HTTP (`mode: "http"`) | Remote MCP services using Streamable HTTP | LangBot connects directly to the remote URL |
 | SSE | Remote MCP services using SSE | LangBot connects directly to the remote URL |
-| stdio | MCP servers started by local commands | When Box Runtime is available, LangBot hosts the stdio process inside Box |
+| stdio | MCP servers started by local commands | Supported only when Box Runtime is available |
 
 <Note>
 MCP tools require the pipeline to use `Local Agent` and a model with function calling enabled. External runners such as Dify, n8n, Langflow, and Coze use their own tool mechanisms.
@@ -47,7 +47,7 @@ After adding, click the switch on the card to connect to the MCP server. Click t
 
 ## stdio MCP and Box Runtime
 
-When an MCP Server uses `stdio` mode and Box Runtime is available, LangBot starts and hosts the MCP process inside Box:
+`stdio` MCP is supported only when Box Runtime is available. When available, LangBot starts and connects to the MCP process inside Box:
 
 1. Create or reuse the shared MCP Box session
 2. If a local project path can be inferred from the command or arguments, stage it into the shared workspace
@@ -81,8 +81,8 @@ Common fields:
 |-------|-------------|
 | `host_path` | Host project directory for the MCP server. It must be under `box.local.allowed_mount_roots` |
 | `network` | Whether network is allowed, often needed for dependency installation |
-| `host_path_mode` | Mount mode, default `ro` |
-| `startup_timeout_sec` | Startup and dependency install wait time, default 120 seconds |
+| `host_path_mode` | Access mode used when preparing `host_path`, default `ro`; stdio MCP usually stages it into the shared workspace first |
+| `startup_timeout_sec` | Timeout for Box preparation and dependency installation, default 120 seconds. stdio MCP connection waits about 30 extra seconds |
 | `image` | Runtime image used by the Docker backend |
 
 <Warning>

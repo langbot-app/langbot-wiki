@@ -167,5 +167,5 @@ space:
 起動時、LangBot はすべての環境変数を読み取り、対応する設定を `config.yaml` に適用して `data/config.yaml` ファイルに書き込みます。
 
 <Note>
-Box Runtime 自体も `BOX_BACKEND` と `LANGBOT_BOX_LOCAL_*` 環境変数をサポートしています。Docker Compose デプロイでは通常、`langbot` と `langbot_box` の両方に `LANGBOT_BOX_LOCAL_HOST_ROOT`、`LANGBOT_BOX_LOCAL_DEFAULT_WORKSPACE`、`LANGBOT_BOX_LOCAL_SKILLS_ROOT`、`LANGBOT_BOX_LOCAL_ALLOWED_MOUNT_ROOTS` を設定します。
+Box 関連設定は `langbot` サービスに統一形式の `BOX__LOCAL__*` 環境変数で設定します。LangBot は起動時にそれらを `data/config.yaml` に適用し、INIT RPC 経由で Box 設定を `langbot_box` に渡します。`LANGBOT_BOX_*` や `BOX__*` を `langbot_box` に設定しても直接読み取られません。`BOX_BACKEND` は Box Runtime backend を意図的に強制する場合のみ使用します。
 </Note>

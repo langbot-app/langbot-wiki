@@ -12,7 +12,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 | `register_skill` | 从沙箱目录注册技能 | 是 |
 
 <Note>
-这两个工具需要沙箱后端（Docker/Nsjail/E2B）可用才能使用。如果没有任何后端可用，工具将不会提供给 Agent。`activate` 只能看到当前流水线绑定范围内的 Skill。
+这两个工具需要 Box Runtime 和沙箱后端可用。流水线绑定会影响注入给 Local Agent 的 Skill 索引；当前 `activate` 工具本身按全局 Skill 名称查找，不在调用时强制校验绑定范围。
 </Note>
 
 ---
@@ -34,10 +34,10 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 
 ### 工作原理
 
-1. Agent 调用 `activate` 工具，传入技能名称（技能必须在当前流水线可见）
+1. Agent 调用 `activate` 工具，传入技能名称
 2. 系统返回技能的 SKILL.md 内容作为 Tool Result
-3. 技能包挂载到 `/workspace/.skills/{skill-name}/`
-4. Agent 可使用 `exec`/`read`/`write`/`edit`/`glob`/`grep` 操作技能文件
+3. 该 Skill 被标记为已激活，可通过 `/workspace/.skills/{skill-name}/` 访问
+4. `read`/`glob`/`grep` 可读取可见 Skill；对 Skill 包执行 `exec`/`write`/`edit` 需要先激活
 
 ### 示例
 
@@ -139,6 +139,7 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
 - `path must be under /workspace`: 路径不在工作区内
 - `Directory does not exist`: 目录不存在
 - `No SKILL.md found in ...`: 目录及其两层以内子目录中没有 SKILL.md 文件
+- `Multiple skill directories found...`: 目标路径下发现多个 Skill 目录，请把 `path` 指向具体 Skill 目录
 
 ---
 
@@ -159,11 +160,8 @@ Agent 通过调用 `activate` 工具来激活技能：
 ### 激活后效果
 
 1. **指令注入**：SKILL.md 内容作为 Tool Result 返回，注入到上下文
-2. **路径挂载**：技能包挂载到 `/workspace/.skills/{skill-name}/`
-3. **文件操作**：Agent 可使用标准工具操作技能文件
-   - `read`：读取技能文件
-   - `exec`：在技能目录中执行命令
-   - `write`/`edit`：修改技能文件
+2. **激活标记**：Skill 被记录为已激活，并通过 `/workspace/.skills/{skill-name}/` 暴露给工具
+3. **文件操作**：`read`/`glob`/`grep` 可读取可见 Skill；对 Skill 包执行 `exec`/`write`/`edit` 需要先激活
 
 ### 设计优势
 
@@ -194,5 +192,5 @@ Agent 通过调用 `activate` 工具来激活技能：
 注册后，新技能即可通过 `activate` 使用。
 
 <Note>
-新技能会注册到 Box Runtime 管理的 skills root。Box 是技能的唯一来源——Box 不可用时无法新增技能，也不存在 `data/skills/` 本地回退。
+新技能会注册到 Box Runtime 管理的 skill store。Box Runtime 或后端不可用时，创建、导入、编辑和 `register_skill` 不可用；不会自动回退到 `data/skills/`。
 </Note>

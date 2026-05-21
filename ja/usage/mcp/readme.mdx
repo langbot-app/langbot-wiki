@@ -15,9 +15,9 @@ LangBot は MCP サーバーのツールを利用できます。MCP サーバー
 
 | モード | 向いている用途 | Runtime との関係 |
 |--------|----------------|------------------|
-| HTTP Streamable | Streamable HTTP を使うリモート MCP サービス | LangBot がリモート URL に直接接続する |
+| Streamable HTTP (`mode: "http"`) | Streamable HTTP を使うリモート MCP サービス | LangBot がリモート URL に直接接続する |
 | SSE | SSE を使うリモート MCP サービス | LangBot がリモート URL に直接接続する |
-| stdio | ローカルコマンドで起動する MCP Server | Box Runtime が利用可能な場合、LangBot は stdio プロセスを Box 内でホストする |
+| stdio | ローカルコマンドで起動する MCP Server | Box Runtime が利用可能な場合のみ利用可能 |
 
 <Note>
 MCP ツールを使うには、パイプラインで `Local Agent` を選び、function calling をサポートするモデルを使う必要があります。Dify、n8n、Langflow、Coze などの外部 Runner は、それぞれのプラットフォームのツール機構を使います。
@@ -47,7 +47,7 @@ MCP ツールを使うには、パイプラインで `Local Agent` を選び、f
 
 ## stdio MCP と Box Runtime
 
-MCP Server が `stdio` モードで、Box Runtime が利用可能な場合、LangBot は MCP プロセスを Box 内で起動してホストします。
+`stdio` 形式の MCP は、Box Runtime が利用可能な場合のみ使用できます。利用可能な場合、LangBot は MCP プロセスを Box 内で起動して接続します。
 
 1. 共有 MCP Box session を作成または再利用する
 2. command または args からローカルプロジェクトパスを推測できる場合、共有ワークスペースへ staging する
