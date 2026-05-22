@@ -2,7 +2,7 @@
 title: "运行时与扩展关系"
 ---
 
-LangBot 里同时存在插件、MCP、Skills 和代码沙箱。它们共享 Agent 的 Tool Call 能力，但职责不同，运行时也不同。
+LangBot 里同时存在插件、MCP、Skills 和沙箱。它们共享 Agent 的 Tool Call 能力，但职责不同，运行时也不同。
 
 ## 一句话区分
 
@@ -15,7 +15,7 @@ LangBot 里同时存在插件、MCP、Skills 和代码沙箱。它们共享 Agen
 | 插件 | Plugin Runtime | 提供插件组件、插件工具、知识库组件等长期扩展 | 在流水线扩展中启用后，由插件系统暴露能力 |
 | MCP Server | LangBot MCP Loader；stdio 模式可由 Box Runtime 托管 | 接入外部 MCP 工具 | 在流水线扩展中启用后，工具进入 Agent 可用工具列表 |
 | Skills | Box Runtime skill store | 提供按需加载的指令、脚本、模板和资源 | Agent 调用 `activate` 后，通过 Tool Result 注入上下文 |
-| Code Sandbox | Box Runtime | 执行命令、读写工作区文件、托管 stdio MCP 进程 | 使用内置 Agent 且 Box 后端可用时提供 `exec/read/write/edit/glob/grep` |
+| Sandbox | Box Runtime | 执行命令、读写工作区文件、托管 stdio MCP 进程 | 使用内置 Agent 且 Box 后端可用时提供 `exec/read/write/edit/glob/grep` |
 
 ## 两套 Runtime
 

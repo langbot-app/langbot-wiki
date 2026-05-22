@@ -49,21 +49,17 @@ LangBotは3つのサンドボックスバックエンドをサポートしてい
 
 Box Runtime は Docker CLI を通じてサンドボックスコンテナを作成・管理：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         ホストシステム                            │
-│                                                                  │
-│  ┌─────────────────┐         ┌─────────────────────────────┐   │
-│  │  Box Runtime     │         │  サンドボックスコンテナ（分離）  │   │
-│  │                 │         │                             │   │
-│  │  docker exec ───┼────────►│  python script.py           │   │
-│  │                 │         │                             │   │
-│  │  マウントディレクトリ ───┼────────►│  /workspace/                │   │
-│  │                 │         │  (CPU/メモリ/ネットワーク分離)  │   │
-│  └─────────────────┘         └─────────────────────────────┘   │
-│                                                                  │
-│  Docker daemon (docker.sock)                                    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph host[ホストシステム]
+        runtime[Box Runtime]
+        daemon[Docker daemon<br/>docker.sock]
+        container[サンドボックスコンテナ<br/>/workspace<br/>CPU / メモリ / ネットワーク分離]
+        runtime -- docker exec --> container
+        runtime -- マウントディレクトリ --> container
+        runtime -. docker CLI .-> daemon
+        daemon -. 作成 / 管理 .-> container
+    end
 ```
 
 <Note>
@@ -173,17 +169,17 @@ make
 
 NsjailはLinuxカーネル機能（namespace、cgroup、seccomp）を使用して分離環境を作成：
 
-```
-┌─────────────────────────────────────────┐
-│              ホストシステム               │
-│                                          │
-│  ┌───────────────────────────────────┐  │
-│  │  Nsjail 分離プロセス                │  │
-│  │  - ホストシステムディレクトリをマウント（RO）│  │
-│  │  - 独立した /workspace              │  │
-│  │  - リソース制限（CPU/メモリ/PID）     │  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph host[ホストシステム]
+        nsjail[Nsjail 分離プロセス]
+        mounts[ホストシステムディレクトリを読み取り専用でマウント]
+        workspace[独立した /workspace]
+        limits[CPU / メモリ / PID のリソース制限]
+        nsjail --> mounts
+        nsjail --> workspace
+        nsjail --> limits
+    end
 ```
 
 ### 特徴

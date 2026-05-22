@@ -49,21 +49,17 @@ The most recommended solution, providing complete container isolation.
 
 The Box Runtime creates and manages sandbox containers through Docker CLI:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Host System                              │
-│                                                                  │
-│  ┌─────────────────┐         ┌─────────────────────────────┐   │
-│  │  Box Runtime    │         │  Sandbox Container (isolated) │   │
-│  │                 │         │                             │   │
-│  │  docker exec ───┼────────►│  python script.py           │   │
-│  │                 │         │                             │   │
-│  │  Mount dir ─────┼────────►│  /workspace/                │   │
-│  │                 │         │  (CPU/memory/network isolated)│   │
-│  └─────────────────┘         └─────────────────────────────┘   │
-│                                                                  │
-│  Docker daemon (docker.sock)                                    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph host[Host System]
+        runtime[Box Runtime]
+        daemon[Docker daemon<br/>docker.sock]
+        container[Sandbox Container<br/>/workspace<br/>CPU / memory / network isolation]
+        runtime -- docker exec --> container
+        runtime -- Mount directory --> container
+        runtime -. docker CLI .-> daemon
+        daemon -. create / manage .-> container
+    end
 ```
 
 <Note>
@@ -173,17 +169,17 @@ make
 
 Nsjail uses Linux kernel features (namespace, cgroup, seccomp) to create isolated environments:
 
-```
-┌─────────────────────────────────────────┐
-│              Host System                 │
-│                                          │
-│  ┌───────────────────────────────────┐  │
-│  │  Nsjail Isolated Process           │  │
-│  │  - Mount host system dirs (ro)     │  │
-│  │  - Independent /workspace          │  │
-│  │  - Resource limits (CPU/mem/PID)   │  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph host[Host System]
+        nsjail[Nsjail Isolated Process]
+        mounts[Read-only host system mounts]
+        workspace[Independent /workspace]
+        limits[CPU / memory / PID limits]
+        nsjail --> mounts
+        nsjail --> workspace
+        nsjail --> limits
+    end
 ```
 
 ### Features

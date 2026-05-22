@@ -299,8 +299,8 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 
 ```
 box.local.host_root/skills/
-├── {skill-name}/
-│   └── SKILL.md
+|-- {skill-name}/
+|   `-- SKILL.md
 ```
 
 默认情况下，`box.local.skills_root` 为相对路径 `skills`，会解析到 `box.local.host_root` 下，因此常见实际路径是 `box.local.host_root/skills`。当前实现不会在 Box 不可用时自动回退扫描 `data/skills/`。
@@ -311,14 +311,14 @@ box.local.host_root/skills/
 
 ```
 box.local.host_root/skills/
-└── my-skill/
-    ├── SKILL.md           # 必需
-    ├── scripts/           # 可选：脚本
-    │   ├── main.py
-    │   └── utils.py
-    ├── templates/         # 可选：模板
-    │   └── output.md
-    └── requirements.txt   # 可选：依赖
+`-- my-skill/
+    |-- SKILL.md           # 必需
+    |-- scripts/           # 可选：脚本
+    |   |-- main.py
+    |   `-- utils.py
+    |-- templates/         # 可选：模板
+    |   `-- output.md
+    `-- requirements.txt   # 可选：依赖
 ```
 
 Agent 可以通过 `/workspace/.skills/{skill-name}/` 访问这些文件。
@@ -331,10 +331,10 @@ LangBot 的 SKILL.md 格式参考 Agent Skills 风格，但当前实现以 LangB
 
 ```
 skill-name/
-├── SKILL.md          # 必需：元数据 + 指令
-├── scripts/          # 可选：可执行代码
-├── references/       # 可选：参考文档
-└── assets/           # 可选：静态资源
+|-- SKILL.md          # 必需：元数据 + 指令
+|-- scripts/          # 可选：可执行代码
+|-- references/       # 可选：参考文档
+`-- assets/           # 可选：静态资源
 ```
 
 ### 渐进式加载模型

@@ -2,7 +2,7 @@
 title: "Runtimes and Extensions"
 ---
 
-LangBot has plugins, MCP servers, Skills, and the code sandbox. They can all contribute to an Agent workflow, but they are managed by different runtimes and enter the conversation at different points.
+LangBot has plugins, MCP servers, Skills, and the sandbox. They can all contribute to an Agent workflow, but they are managed by different runtimes and enter the conversation at different points.
 
 ## Short Version
 
@@ -15,7 +15,7 @@ LangBot has plugins, MCP servers, Skills, and the code sandbox. They can all con
 | Plugins | Plugin Runtime | Long-lived extensions such as plugin tools, events, pages, and knowledge components | Enabled through pipeline extensions, then exposed by the plugin system |
 | MCP Servers | LangBot MCP Loader; stdio mode can be hosted by Box Runtime | Connect external MCP tools | Enabled through pipeline extensions, then exposed as Agent tools |
 | Skills | Box Runtime skill store | On-demand instructions, scripts, templates, and resources | Returned as Tool Result after the Agent calls `activate` |
-| Code Sandbox | Box Runtime | Execute commands, read/write workspace files, and host stdio MCP processes | Provides `exec/read/write/edit/glob/grep` when Local Agent and a Box backend are available |
+| Sandbox | Box Runtime | Execute commands, read/write workspace files, and host stdio MCP processes | Provides `exec/read/write/edit/glob/grep` when Local Agent and a Box backend are available |
 
 ## Two Runtimes
 

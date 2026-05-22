@@ -113,7 +113,7 @@ monitoring:
         # 每个监控表单批删除的过期记录数量
         delete_batch_size: 1000
 box:
-    enabled: true  # Box Runtime 总开关。false 时禁用代码沙箱、Skill 添加/编辑和 stdio MCP 等依赖 Box 的功能。
+    enabled: true  # Box Runtime 总开关。false 时禁用沙箱、Skill 添加/编辑和 stdio MCP 等依赖 Box 的功能。
     backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', 或 'e2b'。BOX__BACKEND 可写入此配置；BOX_BACKEND 是 Runtime 级强制覆盖。
     runtime:
         endpoint: ''  # 外部 Box Runtime 基础 URL，如 'ws://127.0.0.1:5410'。留空时，非 Docker 部署使用本地自动管理的 Runtime；Docker 部署连接 Compose 网络中的 langbot_box:5410。

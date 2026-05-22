@@ -1,12 +1,12 @@
 ---
-title: "Code Sandbox"
+title: "Sandbox"
 ---
 
-LangBot's code sandbox feature allows AI agents to safely execute commands, read/write files, run MCP servers, and more in an isolated environment. This gives your AI bot real code execution capabilities.
+LangBot's sandbox feature allows AI agents to safely execute commands, read/write files, run MCP servers, and more in an isolated environment. This gives your AI bot real code execution capabilities.
 
-## What is a Code Sandbox?
+## What is a Sandbox?
 
-A code sandbox is an isolated execution environment where agents can:
+A sandbox is an isolated execution environment where agents can:
 
 - Execute shell commands (e.g., `python`, `npm`, `curl`)
 - Create, read, and modify files
@@ -31,32 +31,23 @@ Meanwhile, the sandbox provides security isolation:
 
 ## How It Works
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LangBot Main Process                      │
-│                                                              │
-│  Agent (LLM) ──> Native Tools (exec/read/write/edit/glob/grep)  │
-│                           │                                  │
-│                     BoxService                               │
-│                           │                                  │
-│                  BoxRuntimeConnector                         │
-│                           │  Action RPC                      │
-└───────────────────────────┼─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Box Runtime Process                        │
-│                                                              │
-│   Backend (Docker / Nsjail / E2B)                           │
-│         │                                                    │
-│         ▼                                                    │
-│   ┌──────────────────────────────────────┐                  │
-│   │      Isolated Sandbox Environment     │                  │
-│   │   - Independent filesystem            │                  │
-│   │   - Network isolation (configurable)  │                  │
-│   │   - Resource limits                   │                  │
-│   └──────────────────────────────────────┘                  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph langbot[LangBot Main Process]
+        agent[Agent / LLM]
+        tools[Native Tools<br/>exec · read · write · edit · glob · grep]
+        service[BoxService]
+        connector[BoxRuntimeConnector]
+        agent --> tools --> service --> connector
+    end
+
+    subgraph runtime[Box Runtime Process]
+        backend[Backend<br/>Docker · Nsjail · E2B]
+        sandbox[Isolated Sandbox<br/>Independent filesystem · Configurable network isolation · Resource limits]
+        backend --> sandbox
+    end
+
+    connector -- Action RPC --> backend
 ```
 
 ## Backend Types

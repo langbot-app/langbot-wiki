@@ -283,7 +283,7 @@
                   "en/usage/knowledge/readme",
                   "en/usage/mcp/readme",
                   {
-                    "group": "Code Sandbox",
+                    "group": "Sandbox",
                     "pages": [
                       "en/usage/sandbox/readme",
                       "en/usage/sandbox/runtime-relationships",
@@ -503,7 +503,7 @@
                   "zh/usage/knowledge/readme",
                   "zh/usage/mcp/readme",
                   {
-                    "group": "代码沙箱",
+                    "group": "沙箱",
                     "pages": [
                       "zh/usage/sandbox/readme",
                       "zh/usage/sandbox/runtime-relationships",
@@ -742,7 +742,7 @@
                   "ja/usage/knowledge/readme",
                   "ja/usage/mcp/readme",
                   {
-                    "group": "コードサンドボックス",
+                    "group": "サンドボックス",
                     "pages": [
                       "ja/usage/sandbox/readme",
                       "ja/usage/sandbox/runtime-relationships",

@@ -299,8 +299,8 @@ When the sandbox backend is available, Skill files should be placed under the Bo
 
 ```
 box.local.host_root/skills/
-├── {skill-name}/
-│   └── SKILL.md
+|-- {skill-name}/
+|   `-- SKILL.md
 ```
 
 By default, `box.local.skills_root` is the relative path `skills`. Relative paths are resolved under `box.local.host_root`, so the usual effective path is `box.local.host_root/skills`. LangBot does not automatically fall back to `data/skills/` when Box is unavailable.
@@ -311,14 +311,14 @@ For skills containing multiple files:
 
 ```
 box.local.host_root/skills/
-└── my-skill/
-    ├── SKILL.md           # Required
-    ├── scripts/           # Optional: scripts
-    │   ├── main.py
-    │   └── utils.py
-    ├── templates/         # Optional: templates
-    │   └── output.md
-    └── requirements.txt   # Optional: dependencies
+`-- my-skill/
+    |-- SKILL.md           # Required
+    |-- scripts/           # Optional: scripts
+    |   |-- main.py
+    |   `-- utils.py
+    |-- templates/         # Optional: templates
+    |   `-- output.md
+    `-- requirements.txt   # Optional: dependencies
 ```
 
 Agent can access these files through `/workspace/.skills/{skill-name}/`.
@@ -331,10 +331,10 @@ LangBot's SKILL.md format follows the Agent Skills style, but the supported fiel
 
 ```
 skill-name/
-├── SKILL.md          # Required: metadata + instructions
-├── scripts/          # Optional: executable code
-├── references/       # Optional: reference documentation
-└── assets/           # Optional: static resources
+|-- SKILL.md          # Required: metadata + instructions
+|-- scripts/          # Optional: executable code
+|-- references/       # Optional: reference documentation
+`-- assets/           # Optional: static resources
 ```
 
 ### Progressive Loading Model

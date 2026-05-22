@@ -41,39 +41,15 @@ The reasons for this design:
 
 LangBot fully adopts Claude Code's design pattern:
 
-```
-┌─────────────────────────────────────────┐
-│         Agent (LLM)                      │
-│                                          │
-│  User request: "Help me analyze this     │
-│  Python project"                         │
-│                                          │
-│  Decision: matches skill: python-...     │
-│                                          │
-│  Call: activate(skill_name="python-...") │
-│                                          │
-└───────────────────┬─────────────────────┘
-                    │ Tool Call
-                    ▼
-┌─────────────────────────────────────────┐
-│           activate Tool                  │
-│                                          │
-│  Returns: Tool Result                    │
-│  - SKILL.md content                      │
-│  - Mount path info                       │
-│                                          │
-└───────────────────┬─────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│      Agent Continues (with skill context)│
-│                                          │
-│  - Use exec/read/write/edit to operate   │
-│    skill package                         │
-│  - Execute tasks following instructions  │
-│  - Can call activate multiple times      │
-│                                          │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    request[User request<br/>“Help me analyze this Python project”]
+    decision[Agent decision<br/>matches python-analyzer]
+    activate[Call activate tool<br/>skill_name = python-analyzer]
+    result[Tool Result<br/>SKILL.md content + mount path]
+    continue[Agent continues with skill context<br/>uses exec / read / write / edit on the skill package]
+
+    request --> decision --> activate --> result --> continue
 ```
 
 ### Why This Design?
@@ -106,14 +82,14 @@ Each Skill is a directory containing a `SKILL.md` file. When the sandbox backend
 
 ```
 <box.local.host_root>/skills/
-├── my-skill/
-│   ├── SKILL.md           # Required: skill definition file
-│   ├── scripts/           # Optional: script files
-│   │   └── analyze.py
-│   └── templates/         # Optional: template files
-│       └── report.md
-└── another-skill/
-    └── SKILL.md
+|-- my-skill/
+|   |-- SKILL.md           # Required: skill definition file
+|   |-- scripts/           # Optional: script files
+|   |   `-- analyze.py
+|   `-- templates/         # Optional: template files
+|       `-- report.md
+`-- another-skill/
+    `-- SKILL.md
 ```
 
 <Note>
@@ -235,13 +211,13 @@ Contains scripts, templates, and other resource files:
 
 ```
 data-analyzer/
-├── SKILL.md
-├── scripts/
-│   ├── analyze.py
-│   └── visualize.py
-├── templates/
-│   └── report.md
-└── requirements.txt
+|-- SKILL.md
+|-- scripts/
+|   |-- analyze.py
+|   `-- visualize.py
+|-- templates/
+|   `-- report.md
+`-- requirements.txt
 ```
 
 ## Quick Start

@@ -41,37 +41,15 @@ Claude Code 的 Skills 系统有一个关键设计决策：**技能内容通过 
 
 LangBot 完全采用了 Claude Code 的设计模式：
 
-```
-┌─────────────────────────────────────────┐
-│         Agent (LLM)                      │
-│                                          │
-│  用户请求："帮我分析这个 Python 项目"     │
-│                                          │
-│  判断：匹配 skill: python-analyzer       │
-│                                          │
-│  调用：activate(skill_name="python-...") │
-│                                          │
-└───────────────────┬─────────────────────┘
-                    │ Tool Call
-                    ▼
-┌─────────────────────────────────────────┐
-│           activate 工具                  │
-│                                          │
-│  返回：Tool Result                       │
-│  - SKILL.md 内容                         │
-│ - 挂载路径信息                           │
-│                                          │
-└───────────────────┬─────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│      Agent 继续执行（带技能上下文）        │
-│                                          │
-│  - 使用 exec/read/write/edit 操作技能包  │
-│  - 按照技能指令执行任务                   │
-│  - 可多次调用 activate 激活多个技能       │
-│                                          │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    request[用户请求<br/>“帮我分析这个 Python 项目”]
+    decision[Agent 判断<br/>匹配 python-analyzer]
+    activate[调用 activate 工具<br/>skill_name = python-analyzer]
+    result[Tool Result<br/>SKILL.md 内容 + 挂载路径]
+    continue[Agent 带技能上下文继续执行<br/>使用 exec / read / write / edit 操作技能包]
+
+    request --> decision --> activate --> result --> continue
 ```
 
 ### 为什么这样设计？
@@ -104,14 +82,14 @@ LangBot 完全采用了 Claude Code 的设计模式：
 
 ```
 <box.local.host_root>/skills/
-├── my-skill/
-│   ├── SKILL.md           # 必需：技能定义文件
-│   ├── scripts/           # 可选：脚本文件
-│   │   └── analyze.py
-│   └── templates/         # 可选：模板文件
-│       └── report.md
-└── another-skill/
-    └── SKILL.md
+|-- my-skill/
+|   |-- SKILL.md           # 必需：技能定义文件
+|   |-- scripts/           # 可选：脚本文件
+|   |   `-- analyze.py
+|   `-- templates/         # 可选：模板文件
+|       `-- report.md
+`-- another-skill/
+    `-- SKILL.md
 ```
 
 <Note>
@@ -233,13 +211,13 @@ description: 审查代码并提供改进建议
 
 ```
 data-analyzer/
-├── SKILL.md
-├── scripts/
-│   ├── analyze.py
-│   └── visualize.py
-├── templates/
-│   └── report.md
-└── requirements.txt
+|-- SKILL.md
+|-- scripts/
+|   |-- analyze.py
+|   `-- visualize.py
+|-- templates/
+|   `-- report.md
+`-- requirements.txt
 ```
 
 ## 快速开始

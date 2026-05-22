@@ -26,7 +26,7 @@ cd LangBot/docker
 docker compose up
 ```
 
-默认会启动 `langbot` 和 `langbot_plugin_runtime`。如果需要启用代码沙箱、stdio MCP 托管、Skill 添加/编辑等依赖 Box Runtime 的功能，请使用：
+默认会启动 `langbot` 和 `langbot_plugin_runtime`。如果需要启用沙箱、stdio MCP 托管、Skill 添加/编辑等依赖 Box Runtime 的功能，请使用：
 
 ```bash
 docker compose --profile box up
@@ -57,7 +57,7 @@ services:
 <Info>
   - 如果你的主机位于中国大陆，可以考虑把 `docker-compose.yaml` 文件中的镜像名称改为`docker.langbot.app/langbot-public/rockchin/langbot:latest`以使用我们提供的镜像源。
   - 推荐[设置 Docker 容器代理](https://docker.github.net.cn/network/proxy/)，以便保证 LangBot 在运行期间的网络访问通畅。
-  - 如果需要禁用或强制沙箱后端，请参考[代码沙箱配置](/zh/usage/sandbox/config)。
+  - 如果需要禁用或强制沙箱后端，请参考[沙箱配置](/zh/usage/sandbox/config)。
 </Info>
 
 首次启动会输出创建配置文件的提示，请继续按照文件配置。
@@ -69,5 +69,5 @@ services:
 
 - [配置机器人文档](/zh/usage/platforms/readme)。
 - [配置模型文档](/zh/usage/models/readme)。
-- [代码沙箱文档](/zh/usage/sandbox/readme)。
+- [沙箱文档](/zh/usage/sandbox/readme)。
 - [技能系统文档](/zh/usage/skills/readme)。

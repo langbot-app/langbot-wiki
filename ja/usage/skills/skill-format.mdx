@@ -299,8 +299,8 @@ python scripts/benchmark.py https://api.example.com/endpoint --requests 100
 
 ```
 box.local.host_root/skills/
-├── {skill-name}/
-│   └── SKILL.md
+|-- {skill-name}/
+|   `-- SKILL.md
 ```
 
 デフォルトでは `box.local.skills_root` は相対パス `skills` です。相対パスは `box.local.host_root` 配下に解決されるため、通常の実効パスは `box.local.host_root/skills` です。Box が利用できない場合でも `data/skills/` への自動フォールバックはありません。
@@ -311,14 +311,14 @@ box.local.host_root/skills/
 
 ```
 box.local.host_root/skills/
-└── my-skill/
-    ├── SKILL.md           # 必須
-    ├── scripts/           # オプション: スクリプト
-    │   ├── main.py
-    │   └── utils.py
-    ├── templates/         # オプション: テンプレート
-    │   └── output.md
-    └── requirements.txt   # オプション: 依存関係
+`-- my-skill/
+    |-- SKILL.md           # 必須
+    |-- scripts/           # オプション: スクリプト
+    |   |-- main.py
+    |   `-- utils.py
+    |-- templates/         # オプション: テンプレート
+    |   `-- output.md
+    `-- requirements.txt   # オプション: 依存関係
 ```
 
 Agent は `/workspace/.skills/{skill-name}/` 経由でこれらのファイルにアクセスできます。
@@ -331,10 +331,10 @@ LangBot の SKILL.md フォーマットは Agent Skills 風の構造を参考に
 
 ```
 skill-name/
-├── SKILL.md          # 必須: メタデータ + 命令
-├── scripts/          # オプション: 実行可能コード
-├── references/       # オプション: リファレンスドキュメント
-└── assets/           # オプション: 静的リソース
+|-- SKILL.md          # 必須: メタデータ + 命令
+|-- scripts/          # オプション: 実行可能コード
+|-- references/       # オプション: リファレンスドキュメント
+`-- assets/           # オプション: 静的リソース
 ```
 
 ### プログレッシブローディングモデル

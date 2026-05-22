@@ -49,21 +49,17 @@ LangBot 支持三种沙箱后端，根据您的部署环境选择合适的方案
 
 Box Runtime 通过 Docker CLI 创建和管理沙箱容器：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         主机系统                                 │
-│                                                                  │
-│  ┌─────────────────┐         ┌─────────────────────────────┐   │
-│  │  Box Runtime    │         │  沙箱容器 (隔离环境)          │   │
-│  │                 │         │                             │   │
-│  │  docker exec ───┼────────►│  python script.py           │   │
-│  │                 │         │                             │   │
-│  │  挂载目录 ───────┼────────►│  /workspace/                │   │
-│  │                 │         │  (CPU/内存/网络隔离)          │   │
-│  └─────────────────┘         └─────────────────────────────┘   │
-│                                                                  │
-│  Docker daemon (docker.sock)                                    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph host[主机系统]
+        runtime[Box Runtime]
+        daemon[Docker daemon<br/>docker.sock]
+        container[沙箱容器<br/>/workspace<br/>CPU / 内存 / 网络隔离]
+        runtime -- docker exec --> container
+        runtime -- 挂载目录 --> container
+        runtime -. docker CLI .-> daemon
+        daemon -. 创建 / 管理 .-> container
+    end
 ```
 
 <Note>
@@ -172,17 +168,17 @@ make
 
 Nsjail 使用 Linux 内核特性（namespace、cgroup、seccomp）创建隔离环境：
 
-```
-┌─────────────────────────────────────────┐
-│              主机系统                    │
-│                                          │
-│  ┌───────────────────────────────────┐  │
-│  │  Nsjail 隔离进程                   │  │
-│  │  - 挂载主机系统目录（只读）         │  │
-│  │  - 独立的 /workspace               │  │
-│  │  - 资源限制（CPU/内存/PID）        │  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph host[主机系统]
+        nsjail[Nsjail 隔离进程]
+        mounts[只读挂载主机系统目录]
+        workspace[独立 /workspace]
+        limits[CPU / 内存 / PID 资源限制]
+        nsjail --> mounts
+        nsjail --> workspace
+        nsjail --> limits
+    end
 ```
 
 ### 特点
