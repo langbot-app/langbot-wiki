@@ -71,5 +71,5 @@ Sandbox native tools and Skills are currently designed for the built-in Local Ag
 | File operations fail | `box.local.host_root`, `box.local.default_workspace`, and `box.local.allowed_mount_roots` |
 | Skills do not appear | `box.local.skills_root`, Box skill store, and pipeline Skill binding |
 | stdio MCP fails to start | Box Runtime status, MCP command/args/env, dependency install logs, and `startup_timeout_sec` |
-| Forced backend config does not work | Distinguish `BOX__BACKEND` from `BOX_BACKEND` |
+| Backend selection does not work | Ensure `BOX__BACKEND` writes `box.backend` and is set on the `langbot` service |
 

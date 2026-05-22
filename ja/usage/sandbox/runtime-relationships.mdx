@@ -71,5 +71,5 @@ Sandbox のネイティブツールと Skills は、現在は組み込みの Loc
 | ファイル操作に失敗する | `box.local.host_root`、`box.local.default_workspace`、`box.local.allowed_mount_roots` |
 | Skills が表示されない | `box.local.skills_root`、Box skill store、パイプラインの Skill バインド |
 | stdio MCP が起動しない | Box Runtime の状態、MCP command/args/env、依存関係インストールログ、`startup_timeout_sec` |
-| 強制 backend 設定が効かない | `BOX__BACKEND` と `BOX_BACKEND` の違い |
+| backend 選択が効かない | `BOX__BACKEND` が `box.backend` に書き込まれ、`langbot` サービスに設定されていることを確認 |
 

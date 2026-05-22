@@ -71,5 +71,5 @@ Sandbox 内置工具和 Skills 当前面向内置 Agent 使用。使用 Dify、n
 | 读写文件失败 | `box.local.host_root`、`box.local.default_workspace`、`box.local.allowed_mount_roots` |
 | Skill 不显示 | `box.local.skills_root`、Box skill store、流水线 Skills 绑定 |
 | stdio MCP 启动失败 | Box Runtime 状态、MCP 命令/参数/env、依赖安装日志、`startup_timeout_sec` |
-| 后端强制配置不生效 | 区分 `BOX__BACKEND` 和 `BOX_BACKEND` |
+| 后端选择不生效 | 确认 `BOX__BACKEND` 写入的是 `box.backend`，并设置在 `langbot` 服务上 |
 

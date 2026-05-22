@@ -113,7 +113,7 @@ monitoring:
         # 各監視テーブルで 1 回に削除する期限切れ行数
         delete_batch_size: 1000
 box:
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', または 'e2b'。BOX_BACKEND は Box Runtime の上書き、BOX__BACKEND はこの設定を書き込みます。
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', または 'e2b'。BOX__BACKEND で書き込めます。
     runtime:
         endpoint: ''  # 外部 Box Runtime ベース URL（例: 'ws://127.0.0.1:5410'）。空の場合はローカル自動管理ランタイムを使用。
     local:
@@ -167,5 +167,5 @@ space:
 起動時、LangBot はすべての環境変数を読み取り、対応する設定を `config.yaml` に適用して `data/config.yaml` ファイルに書き込みます。
 
 <Note>
-Box 関連設定は `langbot` サービスに統一形式の `BOX__LOCAL__*` 環境変数で設定します。LangBot は起動時にそれらを `data/config.yaml` に適用し、INIT RPC 経由で Box 設定を `langbot_box` に渡します。`LANGBOT_BOX_*` や `BOX__*` を `langbot_box` に設定しても直接読み取られません。`BOX_BACKEND` は Box Runtime backend を意図的に強制する場合のみ使用します。
+Box 関連設定は `langbot` サービスに統一形式の `BOX__*` 環境変数で設定します。LangBot は起動時にそれらを `data/config.yaml` に適用し、INIT RPC 経由で Box 設定を `langbot_box` に渡します。`LANGBOT_BOX_*` や `BOX__*` を `langbot_box` に設定しても直接読み取られません。
 </Note>
