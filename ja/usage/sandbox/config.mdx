@@ -1,256 +1,71 @@
 ---
-title: "リファレンス"
+title: "サンドボックス設定"
 ---
 
-サンドボックス設定オプションの完全版。
+サンドボックス設定は LangBot メインプロセスが管理し、Box Runtime が実際の実行を担当します。通常のデプロイでは、バックエンド、ワークスペースディレクトリ、セキュリティプロファイルだけを決めれば十分です。
 
-## 設定場所
-
-サンドボックス設定は`data/config.yaml`の`box`セクションにあります：
+## 推奨設定
 
 ```yaml
 box:
   enabled: true
   backend: 'local'
-  runtime:
-    endpoint: ''
   local:
     profile: 'default'
-    image: ''
     host_root: './data/box'
-    default_workspace: ''
     skills_root: 'skills'
-    allowed_mount_roots:
-      - './data/box'
-      - '/tmp'
-    workspace_quota_mb: null
-  e2b:
-    api_key: ''
-    api_url: ''
-    template: ''
 ```
 
----
-
-## トップレベル設定
-
-### `enabled`
-
-Box Runtime の総合スイッチ。`false` の場合、LangBot は Box Runtime に接続または起動しません。sandbox tools、Skill の追加/編集、stdio MCP ホスティングなど Box 依存機能は利用できません。
-
-デフォルト：`true`
-
-### `backend`
-
-サンドボックスバックエンドタイプを強制指定。
-
-| 値 | 説明 |
-|-------|-------------|
-| 空/未設定 | すべてのバックエンドを試行（Docker → Nsjail → E2B）、最初に利用可能なものを使用 |
-| `local` | ローカルバックエンドのみ試行（Docker → Nsjail）、E2Bは試行しない |
-| `docker` | Dockerのみ強制 |
-| `nsjail` | Nsjailのみ強制 |
-| `e2b` | E2Bクラウドサンドボックスのみ強制 |
-
-デフォルト：`local`
+- `enabled`: 全体スイッチ。`false` にすると、サンドボックスツール、Skill の追加/編集、stdio MCP ホスティングなど Box 依存機能は利用できません。
+- `backend`: バックエンド選択。デフォルトの `local` はローカルの Docker/Nsjail のみを試します。
+- `local.profile`: ネットワーク、マウント、リソース制限を制御するセキュリティプロファイル。
+- `local.host_root`: ホスト上のサンドボックス作業ディレクトリ。サンドボックス内では `/workspace` にマッピングされます。
+- `local.skills_root`: Skill パッケージディレクトリ。相対パスは `host_root` 配下に解決され、デフォルトは `host_root/skills` です。
 
 <Note>
-これは**強制値**であり、優先度リストではありません。例えば`local`に設定した場合、E2Bが利用可能でも使用されません。
+現在の実装では、Skills は Box Runtime が管理する skill store からのみ読み込まれます。Box Runtime またはバックエンドが利用できない場合、Skill 一覧は空になり、作成、インポート、編集、`register_skill` は利用できません。`data/skills/` の自動スキャンにはフォールバックしません。
 </Note>
 
-### `runtime.endpoint`
+## バックエンド選択
 
-外部Box RuntimeのWebSocket URL。
+| バックエンド | 用途 | 説明 |
+|--------------|------|------|
+| `local` | 推奨デフォルト | Docker、Nsjail の順に試す。E2B は試さない |
+| `docker` | 本番環境、コンテナ分離 | Docker daemon が必要。カスタムイメージ対応 |
+| `nsjail` | 軽量 Linux 分離 | `nsjail` が必要。カスタムイメージ非対応 |
+| `e2b` | クラウドサンドボックス | E2B API Key が必要。ローカルコンテナ環境は不要 |
 
-| 値 | 説明 |
-|-------|-------------|
-| 空 | 自動検出（ローカルではstdio、コンテナではWebSocket） |
-| `ws://host:port` | 指定されたRuntimeに接続 |
+`backend` は強制値であり、優先順位リストではありません。たとえば `local` にすると、E2B が設定されていても使用されません。
 
-デフォルト：空
+## セキュリティプロファイル
 
-<Note>
-ほとんどの場合、これを設定する必要はありません。Box Runtimeを独立してデプロイする場合にのみ使用します。
-</Note>
+| Profile | ネットワーク | マウント | リソース | 推奨場面 |
+|---------|--------------|----------|----------|----------|
+| `default` | 無効 | 読み書き | デフォルト制限 | 通常のデフォルト |
+| `offline_readonly` | 無効 | 読み取り専用 | より厳格 | 信頼できないファイルの読み取り |
+| `network_basic` | 基本ネットワーク | 読み書き | デフォルト制限 | API アクセスや依存関係のダウンロード |
+| `network_extended` | 完全ネットワーク | 読み書き | より緩い | 開発、デバッグ、複雑なタスク |
 
----
+最小権限を優先してください。ネットワークが不要なら `default` または `offline_readonly` を使い、`allowed_mount_roots` には必要なディレクトリだけを追加します。
 
-## local設定
+## よく使う設定項目
 
-### `local.profile`
+| 設定項目 | デフォルト | 説明 |
+|----------|------------|------|
+| `runtime.endpoint` | 空 | 外部 Box Runtime の WebSocket URL。通常は不要 |
+| `local.image` | 空 | Docker バックエンドのカスタムイメージ。空ならデフォルトイメージ |
+| `local.default_workspace` | 空 | デフォルトワークスペース名。空なら `host_root/default` |
+| `local.allowed_mount_roots` | `host_root` | Agent がマウントを要求できるホストディレクトリ |
+| `local.workspace_quota_mb` | `null` | ワークスペースのディスククォータ。`null` は Profile デフォルト |
+| `e2b.api_key` | 空 | E2B API Key。`E2B_API_KEY` 環境変数でも設定可能 |
+| `e2b.api_url` | 空 | セルフホスト E2B のエンドポイント。`E2B_API_URL` でも設定可能 |
+| `e2b.template` | 空 | デフォルト E2B テンプレート ID |
 
-セキュリティプロファイル名。
+## Docker Compose
 
-| 値 | 説明 |
-|-------|-------------|
-| `default` | デフォルトプロファイル、ネットワークなし、読み書きマウント |
-| `offline_readonly` | 高セキュリティ、ネットワークなし、読み取り専用マウント |
-| `network_basic` | ネットワーク有効、読み書きマウント |
-| `network_extended` | 完全なネットワーク、読み書きマウント、より多くのリソース |
-
-デフォルト：`default`
-
-詳細は[セキュリティプロファイル](./profiles)を参照。
-
-### `local.image`
-
-カスタムサンドボックスイメージ。
-
-| 値 | 説明 |
-|-------|-------------|
-| 空 | デフォルトイメージ`rockchin/langbot-sandbox:latest`を使用 |
-| `python:3.11-slim` | Python 3.11イメージを使用 |
-| `node:20-slim` | Node.js 20イメージを使用 |
-
-デフォルト：空
-
-<Note>
-Dockerバックエンドのみ適用されます。Nsjailはホストシステム環境を使用するため、カスタムイメージはサポートされません。
-</Note>
-
-### `local.host_root`
-
-ホスト上のサンドボックスワーキングディレクトリのルートパス。
-
-サンドボックスワークスペースのファイルはこのディレクトリ下に保存されます。
-
-| 値 | 説明 |
-|-------|-------------|
-| `./data/box` | LangBot プロセスの作業ディレクトリからの相対パス |
-| `/var/lib/langbot/box` | 絶対パス |
-
-デフォルト：`./data/box`
-
-### `local.default_workspace`
-
-デフォルトワークスペース名。
-
-| 値 | 説明 |
-|-------|-------------|
-| 空 | `host_root/default`を使用 |
-| `my-workspace` | `host_root/my-workspace`を使用 |
-
-デフォルト：空
-
-### `local.skills_root`
-
-Box Runtime が管理する Skill パッケージディレクトリ。
-
-| 値 | 説明 |
-|-------|-------------|
-| `skills` | `host_root/skills` を使用 |
-| `/var/lib/langbot/skills` | 絶対パスを使用 |
-
-デフォルト：`skills`
-
-<Note>
-現在の実装では、Skills は Box Runtime 管理の skill store からのみ読み込まれます。Box Runtime または backend が利用できない場合、Skill キャッシュは空になり、作成・インポート・編集・`register_skill` は利用できません。`data/skills/` への自動フォールバックはありません。
-</Note>
-
-### `local.allowed_mount_roots`
-
-エージェントがマウントできるホストディレクトリのホワイトリスト。
-
-エージェントがリクエストした`host_path`はこのリスト内のいずれかのディレクトリ下にある必要があります。
+Docker Compose では、Box 設定を `langbot` サービスに設定します。LangBot は有効な設定を INIT RPC 経由で `langbot_box` に渡します。
 
 ```yaml
-allowed_mount_roots:
-  - './data/box'     # サンドボックスワーキングディレクトリのマウントを許可
-  - '/tmp'           # 一時ディレクトリのマウントを許可
-  - '/home/user/projects'  # プロジェクトディレクトリのマウントを許可
-```
-
-デフォルト：`['host_root']`（サンドボックスワーキングディレクトリのみマウント許可）
-
-### `local.workspace_quota_mb`
-
-ワークスペースのディスククォータ（MB単位）。
-
-| 値 | 説明 |
-|-------|-------------|
-| `null` | プロファイルのデフォルトを使用（通常は0、無制限） |
-| `0` | 制限なし |
-| `100` | 100 MBに制限 |
-| `500` | 500 MBに制限 |
-
-デフォルト：`null`
-
-<Note>
-このクォータは強制されます。超過した場合、既存のセッションが破棄される可能性があります。
-</Note>
-
----
-
-## e2b設定
-
-### `e2b.api_key`
-
-E2B API Key。
-
-`E2B_API_KEY`環境変数でも設定可能で、こちらが優先されます。
-
-| ソース | 優先度 |
-|--------|----------|
-| `E2B_API_KEY`環境変数 | 高 |
-| `config.yaml`の`e2b.api_key` | 低 |
-
-### `e2b.api_url`
-
-カスタムE2B API URL。
-
-自己ホストE2Bサービスに接続する場合に使用。`E2B_API_URL`環境変数でも設定可能。
-
-| 値 | 説明 |
-|-------|-------------|
-| 空 | 公式E2Bサービスを使用 |
-| `https://your-e2b.example.com` | 自己ホストサービスのアドレス |
-
-### `e2b.template`
-
-デフォルトE2BテンプレートID。
-
-| 値 | 説明 |
-|-------|-------------|
-| 空 | E2Bデフォルトテンプレートを使用 |
-| `base` | ベーステンプレート |
-| `python-3.11` | Python 3.11テンプレート |
-| カスタムID | E2Bで作成したカスタムテンプレート |
-
----
-
-## 環境変数
-
-すべての設定項目は環境変数で設定可能：
-
-| 環境変数 | 設定項目 / 効果 |
-|---------------------|----------------------|
-| `BOX__ENABLED` | `box.enabled` に書き込み |
-| `BOX__BACKEND` | LangBot 設定 `box.backend` に書き込み |
-| `BOX__LOCAL__PROFILE` | `box.local.profile` に書き込み |
-| `BOX__LOCAL__IMAGE` | `box.local.image` に書き込み |
-| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` に書き込み |
-| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` に書き込み |
-| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` に書き込み |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots` に書き込み。カンマ区切り |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` に書き込み |
-| `BOX__E2B__API_KEY` | `box.e2b.api_key` に書き込み |
-| `BOX__E2B__API_URL` | `box.e2b.api_url` に書き込み |
-| `BOX__E2B__TEMPLATE` | `box.e2b.template` に書き込み |
-| `BOX_BACKEND` | Runtime レベルの backend 強制上書き。Runtime が設定を受け取った後、`box.backend` より優先 |
-| `LANGBOT_BOX_CONFIG` | LangBot が Box Runtime の起動または初期化に使う内部 JSON。通常のユーザー設定では使用しません |
-
-<Note>
-E2B SDKは`E2B_API_KEY`と`E2B_API_URL`環境変数もサポートしており、`config.yaml`より優先されます。Docker Compose では `BOX__LOCAL__*` を `langbot` サービスに設定します。`langbot_box` は `LANGBOT_BOX_*` や `BOX__*` を直接読み取りません。
-</Note>
-
----
-
-## Docker Compose例
-
-Docker Compose では `BOX__LOCAL__*` を `langbot` サービスに設定します。LangBot が有効な Box 設定を INIT RPC 経由で `langbot_box` に渡します：
-
-```yaml
-# docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
@@ -259,75 +74,40 @@ services:
     volumes:
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - TZ=Asia/Shanghai
     command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
-    container_name: langbot
     volumes:
       - ./data:/app/data
     environment:
-      - TZ=Asia/Shanghai
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - BOX__LOCAL__DEFAULT_WORKSPACE=default
       - BOX__LOCAL__SKILLS_ROOT=skills
       - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-`langbot_box` は Docker daemon へのアクセスが必要です。信頼できる環境でのみ `docker.sock` をマウントしてください。`langbot_box` はホストの Docker socket でサンドボックスコンテナを作成するため、Box ルートのホストパスとコンテナ内パスは同一にする必要があります。
+`langbot_box` は Docker daemon へアクセスする必要があります。`docker.sock` は信頼できる環境でのみマウントし、Box ルートパスはホスト側と `langbot_box` コンテナ内で同一にしてください。
 </Warning>
 
----
+## 環境変数
 
-## 完全な設定例
+| 環境変数 | 書き込み先 |
+|----------|------------|
+| `BOX__ENABLED` | `box.enabled` |
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`。カンマ区切り |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+| `BOX_BACKEND` | Box Runtime レベルのバックエンド強制上書き |
 
-### 基本設定
-
-```yaml
-box:
-  enabled: true
-  backend: 'local'
-  local:
-    profile: 'default'
-    host_root: './data/box'
-```
-
-### 開発環境
-
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'network_extended'
-    host_root: './data/box'
-    allowed_mount_roots:
-      - './data/box'
-      - '/tmp'
-      - './projects'
-```
-
-### 高セキュリティ設定
-
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'offline_readonly'
-    host_root: './data/box'
-    allowed_mount_roots:
-      - './data/box'
-    workspace_quota_mb: 50
-```
-
-### E2Bクラウドサンドボックス
-
-```yaml
-box:
-  backend: 'e2b'
-  e2b:
-    api_key: 'e2b_xxxxx'
-    template: 'python-3.11'
-```
+<Note>
+`langbot_box` サービスに `LANGBOT_BOX_*` や `BOX__*` を設定しないでください。Box Runtime はこれらの変数を直接読み取りません。
+</Note>

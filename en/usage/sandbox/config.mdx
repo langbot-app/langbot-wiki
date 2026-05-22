@@ -1,256 +1,71 @@
 ---
-title: "Reference"
+title: "Sandbox Configuration"
 ---
 
-Complete sandbox configuration options.
+Sandbox settings are owned by the LangBot main process. Box Runtime receives the effective configuration and performs the actual execution. In most deployments, you only need to choose a backend, set the workspace directory, and pick a security profile.
 
-## Configuration Location
-
-Sandbox configuration is in the `box` section of `data/config.yaml`:
+## Recommended Configuration
 
 ```yaml
 box:
   enabled: true
   backend: 'local'
-  runtime:
-    endpoint: ''
   local:
     profile: 'default'
-    image: ''
     host_root: './data/box'
-    default_workspace: ''
     skills_root: 'skills'
-    allowed_mount_roots:
-      - './data/box'
-      - '/tmp'
-    workspace_quota_mb: null
-  e2b:
-    api_key: ''
-    api_url: ''
-    template: ''
 ```
 
----
-
-## Top-Level Configuration
-
-### `enabled`
-
-Master switch for Box Runtime. When `false`, LangBot does not connect to or start Box Runtime. Box-dependent features such as sandbox tools, Skill add/edit, and stdio MCP hosting are unavailable.
-
-Default: `true`
-
-### `backend`
-
-Force a specific sandbox backend type.
-
-| Value | Description |
-|-------|-------------|
-| Empty/Not set | Try all backends (Docker → Nsjail → E2B), use first available |
-| `local` | Only try local backends (Docker → Nsjail), don't try E2B |
-| `docker` | Force Docker only |
-| `nsjail` | Force Nsjail only |
-| `e2b` | Force E2B cloud sandbox only |
-
-Default: `local`
+- `enabled`: master switch. When set to `false`, sandbox tools, Skill add/edit, stdio MCP hosting, and other Box-dependent features are unavailable.
+- `backend`: backend selection. The default `local` only tries local Docker/Nsjail backends.
+- `local.profile`: security profile that controls network, mounts, and resource limits.
+- `local.host_root`: host workspace root, mapped to `/workspace` inside the sandbox.
+- `local.skills_root`: Skill package directory. Relative paths resolve under `host_root`; the default is `host_root/skills`.
 
 <Note>
-This is a **forced value**, not a priority list. For example, when set to `local`, E2B won't be used even if available.
+In the current implementation, Skills are loaded only from the Box Runtime-managed skill store. When Box Runtime or a backend is unavailable, the Skill list is empty and create/import/edit/`register_skill` are unavailable; LangBot does not fall back to scanning `data/skills/`.
 </Note>
 
-### `runtime.endpoint`
+## Backend Selection
 
-External Box Runtime WebSocket URL.
+| Backend | Use Case | Notes |
+|---------|----------|-------|
+| `local` | Recommended default | Tries Docker, then Nsjail; does not try E2B |
+| `docker` | Production or container isolation | Requires Docker daemon; supports custom images |
+| `nsjail` | Lightweight Linux isolation | Requires `nsjail`; no custom image support |
+| `e2b` | Cloud sandbox | Requires an E2B API key; no local container runtime needed |
 
-| Value | Description |
-|-------|-------------|
-| Empty | Auto-detect (stdio locally, WebSocket in container) |
-| `ws://host:port` | Connect to specified Runtime |
+`backend` is a forced value, not a priority list. For example, `local` will not use E2B even if E2B is configured.
 
-Default: Empty
+## Security Profiles
 
-<Note>
-Most cases don't need this configured. Only use when deploying Box Runtime independently.
-</Note>
+| Profile | Network | Mounts | Resources | Recommended For |
+|---------|---------|--------|-----------|-----------------|
+| `default` | Off | Read-write | Default limits | Default choice |
+| `offline_readonly` | Off | Read-only | Stricter | Reading untrusted files |
+| `network_basic` | Basic network | Read-write | Default limits | API access or dependency downloads |
+| `network_extended` | Full network | Read-write | Looser | Development, debugging, complex tasks |
 
----
+Prefer least privilege: use `default` or `offline_readonly` when network access is unnecessary, and add only required directories to `allowed_mount_roots`.
 
-## local Configuration
+## Common Options
 
-### `local.profile`
+| Option | Default | Description |
+|--------|---------|-------------|
+| `runtime.endpoint` | empty | External Box Runtime WebSocket URL; usually not needed |
+| `local.image` | empty | Custom Docker image; empty uses the default image |
+| `local.default_workspace` | empty | Default workspace name; empty uses `host_root/default` |
+| `local.allowed_mount_roots` | `host_root` | Host directories the Agent may request to mount |
+| `local.workspace_quota_mb` | `null` | Workspace disk quota; `null` uses the profile default |
+| `e2b.api_key` | empty | E2B API key; can also be set with `E2B_API_KEY` |
+| `e2b.api_url` | empty | Self-hosted E2B endpoint; can also be set with `E2B_API_URL` |
+| `e2b.template` | empty | Default E2B template ID |
 
-Security profile name.
+## Docker Compose
 
-| Value | Description |
-|-------|-------------|
-| `default` | Default profile, no network, read/write mount |
-| `offline_readonly` | High security, no network, read-only mount |
-| `network_basic` | Network enabled, read/write mount |
-| `network_extended` | Full network, read/write mount, more resources |
-
-Default: `default`
-
-See [Security Profiles](./profiles) for details.
-
-### `local.image`
-
-Custom sandbox image.
-
-| Value | Description |
-|-------|-------------|
-| Empty | Use default image `rockchin/langbot-sandbox:latest` |
-| `python:3.11-slim` | Use Python 3.11 image |
-| `node:20-slim` | Use Node.js 20 image |
-
-Default: Empty
-
-<Note>
-Only applies to Docker backend. Nsjail uses host system environment, doesn't support custom images.
-</Note>
-
-### `local.host_root`
-
-Host sandbox working directory root path.
-
-Sandbox workspace files will be stored under this directory.
-
-| Value | Description |
-|-------|-------------|
-| `./data/box` | Relative to the LangBot process working directory |
-| `/var/lib/langbot/box` | Absolute path |
-
-Default: `./data/box`
-
-### `local.default_workspace`
-
-Default workspace name.
-
-| Value | Description |
-|-------|-------------|
-| Empty | Use `host_root/default` |
-| `my-workspace` | Use `host_root/my-workspace` |
-
-Default: Empty
-
-### `local.skills_root`
-
-Box Runtime-owned Skill package directory.
-
-| Value | Description |
-|-------|-------------|
-| `skills` | Use `host_root/skills` |
-| `/var/lib/langbot/skills` | Use an absolute path |
-
-Default: `skills`
-
-<Note>
-In the current implementation, Skills are loaded only from the Box Runtime-managed skill store. If Box Runtime or its backend is unavailable, the skill cache is empty and skill create/import/edit/register operations are unavailable; LangBot does not automatically fall back to `data/skills/`.
-</Note>
-
-### `local.allowed_mount_roots`
-
-Whitelist of host directories Agent can mount.
-
-Agent's requested `host_path` must be under one of the directories in this list.
+With Docker Compose, set Box configuration on the `langbot` service. LangBot sends the effective configuration to `langbot_box` through INIT RPC.
 
 ```yaml
-allowed_mount_roots:
-  - './data/box'     # Allow mounting sandbox working directory
-  - '/tmp'           # Allow mounting temp directory
-  - '/home/user/projects'  # Allow mounting project directory
-```
-
-Default: `['host_root']` (only allow mounting sandbox working directory)
-
-### `local.workspace_quota_mb`
-
-Workspace disk quota in MB.
-
-| Value | Description |
-|-------|-------------|
-| `null` | Use Profile default (usually 0, unlimited) |
-| `0` | No limit |
-| `100` | Limit to 100 MB |
-| `500` | Limit to 500 MB |
-
-Default: `null`
-
-<Note>
-This quota is enforced. Existing sessions may be destroyed when exceeded.
-</Note>
-
----
-
-## e2b Configuration
-
-### `e2b.api_key`
-
-E2B API Key.
-
-Can also be set via `E2B_API_KEY` environment variable, which takes precedence.
-
-| Source | Priority |
-|--------|----------|
-| `E2B_API_KEY` env var | High |
-| `e2b.api_key` in config.yaml | Low |
-
-### `e2b.api_url`
-
-Custom E2B API URL.
-
-For connecting to self-hosted E2B service. Can also be set via `E2B_API_URL` environment variable.
-
-| Value | Description |
-|-------|-------------|
-| Empty | Use official E2B service |
-| `https://your-e2b.example.com` | Self-hosted service address |
-
-### `e2b.template`
-
-Default E2B template ID.
-
-| Value | Description |
-|-------|-------------|
-| Empty | Use E2B default template |
-| `base` | Base template |
-| `python-3.11` | Python 3.11 template |
-| Custom ID | Your custom template created in E2B |
-
----
-
-## Environment Variables
-
-All configuration items can be set via environment variables:
-
-| Environment Variable | Config Item / Effect |
-|---------------------|----------------------|
-| `BOX__ENABLED` | Writes `box.enabled` |
-| `BOX__BACKEND` | Writes LangBot config `box.backend` |
-| `BOX__LOCAL__PROFILE` | Writes `box.local.profile` |
-| `BOX__LOCAL__IMAGE` | Writes `box.local.image` |
-| `BOX__LOCAL__HOST_ROOT` | Writes `box.local.host_root` |
-| `BOX__LOCAL__DEFAULT_WORKSPACE` | Writes `box.local.default_workspace` |
-| `BOX__LOCAL__SKILLS_ROOT` | Writes `box.local.skills_root` |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | Writes `box.local.allowed_mount_roots`, comma-separated |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | Writes `box.local.workspace_quota_mb` |
-| `BOX__E2B__API_KEY` | Writes `box.e2b.api_key` |
-| `BOX__E2B__API_URL` | Writes `box.e2b.api_url` |
-| `BOX__E2B__TEMPLATE` | Writes `box.e2b.template` |
-| `BOX_BACKEND` | Runtime-level backend override; takes precedence over `box.backend` after the Runtime receives config |
-| `LANGBOT_BOX_CONFIG` | Internal JSON payload used by LangBot when starting or initializing Box Runtime; not intended for normal user configuration |
-
-<Note>
-E2B SDK also supports `E2B_API_KEY` and `E2B_API_URL` environment variables, which take precedence over `config.yaml`. In Docker Compose, set `BOX__LOCAL__*` on the `langbot` service; `langbot_box` does not read `LANGBOT_BOX_*` or `BOX__*` directly.
-</Note>
-
----
-
-## Docker Compose Example
-
-When deploying with Docker Compose, set `BOX__LOCAL__*` on the `langbot` service. LangBot forwards the effective Box config to `langbot_box` through INIT RPC:
-
-```yaml
-# docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
@@ -259,75 +74,40 @@ services:
     volumes:
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - TZ=Asia/Shanghai
     command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
-    container_name: langbot
     volumes:
       - ./data:/app/data
     environment:
-      - TZ=Asia/Shanghai
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - BOX__LOCAL__DEFAULT_WORKSPACE=default
       - BOX__LOCAL__SKILLS_ROOT=skills
       - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-`langbot_box` needs access to the Docker daemon. Mount `docker.sock` only in trusted environments. Because `langbot_box` uses the host Docker socket to create sandbox containers, the host path and container path for the Box root must be identical.
+`langbot_box` needs access to Docker daemon. Mount `docker.sock` only in trusted environments, and keep the Box root path identical on the host and inside the `langbot_box` container.
 </Warning>
 
----
+## Environment Variables
 
-## Complete Configuration Examples
+| Environment Variable | Writes To |
+|----------------------|-----------|
+| `BOX__ENABLED` | `box.enabled` |
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`, comma-separated |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+| `BOX_BACKEND` | Box Runtime-level backend override |
 
-### Basic Configuration
-
-```yaml
-box:
-  enabled: true
-  backend: 'local'
-  local:
-    profile: 'default'
-    host_root: './data/box'
-```
-
-### Development Environment
-
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'network_extended'
-    host_root: './data/box'
-    allowed_mount_roots:
-      - './data/box'
-      - '/tmp'
-      - './projects'
-```
-
-### High Security Configuration
-
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'offline_readonly'
-    host_root: './data/box'
-    allowed_mount_roots:
-      - './data/box'
-    workspace_quota_mb: 50
-```
-
-### E2B Cloud Sandbox
-
-```yaml
-box:
-  backend: 'e2b'
-  e2b:
-    api_key: 'e2b_xxxxx'
-    template: 'python-3.11'
-```
+<Note>
+Do not set `LANGBOT_BOX_*` or `BOX__*` on the `langbot_box` service; Box Runtime does not read those variables directly.
+</Note>

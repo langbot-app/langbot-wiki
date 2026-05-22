@@ -1,256 +1,71 @@
 ---
-title: "参考"
+title: "沙箱配置"
 ---
 
-完整的沙箱配置项说明。
+沙箱由 LangBot 主进程配置，Box Runtime 负责实际执行。常规部署只需要选择后端、设置工作目录和安全预设。
 
-## 配置位置
-
-沙箱配置位于 `data/config.yaml` 的 `box` 部分：
+## 推荐配置
 
 ```yaml
 box:
   enabled: true
   backend: 'local'
-  runtime:
-    endpoint: ''
   local:
     profile: 'default'
-    image: ''
     host_root: './data/box'
-    default_workspace: ''
     skills_root: 'skills'
-    allowed_mount_roots:
-      - './data/box'
-      - '/tmp'
-    workspace_quota_mb: null
-  e2b:
-    api_key: ''
-    api_url: ''
-    template: ''
 ```
 
----
-
-## 顶层配置
-
-### `enabled`
-
-Box Runtime 总开关。设为 `false` 时，LangBot 不连接或启动 Box Runtime，沙箱工具、Skill 添加/编辑和 stdio MCP 托管等依赖 Box 的功能不可用。
-
-默认值：`true`
-
-### `backend`
-
-强制指定沙箱后端类型。
-
-| 值 | 说明 |
-|-----|------|
-| 空/未设置 | 尝试所有后端（Docker → Nsjail → E2B），使用第一个可用的 |
-| `local` | 只尝试本地后端（Docker → Nsjail），不尝试 E2B |
-| `docker` | 强制使用 Docker |
-| `nsjail` | 强制使用 Nsjail |
-| `e2b` | 强制使用 E2B 云端沙箱 |
-
-默认值：`local`
-
-<Note>
-这是一个**强制值**，不是优先级列表。例如设置为 `local` 时，即使 E2B 可用也不会使用。
-</Note>
-
-### `runtime.endpoint`
-
-外部 Box Runtime 的 WebSocket URL。
-
-| 值 | 说明 |
-|-----|------|
-| 空 | 自动检测（stdio 本地，WebSocket 容器） |
-| `ws://host:port` | 连接到指定的 Runtime |
-
-默认值：空
-
-<Note>
-大多数情况下不需要配置此项。仅在独立部署 Box Runtime 时使用。
-</Note>
-
----
-
-## local 配置
-
-### `local.profile`
-
-安全预设名称。
-
-| 值 | 说明 |
-|-----|------|
-| `default` | 默认预设，无网络，读写挂载 |
-| `offline_readonly` | 高安全，无网络，只读挂载 |
-| `network_basic` | 有网络，读写挂载 |
-| `network_extended` | 完全网络，读写挂载，更多资源 |
-
-默认值：`default`
-
-详见 [安全预设](./profiles)。
-
-### `local.image`
-
-自定义沙箱镜像。
-
-| 值 | 说明 |
-|-----|------|
-| 空 | 使用默认镜像 `rockchin/langbot-sandbox:latest` |
-| `python:3.11-slim` | 使用 Python 3.11 镜像 |
-| `node:20-slim` | 使用 Node.js 20 镜像 |
-
-默认值：空
-
-<Note>
-仅 Docker 后端生效。Nsjail 使用主机系统环境，不支持自定义镜像。
-</Note>
-
-### `local.host_root`
-
-主机上的沙箱工作目录根路径。
-
-沙箱的工作区文件将存储在此目录下。
-
-| 值 | 说明 |
-|-----|------|
-| `./data/box` | 相对于 LangBot 进程工作目录 |
-| `/var/lib/langbot/box` | 绝对路径 |
-
-默认值：`./data/box`
-
-### `local.default_workspace`
-
-默认工作空间名称。
-
-| 值 | 说明 |
-|-----|------|
-| 空 | 使用 `host_root/default` |
-| `my-workspace` | 使用 `host_root/my-workspace` |
-
-默认值：空
-
-### `local.skills_root`
-
-Box Runtime 管理的 Skill 包目录。
-
-| 值 | 说明 |
-|-----|------|
-| `skills` | 使用 `host_root/skills` |
-| `/var/lib/langbot/skills` | 使用绝对路径 |
-
-默认值：`skills`
+- `enabled`：总开关。设为 `false` 时，沙箱工具、Skill 添加/编辑、stdio MCP 托管等依赖 Box 的能力不可用。
+- `backend`：后端选择。默认 `local`，只在本机 Docker/Nsjail 中选择。
+- `local.profile`：安全预设，控制网络、挂载和资源限制。
+- `local.host_root`：主机上的沙箱工作目录，会映射为沙箱内的 `/workspace`。
+- `local.skills_root`：Skill 包目录。相对路径会解析到 `host_root` 下，默认是 `host_root/skills`。
 
 <Note>
 当前实现中，Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端不可用时，Skill 列表为空，创建、导入、编辑和 `register_skill` 不可用；不会自动回退扫描 `data/skills/`。
 </Note>
 
-### `local.allowed_mount_roots`
+## 后端选择
 
-允许 Agent 挂载的主机目录白名单。
+| 后端 | 适用场景 | 说明 |
+|------|----------|------|
+| `local` | 推荐默认值 | 依次尝试 Docker、Nsjail；不尝试 E2B |
+| `docker` | 生产环境、本地容器隔离 | 需要 Docker daemon；支持自定义镜像 |
+| `nsjail` | Linux 轻量隔离 | 需要安装 `nsjail`；不支持自定义镜像 |
+| `e2b` | 云端沙箱 | 需要 E2B API Key；无需本地容器环境 |
 
-Agent 请求挂载的 `host_path` 必须在此列表中的某个目录下。
+`backend` 是强制值，不是优先级列表。例如设置为 `local` 时，即使 E2B 可用也不会使用。
 
-```yaml
-allowed_mount_roots:
-  - './data/box'     # 允许挂载沙箱工作目录
-  - '/tmp'           # 允许挂载临时目录
-  - '/home/user/projects'  # 允许挂载项目目录
-```
+## 安全预设
 
-默认值：`['host_root']`（只允许挂载沙箱工作目录）
+| Profile | 网络 | 挂载 | 资源 | 建议场景 |
+|---------|------|------|------|----------|
+| `default` | 关闭 | 读写 | 默认限制 | 默认选择 |
+| `offline_readonly` | 关闭 | 只读 | 更严格 | 读取不可信文件 |
+| `network_basic` | 开启基础网络 | 读写 | 默认限制 | 需要访问 API 或下载依赖 |
+| `network_extended` | 开启完整网络 | 读写 | 更宽松 | 开发、调试、复杂任务 |
 
-### `local.workspace_quota_mb`
+优先使用最小权限：不需要网络就用 `default` 或 `offline_readonly`；只把必要目录加入 `allowed_mount_roots`。
 
-工作区磁盘配额（MB）。
+## 常用配置项
 
-| 值 | 说明 |
-|-----|------|
-| `null` | 使用 Profile 默认值（通常为 0，无限制） |
-| `0` | 无限制 |
-| `100` | 限制 100 MB |
-| `500` | 限制 500 MB |
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `runtime.endpoint` | 空 | 外部 Box Runtime WebSocket URL；多数情况下无需设置 |
+| `local.image` | 空 | Docker 后端自定义镜像；空值使用默认镜像 |
+| `local.default_workspace` | 空 | 默认工作空间名称；空值使用 `host_root/default` |
+| `local.allowed_mount_roots` | `host_root` | Agent 可请求挂载的主机目录白名单 |
+| `local.workspace_quota_mb` | `null` | 工作区磁盘配额；`null` 表示使用 Profile 默认值 |
+| `e2b.api_key` | 空 | E2B API Key，也可用 `E2B_API_KEY` 环境变量 |
+| `e2b.api_url` | 空 | 自建 E2B 服务地址，也可用 `E2B_API_URL` 环境变量 |
+| `e2b.template` | 空 | 默认 E2B 模板 ID |
 
-默认值：`null`
+## Docker Compose
 
-<Note>
-此配额是强制性的，超过配额时现有 session 可能被销毁。
-</Note>
-
----
-
-## e2b 配置
-
-### `e2b.api_key`
-
-E2B API Key。
-
-也可以通过环境变量 `E2B_API_KEY` 设置，环境变量优先级更高。
-
-| 来源 | 优先级 |
-|------|--------|
-| `E2B_API_KEY` 环境变量 | 高 |
-| `config.yaml` 中 `e2b.api_key` | 低 |
-
-### `e2b.api_url`
-
-自定义 E2B API URL。
-
-用于连接自建的 E2B 服务。也可以通过环境变量 `E2B_API_URL` 设置。
-
-| 值 | 说明 |
-|-----|------|
-| 空 | 使用官方 E2B 服务 |
-| `https://your-e2b.example.com` | 自建服务地址 |
-
-### `e2b.template`
-
-默认 E2B 模板 ID。
-
-| 值 | 说明 |
-|-----|------|
-| 空 | 使用 E2B 默认模板 |
-| `base` | 基础模板 |
-| `python-3.11` | Python 3.11 模板 |
-| 自定义 ID | 您在 E2B 创建的自定义模板 |
-
----
-
-## 环境变量
-
-所有配置项都可以通过环境变量设置：
-
-| 环境变量 | 配置项/作用 |
-|---------|-------------|
-| `BOX__ENABLED` | 写入 `box.enabled` |
-| `BOX__BACKEND` | 写入 LangBot 配置 `box.backend` |
-| `BOX__LOCAL__PROFILE` | 写入 `box.local.profile` |
-| `BOX__LOCAL__IMAGE` | 写入 `box.local.image` |
-| `BOX__LOCAL__HOST_ROOT` | 写入 `box.local.host_root` |
-| `BOX__LOCAL__DEFAULT_WORKSPACE` | 写入 `box.local.default_workspace` |
-| `BOX__LOCAL__SKILLS_ROOT` | 写入 `box.local.skills_root` |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | 写入 `box.local.allowed_mount_roots`，使用逗号分隔 |
-| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | 写入 `box.local.workspace_quota_mb` |
-| `BOX__E2B__API_KEY` | 写入 `box.e2b.api_key` |
-| `BOX__E2B__API_URL` | 写入 `box.e2b.api_url` |
-| `BOX__E2B__TEMPLATE` | 写入 `box.e2b.template` |
-| `BOX_BACKEND` | Box Runtime 级后端强制覆盖，Runtime 收到配置后优先于 `box.backend` |
-| `LANGBOT_BOX_CONFIG` | LangBot 启动或初始化 Box Runtime 时使用的内部 JSON 载荷；不建议用户手动配置 |
-
-<Note>
-E2B SDK 还支持 `E2B_API_KEY` 和 `E2B_API_URL` 环境变量，优先级高于 `config.yaml`。Docker Compose 部署时，把 `BOX__LOCAL__*` 设置到 `langbot` 服务；`langbot_box` 不直接读取 `LANGBOT_BOX_*` 或 `BOX__*`。
-</Note>
-
----
-
-## Docker Compose 示例
-
-使用 Docker Compose 部署时，把 `BOX__LOCAL__*` 设置到 `langbot` 服务。LangBot 会将生效后的 Box 配置通过 INIT RPC 下发给 `langbot_box`：
+使用 Docker Compose 时，Box 配置应设置在 `langbot` 服务上。LangBot 启动后会将配置通过 INIT RPC 下发给 `langbot_box`。
 
 ```yaml
-# docker-compose.yaml
 services:
   langbot_box:
     image: rockchin/langbot:latest
@@ -259,75 +74,40 @@ services:
     volumes:
       - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - TZ=Asia/Shanghai
     command: ["uv", "run", "--no-sync", "-m", "langbot_plugin.cli.__init__", "box"]
 
   langbot:
     image: rockchin/langbot:latest
-    container_name: langbot
     volumes:
       - ./data:/app/data
     environment:
-      - TZ=Asia/Shanghai
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
-      - BOX__LOCAL__DEFAULT_WORKSPACE=default
       - BOX__LOCAL__SKILLS_ROOT=skills
       - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
 ```
 
 <Warning>
-`langbot_box` 需要访问 Docker daemon，请只在受信任环境中挂载 `docker.sock`。由于 `langbot_box` 会用主机 Docker socket 创建沙箱容器，Box 根目录的宿主机路径和容器内路径需要保持一致。
+`langbot_box` 需要访问 Docker daemon。只在受信任环境中挂载 `docker.sock`；并保持 Box 根目录在主机和 `langbot_box` 容器内路径一致。
 </Warning>
 
----
+## 环境变量
 
-## 完整配置示例
+| 环境变量 | 写入配置 |
+|----------|----------|
+| `BOX__ENABLED` | `box.enabled` |
+| `BOX__BACKEND` | `box.backend` |
+| `BOX__LOCAL__PROFILE` | `box.local.profile` |
+| `BOX__LOCAL__IMAGE` | `box.local.image` |
+| `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
+| `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
+| `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`，逗号分隔 |
+| `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__E2B__API_KEY` | `box.e2b.api_key` |
+| `BOX__E2B__API_URL` | `box.e2b.api_url` |
+| `BOX__E2B__TEMPLATE` | `box.e2b.template` |
+| `BOX_BACKEND` | Box Runtime 级后端强制覆盖 |
 
-### 基础配置
-
-```yaml
-box:
-  enabled: true
-  backend: 'local'
-  local:
-    profile: 'default'
-    host_root: './data/box'
-```
-
-### 开发环境
-
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'network_extended'
-    host_root: './data/box'
-    allowed_mount_roots:
-      - './data/box'
-      - '/tmp'
-      - './projects'
-```
-
-### 高安全配置
-
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'offline_readonly'
-    host_root: './data/box'
-    allowed_mount_roots:
-      - './data/box'
-    workspace_quota_mb: 50
-```
-
-### E2B 云端沙箱
-
-```yaml
-box:
-  backend: 'e2b'
-  e2b:
-    api_key: 'e2b_xxxxx'
-    template: 'python-3.11'
-```
+<Note>
+不要在 `langbot_box` 服务上设置 `LANGBOT_BOX_*` 或 `BOX__*`；这些变量不会被 Box Runtime 直接读取。
+</Note>

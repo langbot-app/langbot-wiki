@@ -54,6 +54,30 @@
   },
   "redirects": [
     {
+      "source": "/en/usage/sandbox/backend",
+      "destination": "/en/usage/sandbox/config"
+    },
+    {
+      "source": "/en/usage/sandbox/profiles",
+      "destination": "/en/usage/sandbox/config"
+    },
+    {
+      "source": "/zh/usage/sandbox/backend",
+      "destination": "/zh/usage/sandbox/config"
+    },
+    {
+      "source": "/zh/usage/sandbox/profiles",
+      "destination": "/zh/usage/sandbox/config"
+    },
+    {
+      "source": "/ja/usage/sandbox/backend",
+      "destination": "/ja/usage/sandbox/config"
+    },
+    {
+      "source": "/ja/usage/sandbox/profiles",
+      "destination": "/ja/usage/sandbox/config"
+    },
+    {
       "source": "/en/deploy/platforms/:slug*",
       "destination": "/en/usage/platforms/:slug*"
     },
@@ -287,8 +311,6 @@
                     "pages": [
                       "en/usage/sandbox/readme",
                       "en/usage/sandbox/runtime-relationships",
-                      "en/usage/sandbox/backend",
-                      "en/usage/sandbox/profiles",
                       "en/usage/sandbox/config"
                     ]
                   },
@@ -507,8 +529,6 @@
                     "pages": [
                       "zh/usage/sandbox/readme",
                       "zh/usage/sandbox/runtime-relationships",
-                      "zh/usage/sandbox/backend",
-                      "zh/usage/sandbox/profiles",
                       "zh/usage/sandbox/config"
                     ]
                   },
@@ -746,8 +766,6 @@
                     "pages": [
                       "ja/usage/sandbox/readme",
                       "ja/usage/sandbox/runtime-relationships",
-                      "ja/usage/sandbox/backend",
-                      "ja/usage/sandbox/profiles",
                       "ja/usage/sandbox/config"
                     ]
                   },
