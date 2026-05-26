@@ -338,12 +338,7 @@
                       "en/usage/sandbox/config"
                     ]
                   },
-                  {
-                    "group": "Skills",
-                    "pages": [
-                      "en/usage/skills/readme"
-                    ]
-                  }
+                  "en/usage/skills/readme"
                 ]
               },
               {
@@ -554,12 +549,7 @@
                       "zh/usage/sandbox/config"
                     ]
                   },
-                  {
-                    "group": "技能系统",
-                    "pages": [
-                      "zh/usage/skills/readme"
-                    ]
-                  }
+                  "zh/usage/skills/readme"
                 ]
               },
               {
@@ -789,12 +779,7 @@
                       "ja/usage/sandbox/config"
                     ]
                   },
-                  {
-                    "group": "Skills",
-                    "pages": [
-                      "ja/usage/skills/readme"
-                    ]
-                  }
+                  "ja/usage/skills/readme"
                 ]
               },
               {
