@@ -2,43 +2,52 @@
 title: "技能 (Skills)"
 ---
 
-Skill 是一个**按需激活**的指令包：用户描述匹配时，Agent 调 `activate` 工具把这个技能的指令拉进上下文，然后按指令完成任务。
+Skill 是一个**按需激活**的指令包：用户描述匹配时，Agent 调用 `activate` 工具把这个技能的指令拉进上下文，然后按指令完成任务。未激活的技能不占用上下文。
 
-适合给 Agent 加一段**专业流程、模板或脚本**——比如"分析 Python 项目"、"做 PDF 表单填充"、"代码评审"——而不是每个对话都把所有指令塞进 System Prompt。
+适合给 Agent 加一段**专业流程、模板或脚本**——比如"分析 Python 项目"、"PDF 表单填充"、"代码评审"——而不必每个对话都把指令塞进 System Prompt。
 
 ## 与插件、MCP 的区别
 
 | 你想做的事 | 用这个 |
 |------------|--------|
-| 一段按需触发的工作流（含可选脚本/模板） | Skill |
+| 按需触发的一段工作流（可带脚本、模板） | Skill |
 | 接入已有的 MCP 工具服务 | MCP Server |
-| 长期能力、配置页、事件监听、知识库 | 插件 |
+| 长期能力，需要配置页、事件、知识库 | 插件 |
 
 详见[运行时与扩展关系](../sandbox/runtime-relationships)。
 
-## 工作流程
+## 安装技能
 
-```
-用户："帮我分析这个 Python 项目"
-   ↓
-Agent 从 <available_skills> 看到 python-analyzer
-   ↓
-Agent 调用 activate(skill_name="python-analyzer")
-   ↓
-SKILL.md 内容作为 Tool Result 返回
-   ↓
-Agent 按指令执行（用 read / exec / write 等工具）
-```
+<Note>
+技能依赖沙箱：`box.enabled` 为 `true` 且 Docker / Nsjail / E2B 至少一个可用时，才能安装、激活和编辑技能。详见[沙箱配置](../sandbox/config)。
+</Note>
 
-Agent 只在判断匹配时才激活技能，未激活的技能不占用上下文。
+### 从 LangBot Space（首选）
 
-## 前置条件
+[LangBot Space](https://space.langbot.app) 是 LangBot 的官方市场，已上架多种技能。在 WebUI 的 Skills 页面浏览并一键安装，无需自己编写 `SKILL.md` 或准备资源文件。
 
-Skills 依赖沙箱后端。`box.enabled` 必须为 `true` 且后端可用（Docker / Nsjail / E2B）。Box 不可用时，技能列表为空，新增/编辑/激活都不可用。
+适合大多数场景。需要自定义流程再走下面的方式。
 
-参见[沙箱配置](../sandbox/config)。
+### 自己创建技能
 
-## SKILL.md 格式
+**WebUI** — Skills 页面新建、上传 zip 包、从 GitHub 导入。
+
+**沙箱 + `register_skill`**：
+1. 在沙箱 `/workspace` 下准备好目录和 `SKILL.md`
+2. 让 Agent 调用 `register_skill(path="/workspace/my-skill")`
+
+两种方式都会写入 Box Runtime 管理的 skill store。
+
+## 在流水线启用
+
+技能装好之后，还要在流水线扩展配置里决定 Agent 能看到哪些：
+
+- 开启"启用所有技能"，或
+- 只绑定指定技能
+
+绑定只影响 `<available_skills>` 列表（即 Agent 能从哪些技能里挑），完整指令永远等 `activate` 被调用后才注入。
+
+## 编写 SKILL.md
 
 技能就是一个目录加一个 `SKILL.md`。frontmatter 写元数据，正文是 Agent 激活后会收到的指令：
 
@@ -64,41 +73,18 @@ LangBot 当前读取以下三个字段：
 | `description` | 强烈建议 | Agent 用它判断何时激活——越具体越能选中 |
 | `display_name` | 否 | UI 显示名 |
 
-完整规范参见 [agentskills.io](https://agentskills.io/home)。其它字段（`license`、`metadata` 等）可保留供未来兼容，当前不会被读取。
+`description` 是 Agent 挑技能的唯一依据，要写清楚**功能、适用场景、可能的触发关键词**。
 
-带资源的技能在 `SKILL.md` 同级放 `scripts/`、`templates/` 等目录，激活后 Agent 通过 `/workspace/.skills/{skill-name}/` 访问。
+完整规范见 [agentskills.io](https://agentskills.io/home)。其它字段（`license`、`metadata` 等）可保留供未来兼容，当前不会被读取。
 
-## 从 LangBot Space 安装（首选）
+**带资源的技能**在 `SKILL.md` 同级放 `scripts/`、`templates/` 等目录，激活后 Agent 通过 `/workspace/.skills/{skill-name}/` 访问。
 
-[LangBot Space](https://space.langbot.app) 是 LangBot 的官方市场，已上架多种技能。在 WebUI 的 Skills 页面浏览并一键安装，无需自己编写 `SKILL.md` 或准备资源文件。
-
-适合大多数场景；需要自定义流程再按下文方式自己创建。
-
-## 创建自定义技能
-
-**方式一：WebUI** — Skills 页面创建、上传 zip、从 GitHub 导入
-
-**方式二：沙箱 + `register_skill`**
-1. 在沙箱 `/workspace` 下准备好目录和 `SKILL.md`
-2. 让 Agent 调用 `register_skill(path="/workspace/my-skill")`
-
-两种方式都会写入 Box Runtime 管理的 skill store。
-
-## 在流水线启用
-
-技能装好之后，还要在流水线扩展配置里决定 Agent 能看到哪些：
-
-- 开启"启用所有技能"，或
-- 只绑定指定技能
-
-绑定只影响 `<available_skills>` 列表（即 Agent 能选什么）。完整指令永远等 `activate` 被调用后才注入。
-
-## Agent 可用的工具
+### Agent 可用的工具
 
 | 工具 | 用途 |
 |------|------|
-| `activate` | 激活一个技能，把 SKILL.md 拉进上下文 |
-| `register_skill` | 把沙箱里准备好的目录注册为技能 |
+| `activate` | Agent 判断匹配时自动调用，把 SKILL.md 拉进上下文 |
+| `register_skill` | 把沙箱里准备好的目录注册为新技能 |
 
 ## 常见问题
 
@@ -110,5 +96,5 @@ LangBot 当前读取以下三个字段：
 | `register_skill` 报错 | 路径必须在 `/workspace` 下，目录或两层内子目录需含 `SKILL.md` |
 
 <Note>
-Skills 当前面向内置 Agent，依赖函数调用和沙箱后端。外部 Runner 请使用各自平台的等价机制。
+Skills 当前面向内置 Agent，依赖函数调用和沙箱后端。外部 Runner（Dify、n8n、Langflow、Coze 等）请使用各自平台的等价机制。
 </Note>
