@@ -2,7 +2,7 @@
 title: "MCP サーバー"
 ---
 
-LangBot は MCP サーバーのツールを利用できます。MCP サーバーを追加し、Tool Call をサポートするモデルからそれらのツールを呼び出せます。
+LangBot は MCP サーバー由来のツールを利用できます。MCP サーバーを追加すれば、ツール使用を有効にしたモデルを持つ組み込み Agent が会話中にそのツールを呼び出せます。
 
 <Info title="MCP は Streamable HTTP、SSE、stdio の 3 モードに対応しています。">
   まずは [LangBot Space](https://space.langbot.app) からのインストールを推奨します。掲載されている MCP サーバーは設定済みで、そのまま使えます。
@@ -10,57 +10,59 @@ LangBot は MCP サーバーのツールを利用できます。MCP サーバー
   [ModelScope](https://modelscope.cn/mcp)、[mcp.so](https://mcp.so)、[composio.dev](https://composio.dev/toolkits) から入手して、後述の手動追加で登録することも可能です。
 </Info>
 
-## 実行モード
+## 3 つの通信モード
 
-| モード | 向いている用途 | Runtime との関係 |
-|--------|----------------|------------------|
-| Streamable HTTP (`mode: "http"`) | Streamable HTTP を使うリモート MCP サービス | LangBot がリモート URL に直接接続する |
-| SSE | SSE を使うリモート MCP サービス | LangBot がリモート URL に直接接続する |
-| stdio | ローカルコマンドで起動する MCP Server | Box Runtime が利用可能な場合のみ利用可能 |
+| モード | 適した場面 | 備考 |
+|------|----------|------|
+| Streamable HTTP (`mode: "http"`) | Streamable HTTP に対応したリモート MCP | LangBot がリモート URL に直接接続 |
+| SSE | SSE に対応したリモート MCP | LangBot がリモート URL に直接接続 |
+| stdio | ローカルコマンドで起動する MCP サーバー | Box Runtime が利用可能なときのみサポート |
 
 <Note>
-MCP ツールを使うには、パイプラインで `Local Agent` を選び、function calling をサポートするモデルを使う必要があります。Dify、n8n、Langflow、Coze などの外部 Runner は、それぞれのプラットフォームのツール機構を使います。
+MCP ツールを使うには、パイプラインで**組み込み Agent** を選択し、**ツール使用が有効化されたモデル**を使用する必要があります。[モデル](../models/readme)を参照。Dify、n8n、Langflow、Coze などの外部 Runner は各プラットフォームのツール機構を使います。
 </Note>
 
-## モデルのFunction Callingを有効化
+## MCP サーバーをインストール
 
-画像に示すように、モデルの`Function Calling`機能を有効にします。
-
-<img width="400px" src="/images/zh/deploy/mcp/mcp_01.png" alt="enable function call" />
-
-## LangBot Space からインストール（推奨）
+### LangBot Space から（推奨）
 
 [LangBot Space](https://space.langbot.app) は LangBot 公式のマーケットプレイスで、設定済みの MCP サーバーが多数掲載されています。WebUI の `プラグイン管理` → `MCP 管理` から閲覧して 1 クリックでインストールでき、URL、コマンド、モードなどのパラメータはマーケット側が提供するため、手動入力は不要です。
 
-ほとんどのケースはこれで十分です。掲載されていないサービスを利用する場合は、後述の手動追加を使ってください。
+ほとんどのケースはこれで十分です。掲載されていないサービスを利用する場合は、下記の手動追加を使ってください。
 
-## MCPサーバーを手動で追加
+### 手動で追加
 
-`プラグイン管理`をクリックしてから`MCP管理`をクリックします:
+`プラグイン管理` → `MCP 管理` を開きます：
 
-<img width="1000px" src="/images/zh/deploy/mcp/mcp02.png" alt="server page" />
+<img width="1000px" src="/images/zh/deploy/mcp/mcp02.png" alt="MCP 管理ページ" />
 
-右上の`追加`をクリックしてから`MCPサーバーを作成`をクリックします。
+右上の `追加` → `MCP サーバーを追加` をクリック。URL（HTTP/SSE）またはコマンド（stdio）を入力し、`テスト` で接続を確認、`送信` で保存します：
 
-<img width="400px" src="/images/zh/deploy/mcp/mcp03.png" alt="create new mcp server" />
+<img width="400px" src="/images/zh/deploy/mcp/mcp03.png" alt="MCP サーバー作成" />
 
-例えば、Fetch HTMLサーバーを使用するには、対応するURLを入力し、`テスト`をクリックしてMCPサーバーをテストし、`送信`をクリックしてサーバーを追加します。
+保存後、カードのスイッチをオンにして接続します。カードをクリックすると詳細を確認できます：
 
-追加後、カードのスイッチをクリックしてMCPサーバーに接続します。カードをクリックしてMCPサーバーの詳細を表示します:
+<img width="400px" src="/images/zh/deploy/mcp/mcp05.png" alt="MCP サーバー詳細" />
 
-<img width="400px" src="/images/zh/deploy/mcp/mcp05.png" alt="detailed server" />
+## パイプラインで有効化
 
-## stdio MCP と Box Runtime
+MCP サーバーを追加したあと、パイプライン拡張設定で Agent から見える MCP を決めます：
 
-`stdio` 形式の MCP は、Box Runtime が利用可能な場合のみ使用できます。利用可能な場合、LangBot は MCP プロセスを Box 内で起動して接続します。
+- 「すべての MCP サーバーを有効化」をオン、または
+- 指定した MCP サーバーのみをバインド
 
-1. 共有 MCP Box session を作成または再利用する
-2. command または args からローカルプロジェクトパスを推測できる場合、共有ワークスペースへ staging する
-3. プロジェクトに `requirements.txt`、`pyproject.toml`、`setup.py`、`setup.cfg` があれば、先に依存関係をインストールする
-4. WebSocket relay 経由で MCP プロセスの stdin/stdout に接続する
-5. MCP サーバーの初期化が成功した後、ツールを Agent の利用可能ツールに追加する
+バインドしていない MCP のツールはそのパイプラインのツール一覧に入りません。
 
-高度な stdio MCP 設定では、`box` override を含められます。
+## 高度な設定：stdio MCP
+
+stdio MCP は Box Runtime によってホストされます。接続前に LangBot は以下を行います：
+
+1. 共有の MCP Box session を作成または再利用
+2. コマンドからローカルプロジェクトのパスを推測できれば、プロジェクトをワークスペースに staging
+3. プロジェクトに `requirements.txt`、`pyproject.toml`、`setup.py`、`setup.cfg` がある場合は依存をインストール
+4. WebSocket relay 経由で MCP プロセスの stdin/stdout に接続
+
+マウント、ネットワーク、タイムアウトを細かく調整したい場合、MCP 設定の `extra_args` に `box` オーバーライドを追加できます：
 
 ```json
 {
@@ -80,41 +82,26 @@ MCP ツールを使うには、パイプラインで `Local Agent` を選び、f
 }
 ```
 
-主なフィールド:
+主なフィールド：
 
 | フィールド | 説明 |
-|------------|------|
-| `host_path` | MCP サーバーのホスト側プロジェクトディレクトリ。`box.local.allowed_mount_roots` の範囲内である必要があります |
-| `network` | ネットワークを許可するかどうか。依存関係のインストールでよく必要になります |
-| `host_path_mode` | マウントモード。デフォルトは `ro` |
-| `startup_timeout_sec` | 起動と依存関係インストールの待機時間。デフォルトは 120 秒 |
-| `image` | Docker backend で使う実行イメージ |
+|------|------|
+| `host_path` | ホスト上の MCP プロジェクトディレクトリ。`box.local.allowed_mount_roots` の許可範囲内である必要があります |
+| `network` | ネットワークを許可するか（依存インストールでよく使う） |
+| `host_path_mode` | `host_path` を staging するときのアクセスモード。デフォルトは `ro`。stdio MCP は通常ワークスペースに staging されます |
+| `startup_timeout_sec` | Box 準備と依存インストールのタイムアウト、デフォルト 120 秒。接続待ちで約 30 秒追加されます |
+| `image` | Docker バックエンドで使用するランタイムイメージ |
 
 <Warning>
-stdio MCP を Box 内で実行する場合、依存関係インストールとプロセス起動は sandbox profile、ネットワーク権限、リソース制限、マウントホワイトリストの影響を受けます。
+stdio MCP は Box 内で実行されます。依存インストールとプロセス起動は sandbox profile、ネットワーク権限、リソース制限、マウント許可リストの影響を受けます。
 </Warning>
-
-## パイプラインで有効化
-
-MCP Server を作成して接続した後、パイプライン拡張設定で許可する必要があります。
-
-- すべての MCP Server を有効化する
-- または指定した MCP Server だけをバインドする
-
-指定リストを使う場合、バインドされていない MCP ツールはそのパイプラインの Agent に公開されません。
-
-## 効果
-
-パイプライン設定で`Local Agent`をランナーとして選択し、function callingをサポートするモデルを使用する必要があります。
-
-<img width="1000px" src="/images/zh/deploy/mcp/mcp04.png" alt="dialog with mcp" />
 
 ## よくある問題
 
-| 症状 | 確認すること |
-|------|--------------|
-| MCP 接続に失敗する | URL、command、args、環境変数 |
-| stdio MCP が接続中のままになる | Box Runtime が利用可能か、`startup_timeout_sec` が短すぎないか |
-| 依存関係インストールに失敗する | sandbox でネットワークが許可されているか、依存関係ファイルが正しいか |
-| ローカルファイルにアクセスできない | `host_path` が存在するか、`allowed_mount_roots` の範囲内か |
-| Agent に MCP ツールが見えない | Local Agent、function calling、MCP 接続状態、パイプラインバインド |
+| 症状 | 確認項目 |
+|------|--------|
+| MCP の接続に失敗 | URL、コマンド、引数、環境変数が正しいか |
+| stdio MCP が接続中のまま | Box Runtime の状態、`startup_timeout_sec` が短すぎないか |
+| 依存インストールに失敗 | sandbox がネットワークを許可しているか、依存ファイルが正しいか |
+| ローカルファイルにアクセスできない | `host_path` が存在し、`allowed_mount_roots` 内にあるか |
+| Agent が MCP ツールを認識しない | パイプラインで組み込み Agent を使っているか、モデルでツール使用を有効にしているか、MCP がパイプラインにバインドされているか |

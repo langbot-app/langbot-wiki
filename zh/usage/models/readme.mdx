@@ -45,8 +45,14 @@ LangBot Models 是 LangBot 官方提供的模型服务。当您使用 LangBot Sp
 
 模型能力方面，请根据具体模型特性来选择：
 
-- 视觉能力：需要启用才可以识图
-- 函数调用：需要启用才可以在对话中使用 Agent 工具
+- **视觉能力**：启用后才能识别图片
+- **工具使用能力**（function calling / tool use）：启用后 LLM 才能在对话中调用工具
+
+<Note>
+**只要想使用来自 MCP 服务器、沙箱内置工具（`exec`/`read`/`write`/`edit`/`glob`/`grep`）、Skills 的能力，都必须为模型启用工具使用能力。** 否则即使流水线绑定了这些扩展，Agent 也不会调用任何工具。
+
+模型本身需要支持 function calling 才能勾选。不确定时请查阅模型供应商的文档。
+</Note>
 
 ### 嵌入模型 (Embedding Model)
 
