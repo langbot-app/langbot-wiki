@@ -4,11 +4,10 @@ title: "MCP サーバー"
 
 LangBot は MCP サーバーのツールを利用できます。MCP サーバーを追加し、Tool Call をサポートするモデルからそれらのツールを呼び出せます。
 
-<Info title="MCP サービスは HTTP Streamable、SSE、stdio モードをサポートしています。">
-- MCPサーバーの推奨取得チャネル：
-  - [ModelScope](https://modelscope.cn/mcp)
-  - https://mcp.so
-  - https://composio.dev/toolkits
+<Info title="MCP は Streamable HTTP、SSE、stdio の 3 モードに対応しています。">
+  まずは [LangBot Space](https://space.langbot.app) からのインストールを推奨します。掲載されている MCP サーバーは設定済みで、そのまま使えます。
+
+  [ModelScope](https://modelscope.cn/mcp)、[mcp.so](https://mcp.so)、[composio.dev](https://composio.dev/toolkits) から入手して、後述の手動追加で登録することも可能です。
 </Info>
 
 ## 実行モード
@@ -29,7 +28,13 @@ MCP ツールを使うには、パイプラインで `Local Agent` を選び、f
 
 <img width="400px" src="/images/zh/deploy/mcp/mcp_01.png" alt="enable function call" />
 
-## MCPサーバーの作成
+## LangBot Space からインストール（推奨）
+
+[LangBot Space](https://space.langbot.app) は LangBot 公式のマーケットプレイスで、設定済みの MCP サーバーが多数掲載されています。WebUI の `プラグイン管理` → `MCP 管理` から閲覧して 1 クリックでインストールでき、URL、コマンド、モードなどのパラメータはマーケット側が提供するため、手動入力は不要です。
+
+ほとんどのケースはこれで十分です。掲載されていないサービスを利用する場合は、後述の手動追加を使ってください。
+
+## MCPサーバーを手動で追加
 
 `プラグイン管理`をクリックしてから`MCP管理`をクリックします:
 

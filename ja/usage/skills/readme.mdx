@@ -68,7 +68,13 @@ LangBot は現在、以下の 3 つのフィールドを読み取ります:
 
 リソースを伴う Skill では `SKILL.md` と同じ階層に `scripts/`、`templates/` などを置きます。起動後、Agent は `/workspace/.skills/{skill-name}/` でこれらにアクセスできます。
 
-## Skill を作成する
+## LangBot Space からインストール（推奨）
+
+[LangBot Space](https://space.langbot.app) は LangBot 公式のマーケットプレイスで、すぐに使える Skill が多数掲載されています。WebUI の Skills ページから閲覧して 1 クリックでインストールでき、`SKILL.md` の作成やリソースファイルの準備は不要です。
+
+ほとんどのケースはこれで十分です。独自のワークフローが必要な場合は、後述の方法で自分で作成してください。
+
+## カスタム Skill を作成する
 
 **方法 1: WebUI** — Skills ページで作成、zip アップロード、GitHub からのインポートが可能
 

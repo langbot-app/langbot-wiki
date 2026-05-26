@@ -4,11 +4,10 @@ title: "MCP Servers"
 
 LangBot can use tools from MCP servers. Add an MCP server, then let a model with Tool Call support invoke those tools during Agent execution.
 
-<Info title="MCP service supports HTTP Streamable, SSE, and stdio modes.">
-- MCP servers recommended acquisition channels:
-  - [ModelScope](https://modelscope.cn/mcp)
-  - https://mcp.so
-  - https://composio.dev/toolkits
+<Info title="MCP supports Streamable HTTP, SSE, and stdio modes.">
+  Install from [LangBot Space](https://space.langbot.app) for the smoothest setup — listed MCPs are pre-configured and ready to use.
+
+  You can also fetch from [ModelScope](https://modelscope.cn/mcp), [mcp.so](https://mcp.so), or [composio.dev](https://composio.dev/toolkits), then add them manually as shown below.
 </Info>
 
 ## Runtime Modes
@@ -29,7 +28,13 @@ As shown in the image, enable the `Function Calling` feature for the model.
 
 <img width="400px" src="/images/zh/deploy/mcp/mcp_01.png" alt="enable function call" />
 
-## Create MCP Server
+## Install from LangBot Space (Preferred)
+
+[LangBot Space](https://space.langbot.app) is the official LangBot marketplace, with a curated list of ready-to-use MCP servers. In the WebUI, browse and install them with one click under `Plugin Management` → `MCP Management` — URL, command, and mode are filled in by the listing, so nothing has to be configured by hand.
+
+This covers most cases. To connect to services that aren't listed, add them manually as shown below.
+
+## Add MCP Server Manually
 
 Click `Plugin Management`, then `MCP Management`, as shown:
 
