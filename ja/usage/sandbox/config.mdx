@@ -13,61 +13,84 @@ title: "サンドボックス設定"
 ```yaml
 box:
   enabled: true
-  backend: 'local'
+  backend: 'local'        # Docker / Nsjail から利用可能なものを自動選択
   local:
     profile: 'default'
     host_root: './data/box'
     skills_root: 'skills'
 ```
 
-- `enabled`: 全体スイッチ。`false` にすると、サンドボックスツール、Skill の追加/編集、stdio MCP ホスティングなど Box 依存機能は利用できません。
-- `backend`: バックエンド選択。デフォルトの `local` はローカルの Docker/Nsjail のみを試します。
-- `local.profile`: ネットワーク、マウント、リソース制限を制御するセキュリティプロファイル。
-- `local.host_root`: ホスト上のサンドボックス作業ディレクトリ。サンドボックス内では `/workspace` にマッピングされます。
-- `local.skills_root`: Skill パッケージディレクトリ。相対パスは `host_root` 配下に解決され、デフォルトは `host_root/skills` です。
+- `enabled`：サンドボックスのマスタースイッチ。`false` にすると、サンドボックス組み込みツール、Skill の追加 / 編集、stdio MCP のホスティングなど Box 依存の機能はすべて無効になります。
+- `backend`：下記「バックエンドの選択」を参照。
+- `local.profile`：セキュリティプロファイル。ネットワーク、マウント、リソース制限を制御。
+- `local.host_root`：ホスト側のサンドボックス作業ディレクトリ。サンドボックス内では `/workspace` にマウントされます。
+- `local.skills_root`：Skill パッケージのディレクトリ。相対パスは `host_root` 配下に解決され、デフォルトは `host_root/skills`。
 
 <Note>
-現在の実装では、Skills は Box Runtime が管理する skill store からのみ読み込まれます。Box Runtime またはバックエンドが利用できない場合、Skill 一覧は空になり、作成、インポート、編集、`register_skill` は利用できません。`data/skills/` の自動スキャンにはフォールバックしません。
+Skill は Box Runtime が管理する skill store からのみ読み込まれます。Box Runtime またはバックエンドが利用できない場合、Skill 一覧は空になり、追加 / 編集 / `register_skill` も使えません。`data/skills/` へのフォールバックは行いません。
 </Note>
 
-## バックエンド選択
+## バックエンドの選択
 
-| バックエンド | 用途 | 説明 |
-|--------------|------|------|
-| `local` | 推奨デフォルト | Docker、Nsjail の順に試す。E2B は試さない |
-| `docker` | 本番環境、コンテナ分離 | Docker daemon が必要。カスタムイメージ対応 |
-| `nsjail` | 軽量 Linux 分離 | `nsjail` が必要。カスタムイメージ非対応 |
-| `e2b` | クラウドサンドボックス | E2B API Key が必要。ローカルコンテナ環境は不要 |
+サンドボックスは**ローカルコンテナ**または**クラウド**で動作させられます。`box.backend` でどちらを使うかを指定します：
 
-`backend` は強制値であり、優先順位リストではありません。たとえば `local` にすると、E2B が設定されていても使用されません。
+| `backend` | 実行場所 | 動作 |
+|-----------|---------|------|
+| `local`（既定） | ローカルコンテナ | Docker / Nsjail から利用可能なものを自動選択（Docker 優先） |
+| `docker` | ローカルコンテナ | Docker を強制使用。Docker daemon が必要 |
+| `nsjail` | ローカルコンテナ | Nsjail を強制使用（Linux のみ）。カスタムイメージ非対応 |
+| `e2b` | クラウド | [E2B](https://e2b.dev) クラウドサンドボックスを使用。API キーが必要 |
+
+`local` は「自動選択」のショートハンドであり、`docker` / `nsjail` と並列の 4 つ目のバックエンドではありません。ローカル系バックエンド（`local` / `docker` / `nsjail`）は `box.local.*` 設定セクションを**共有**し、クラウドバックエンドは `box.e2b.*` を使います。
+
+<Note>
+`backend` は強制値です。`docker` を指定して Docker が使えない場合、Nsjail や E2B に**自動でフォールバックしません**。自動 fan-out するのは `local` だけです。
+
+環境変数 `BOX__BACKEND` で `box.backend` を上書きできます（`config.yaml` より優先）。
+</Note>
 
 ## セキュリティプロファイル
 
-| Profile | ネットワーク | マウント | リソース | 推奨場面 |
-|---------|--------------|----------|----------|----------|
-| `default` | 無効 | 読み書き | デフォルト制限 | 通常のデフォルト |
-| `offline_readonly` | 無効 | 読み取り専用 | より厳格 | 信頼できないファイルの読み取り |
-| `network_basic` | 基本ネットワーク | 読み書き | デフォルト制限 | API アクセスや依存関係のダウンロード |
-| `network_extended` | 完全ネットワーク | 読み書き | より緩い | 開発、デバッグ、複雑なタスク |
+`box.local.profile` はローカル系バックエンドのネットワーク、マウント、リソース制限を制御します：
 
-最小権限を優先してください。ネットワークが不要なら `default` または `offline_readonly` を使い、`allowed_mount_roots` には必要なディレクトリだけを追加します。
+| Profile | ネットワーク | マウント | リソース | 推奨シーン |
+|---------|---------|---------|---------|----------|
+| `default` | オフ | 読み書き | 既定制限 | 既定の選択 |
+| `offline_readonly` | オフ | 読み取り専用 | より厳格 | 信頼できないファイルの読み込み |
+| `network_basic` | 基本ネットワーク | 読み書き | 既定制限 | API アクセス、依存関係インストール |
+| `network_extended` | フルネットワーク | 読み書き | 緩和 | 開発、デバッグ、複雑なタスク |
 
-## よく使う設定項目
+最小権限を優先：ネットワークが不要なら `default` または `offline_readonly`；`allowed_mount_roots` には必要なディレクトリのみを追加。
 
-| 設定項目 | デフォルト | 説明 |
-|----------|------------|------|
-| `runtime.endpoint` | 空 | 外部 Box Runtime の WebSocket URL。通常は不要 |
-| `local.image` | 空 | Docker バックエンドのカスタムイメージ。空ならデフォルトイメージ |
-| `local.default_workspace` | 空 | デフォルトワークスペース名。空なら `host_root/default` |
-| `local.allowed_mount_roots` | `host_root` | Agent がマウントを要求できるホストディレクトリ |
-| `local.workspace_quota_mb` | `null` | ワークスペースのディスククォータ。`null` は Profile デフォルト |
-| `e2b.api_key` | 空 | E2B API Key。`E2B_API_KEY` 環境変数でも設定可能 |
-| `e2b.api_url` | 空 | セルフホスト E2B のエンドポイント。`E2B_API_URL` でも設定可能 |
-| `e2b.template` | 空 | デフォルト E2B テンプレート ID |
+## ローカル系バックエンド設定（box.local.*）
 
-## Docker Compose
+ローカル系バックエンド（`local` / `docker` / `nsjail`）は以下を共有します：
 
-Docker Compose では、Box 設定を `langbot` サービスに設定します。LangBot は有効な設定を INIT RPC 経由で `langbot_box` に渡します。
+| 設定項目 | 既定値 | 説明 |
+|---------|--------|------|
+| `local.profile` | `default` | 上記「セキュリティプロファイル」を参照 |
+| `local.image` | 空 | Docker バックエンドのカスタムイメージ。空 = プロファイル既定を使用 |
+| `local.host_root` | `./data/box` | ホスト作業ディレクトリのベース。サンドボックス内の `/workspace` にマップ |
+| `local.default_workspace` | 空 | 既定ワークスペース名。空 = `<host_root>/default` |
+| `local.skills_root` | `skills` | Skill パッケージディレクトリ。相対パスは `host_root` 配下に解決 |
+| `local.allowed_mount_roots` | `[host_root]` | Agent がマウント要求できるホストディレクトリの許可リスト |
+| `local.workspace_quota_mb` | `null` | ワークスペースのディスク配額（MB）。`null` = プロファイル既定 |
+
+## クラウドバックエンド設定（box.e2b.*）
+
+`backend: 'e2b'` を指定したうえで設定します：
+
+| 設定項目 | 既定値 | 説明 |
+|---------|--------|------|
+| `e2b.api_key` | 空 | E2B API キー。環境変数 `E2B_API_KEY` でも設定可 |
+| `e2b.api_url` | 空 | セルフホスト E2B のエンドポイント。環境変数 `E2B_API_URL` でも設定可 |
+| `e2b.template` | 空 | 既定の E2B テンプレート ID |
+
+E2B はホスト側に Docker や Nsjail を必要とせず、毎回の実行をリモートサンドボックスで行います。
+
+## Docker Compose デプロイ
+
+Docker Compose では、サンドボックス設定は `langbot` サービス側に記述します。LangBot は起動時に INIT RPC で設定を `langbot_box` に転送します。
 
 ```yaml
 services:
@@ -91,13 +114,21 @@ services:
 ```
 
 <Warning>
-`langbot_box` は Docker daemon へアクセスする必要があります。`docker.sock` は信頼できる環境でのみマウントし、Box ルートパスはホスト側と `langbot_box` コンテナ内で同一にしてください。
+`langbot_box` は Docker daemon にアクセスします。`docker.sock` のマウントは信頼できる環境でのみ行い、Box のルートパスをホストと `langbot_box` コンテナ内で一致させてください。
 </Warning>
+
+外部の Box Runtime（リモートホストなど）に接続する場合は `box.runtime.endpoint` で URL を指定します：
+
+```yaml
+box:
+  runtime:
+    endpoint: 'ws://192.168.1.10:5410'
+```
 
 ## 環境変数
 
-| 環境変数 | 書き込み先 |
-|----------|------------|
+| 環境変数 | 対応する設定 |
+|----------|----------|
 | `BOX__ENABLED` | `box.enabled` |
 | `BOX__BACKEND` | `box.backend` |
 | `BOX__LOCAL__PROFILE` | `box.local.profile` |
@@ -105,12 +136,12 @@ services:
 | `BOX__LOCAL__HOST_ROOT` | `box.local.host_root` |
 | `BOX__LOCAL__DEFAULT_WORKSPACE` | `box.local.default_workspace` |
 | `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
-| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`。カンマ区切り |
+| `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`、カンマ区切り |
 | `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
 | `BOX__E2B__API_KEY` | `box.e2b.api_key` |
 | `BOX__E2B__API_URL` | `box.e2b.api_url` |
 | `BOX__E2B__TEMPLATE` | `box.e2b.template` |
 
 <Note>
-`langbot_box` サービスに `LANGBOT_BOX_*` や `BOX__*` を設定しないでください。Box Runtime はこれらの変数を直接読み取りません。
+`langbot_box` サービス側には `BOX__*` や `LANGBOT_BOX_*` を設定しないでください。Box Runtime はこれらを直接読みません——設定は LangBot から INIT RPC 経由で渡されます。
 </Note>

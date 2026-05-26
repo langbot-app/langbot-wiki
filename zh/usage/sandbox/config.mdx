@@ -13,35 +13,45 @@ title: "沙箱配置"
 ```yaml
 box:
   enabled: true
-  backend: 'local'
+  backend: 'local'        # 自动从 Docker / Nsjail 里选可用的
   local:
     profile: 'default'
     host_root: './data/box'
     skills_root: 'skills'
 ```
 
-- `enabled`：总开关。设为 `false` 时，沙箱工具、Skill 添加/编辑、stdio MCP 托管等依赖 Box 的能力不可用。
-- `backend`：后端选择。默认 `local`，只在本机 Docker/Nsjail 中选择。
+- `enabled`：沙箱总开关。设为 `false` 时，沙箱内置工具、Skill 添加/编辑、stdio MCP 托管等依赖 Box 的能力都不可用。
+- `backend`：见下文「后端选择」。
 - `local.profile`：安全预设，控制网络、挂载和资源限制。
 - `local.host_root`：主机上的沙箱工作目录，会映射为沙箱内的 `/workspace`。
-- `local.skills_root`：Skill 包目录。相对路径会解析到 `host_root` 下，默认是 `host_root/skills`。
+- `local.skills_root`：Skill 包目录；相对路径解析到 `host_root` 下，默认 `host_root/skills`。
 
 <Note>
-当前实现中，Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端不可用时，Skill 列表为空，创建、导入、编辑和 `register_skill` 不可用；不会自动回退扫描 `data/skills/`。
+Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端不可用时 Skill 列表为空，新增 / 编辑 / `register_skill` 都不可用；不会回退扫描 `data/skills/`。
 </Note>
 
 ## 后端选择
 
-| 后端 | 适用场景 | 说明 |
-|------|----------|------|
-| `local` | 推荐默认值 | 依次尝试 Docker、Nsjail；不尝试 E2B |
-| `docker` | 生产环境、本地容器隔离 | 需要 Docker daemon；支持自定义镜像 |
-| `nsjail` | Linux 轻量隔离 | 需要安装 `nsjail`；不支持自定义镜像 |
-| `e2b` | 云端沙箱 | 需要 E2B API Key；无需本地容器环境 |
+沙箱可以跑在**本机容器**或**云端**。`box.backend` 选择走哪一种：
 
-`backend` 是强制值，不是优先级列表。例如设置为 `local` 时，即使 E2B 可用也不会使用。
+| `backend` | 跑在哪 | 行为 |
+|-----------|--------|------|
+| `local`（默认） | 本机容器 | 自动从 Docker / Nsjail 里选可用的（Docker 优先） |
+| `docker` | 本机容器 | 强制使用 Docker，需要 Docker daemon |
+| `nsjail` | 本机容器 | 强制使用 Nsjail（仅 Linux），不支持自定义镜像 |
+| `e2b` | 云端 | 使用 [E2B](https://e2b.dev) 云沙箱，需要 API Key |
+
+`local` 是「自动选择」的简写，不是和 `docker`/`nsjail` 平级的第四种后端。本机容器后端（`local`/`docker`/`nsjail`）**共用** `box.local.*` 配置段；云端后端用 `box.e2b.*` 配置段。
+
+<Note>
+`backend` 是强制值。设为 `docker` 时如果 Docker 不可用，**不会**自动回退到 Nsjail 或 E2B——只有 `local` 会自动 fan-out。
+
+也可以用环境变量 `BOX__BACKEND` 覆盖配置（优先级高于 `config.yaml`）。
+</Note>
 
 ## 安全预设
+
+`box.local.profile` 控制本机后端的网络、挂载、资源限制：
 
 | Profile | 网络 | 挂载 | 资源 | 建议场景 |
 |---------|------|------|------|----------|
@@ -52,22 +62,35 @@ box:
 
 优先使用最小权限：不需要网络就用 `default` 或 `offline_readonly`；只把必要目录加入 `allowed_mount_roots`。
 
-## 常用配置项
+## 本机后端配置（box.local.*）
+
+本机后端（`local` / `docker` / `nsjail`）共用以下配置：
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `runtime.endpoint` | 空 | 外部 Box Runtime WebSocket URL；多数情况下无需设置 |
-| `local.image` | 空 | Docker 后端自定义镜像；空值使用默认镜像 |
-| `local.default_workspace` | 空 | 默认工作空间名称；空值使用 `host_root/default` |
-| `local.allowed_mount_roots` | `host_root` | Agent 可请求挂载的主机目录白名单 |
-| `local.workspace_quota_mb` | `null` | 工作区磁盘配额；`null` 表示使用 Profile 默认值 |
+| `local.profile` | `default` | 见上文「安全预设」 |
+| `local.image` | 空 | Docker 后端的自定义镜像；空 = 用 profile 默认 |
+| `local.host_root` | `./data/box` | 主机工作目录基础路径，映射为沙箱内 `/workspace` |
+| `local.default_workspace` | 空 | 默认工作空间名；空 = `<host_root>/default` |
+| `local.skills_root` | `skills` | Skill 包目录；相对路径解析到 `host_root` 下 |
+| `local.allowed_mount_roots` | `[host_root]` | Agent 可请求挂载的主机目录白名单 |
+| `local.workspace_quota_mb` | `null` | 工作区磁盘配额（MB），`null` = 用 profile 默认 |
+
+## 云端后端配置（box.e2b.*）
+
+设为 `backend: 'e2b'` 后配置：
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
 | `e2b.api_key` | 空 | E2B API Key，也可用 `E2B_API_KEY` 环境变量 |
-| `e2b.api_url` | 空 | 自建 E2B 服务地址，也可用 `E2B_API_URL` 环境变量 |
+| `e2b.api_url` | 空 | 自建 E2B 服务地址，也可用 `E2B_API_URL` |
 | `e2b.template` | 空 | 默认 E2B 模板 ID |
 
-## Docker Compose
+E2B 不需要本机 Docker 或 Nsjail，每次执行都走远程沙箱。
 
-使用 Docker Compose 时，Box 配置应设置在 `langbot` 服务上。LangBot 启动后会将配置通过 INIT RPC 下发给 `langbot_box`。
+## Docker Compose 部署
+
+Docker Compose 部署时，沙箱配置写在 `langbot` 服务上。LangBot 启动后会通过 INIT RPC 把配置下发给 `langbot_box`。
 
 ```yaml
 services:
@@ -94,6 +117,14 @@ services:
 `langbot_box` 需要访问 Docker daemon。只在受信任环境中挂载 `docker.sock`；并保持 Box 根目录在主机和 `langbot_box` 容器内路径一致。
 </Warning>
 
+如需 LangBot 连接外部 Box Runtime（例如远程主机），用 `box.runtime.endpoint` 指定 URL：
+
+```yaml
+box:
+  runtime:
+    endpoint: 'ws://192.168.1.10:5410'
+```
+
 ## 环境变量
 
 | 环境变量 | 写入配置 |
@@ -112,5 +143,5 @@ services:
 | `BOX__E2B__TEMPLATE` | `box.e2b.template` |
 
 <Note>
-不要在 `langbot_box` 服务上设置 `LANGBOT_BOX_*` 或 `BOX__*`；这些变量不会被 Box Runtime 直接读取。
+不要在 `langbot_box` 服务上设置 `BOX__*` 或 `LANGBOT_BOX_*` 变量；这些变量不会被 Box Runtime 直接读取——它的配置由 LangBot 通过 INIT RPC 下发。
 </Note>
