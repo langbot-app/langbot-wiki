@@ -38,16 +38,9 @@ Skills depend on the sandbox backend. `box.enabled` must be `true` and a backend
 
 See [Sandbox Configuration](../sandbox/config).
 
-## A Minimal Skill
+## SKILL.md Format
 
-A skill is a directory plus a `SKILL.md`:
-
-```
-my-skill/
-└── SKILL.md
-```
-
-`SKILL.md`:
+A skill is a directory plus a `SKILL.md`. The frontmatter holds metadata; the body is what the Agent receives after activation:
 
 ```markdown
 ---
@@ -63,9 +56,17 @@ description: Reviews code and gives improvement suggestions; triggered when the 
 3. Provide improvement suggestions, sorted by priority
 ```
 
-The clearer the `description`, the better the Agent can decide when to activate — this is the single most important thing about writing a good skill.
+LangBot currently reads these three fields:
 
-See [SKILL.md Format](./skill-format) for full field reference and more examples.
+| Field | Required | Notes |
+|-------|----------|-------|
+| `name` | When creating/registering | Unique ID, 1–64 chars |
+| `description` | Strongly recommended | The Agent uses this to decide when to activate — the more specific, the better |
+| `display_name` | No | Shown in the UI |
+
+For the full spec see [agentskills.io](https://agentskills.io/home). Other fields (`license`, `metadata`, ...) can stay in the file for future compatibility but are not currently read.
+
+For a skill with resources, place `scripts/`, `templates/`, etc. next to `SKILL.md`. After activation the Agent accesses them at `/workspace/.skills/{skill-name}/`.
 
 ## Creating a Skill
 
@@ -93,8 +94,6 @@ Binding only affects the `<available_skills>` list (what the Agent can choose fr
 | `activate` | Activate a skill and pull its SKILL.md into context |
 | `register_skill` | Register a directory prepared in the sandbox as a skill |
 
-See [Tools API](./tools-api) for parameters and return values.
-
 ## Common Issues
 
 | Symptom | What to check |
@@ -107,8 +106,3 @@ See [Tools API](./tools-api) for parameters and return values.
 <Note>
 Skills currently target the built-in Agent and depend on function calling plus a sandbox backend. External runners should use their platform's equivalent mechanism.
 </Note>
-
-## Next Steps
-
-- [SKILL.md Format](./skill-format) — fields, directory layout, writing tips
-- [Tools API](./tools-api) — parameters and return values for `activate` and `register_skill`

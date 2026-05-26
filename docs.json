@@ -78,6 +78,30 @@
       "destination": "/ja/usage/sandbox/config"
     },
     {
+      "source": "/en/usage/skills/skill-format",
+      "destination": "/en/usage/skills/readme"
+    },
+    {
+      "source": "/en/usage/skills/tools-api",
+      "destination": "/en/usage/skills/readme"
+    },
+    {
+      "source": "/zh/usage/skills/skill-format",
+      "destination": "/zh/usage/skills/readme"
+    },
+    {
+      "source": "/zh/usage/skills/tools-api",
+      "destination": "/zh/usage/skills/readme"
+    },
+    {
+      "source": "/ja/usage/skills/skill-format",
+      "destination": "/ja/usage/skills/readme"
+    },
+    {
+      "source": "/ja/usage/skills/tools-api",
+      "destination": "/ja/usage/skills/readme"
+    },
+    {
       "source": "/en/deploy/platforms/:slug*",
       "destination": "/en/usage/platforms/:slug*"
     },
@@ -317,9 +341,7 @@
                   {
                     "group": "Skills",
                     "pages": [
-                      "en/usage/skills/readme",
-                      "en/usage/skills/skill-format",
-                      "en/usage/skills/tools-api"
+                      "en/usage/skills/readme"
                     ]
                   }
                 ]
@@ -535,9 +557,7 @@
                   {
                     "group": "技能系统",
                     "pages": [
-                      "zh/usage/skills/readme",
-                      "zh/usage/skills/skill-format",
-                      "zh/usage/skills/tools-api"
+                      "zh/usage/skills/readme"
                     ]
                   }
                 ]
@@ -772,9 +792,7 @@
                   {
                     "group": "Skills",
                     "pages": [
-                      "ja/usage/skills/readme",
-                      "ja/usage/skills/skill-format",
-                      "ja/usage/skills/tools-api"
+                      "ja/usage/skills/readme"
                     ]
                   }
                 ]

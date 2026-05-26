@@ -38,16 +38,9 @@ Skills 依赖沙箱后端。`box.enabled` 必须为 `true` 且后端可用（Doc
 
 参见[沙箱配置](../sandbox/config)。
 
-## 一个最小技能
+## SKILL.md 格式
 
-技能就是一个目录加一个 `SKILL.md`：
-
-```
-my-skill/
-└── SKILL.md
-```
-
-`SKILL.md`：
+技能就是一个目录加一个 `SKILL.md`。frontmatter 写元数据，正文是 Agent 激活后会收到的指令：
 
 ```markdown
 ---
@@ -63,9 +56,17 @@ description: 审查代码并给出改进建议；用户提到 review、评审、
 3. 给出按优先级排序的改进建议
 ```
 
-`description` 写得越清晰，Agent 越能准确判断何时激活——这是写好技能最重要的一件事。
+LangBot 当前读取以下三个字段：
 
-详细字段说明和更多示例见 [SKILL.md 格式](./skill-format)。
+| 字段 | 必需 | 说明 |
+|------|------|------|
+| `name` | 创建/注册时 | 唯一标识，1–64 字符 |
+| `description` | 强烈建议 | Agent 用它判断何时激活——越具体越能选中 |
+| `display_name` | 否 | UI 显示名 |
+
+完整规范参见 [agentskills.io](https://agentskills.io/home)。其它字段（`license`、`metadata` 等）可保留供未来兼容，当前不会被读取。
+
+带资源的技能在 `SKILL.md` 同级放 `scripts/`、`templates/` 等目录，激活后 Agent 通过 `/workspace/.skills/{skill-name}/` 访问。
 
 ## 创建技能
 
@@ -93,8 +94,6 @@ description: 审查代码并给出改进建议；用户提到 review、评审、
 | `activate` | 激活一个技能，把 SKILL.md 拉进上下文 |
 | `register_skill` | 把沙箱里准备好的目录注册为技能 |
 
-参数和返回值见[工具 API](./tools-api)。
-
 ## 常见问题
 
 | 现象 | 检查项 |
@@ -107,8 +106,3 @@ description: 审查代码并给出改进建议；用户提到 review、评审、
 <Note>
 Skills 当前面向内置 Agent，依赖函数调用和沙箱后端。外部 Runner 请使用各自平台的等价机制。
 </Note>
-
-## 下一步
-
-- [SKILL.md 格式](./skill-format) — 字段、目录结构、写作建议
-- [工具 API](./tools-api) — `activate` 和 `register_skill` 的参数与返回值
