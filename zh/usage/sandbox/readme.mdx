@@ -2,170 +2,72 @@
 title: "沙箱 (Sandbox)"
 ---
 
-LangBot 的沙箱功能允许 AI Agent 在隔离的环境中安全地执行命令、读写文件、运行 MCP Server 等操作。这让您的 AI 机器人具备了真正的代码执行能力。
+沙箱给内置 Agent 一个隔离的执行环境：跑命令、读写文件、运行长驻进程。日常 Agent 应用（数据处理、文件操作、运行用户代码、托管 stdio MCP）都依赖它。
 
-## 什么是沙箱？
-
-沙箱是一个隔离的执行环境，Agent 可以在其中：
-
-- 执行 Shell 命令（如 `python`、`npm`、`curl` 等）
-- 创建、读取、修改文件
-- 运行长时间运行的进程（如 MCP Server）
-- 访问网络资源（根据配置）
-
-同时，沙箱提供了安全隔离，确保：
-
-- 执行过程不会影响宿主机系统
-- 资源使用受到限制（CPU、内存、进程数）
-- 文件访问范围受到控制
-
-## 适用场景
-
-| 场景 | 说明 |
-|------|------|
-| **数据分析** | Agent 执行 Python 脚本处理数据、生成图表 |
-| **代码运行** | 运行用户提供的代码片段并返回结果 |
-| **文件操作** | 读取、编辑文档，管理项目文件 |
-| **MCP Server** | 在隔离环境中运行 MCP 工具服务 |
-| **自动化任务** | 执行 Agent 请求的临时脚本或命令 |
-
-## 工作原理
-
-```mermaid
-flowchart TB
-    subgraph langbot[LangBot 主进程]
-        agent[Agent / LLM]
-        tools[内置工具<br/>exec · read · write · edit · glob · grep]
-        service[BoxService]
-        connector[BoxRuntimeConnector]
-        agent --> tools --> service --> connector
-    end
-
-    subgraph runtime[Box Runtime 进程]
-        backend[后端<br/>Docker · Nsjail · E2B]
-        sandbox[隔离的沙箱环境<br/>独立文件系统 · 网络隔离可配置 · 资源限制]
-        backend --> sandbox
-    end
-
-    connector -- Action RPC --> backend
-```
-
-## 后端类型
-
-LangBot 支持多种沙箱后端：
-
-| 后端 | 依赖 | 特点 | 适用场景 |
-|------|------|------|---------|
-| **Docker** | `docker` CLI | 完整容器隔离，支持自定义镜像 | 生产环境、需要完整隔离 |
-| **Nsjail** | `nsjail` binary | 轻量级 Linux 沙箱，无需容器 | Linux 服务器、轻量部署 |
-| **E2B** | `e2b` SDK | 云端沙箱服务 | 无需本地基础设施 |
-
-<Tip>
-通过 `backend` 配置项选择：`local` 自动选择 Docker 或 Nsjail；`docker`/`nsjail`/`e2b` 强制使用指定后端。
-</Tip>
+启用沙箱后，内置 Agent 会自动获得六个工具，无需在流水线里逐项开启。
 
 ## 内置工具
 
-沙箱功能为 Agent 提供了六个内置工具：
+| 工具 | 用途 |
+|------|------|
+| `exec` | 在沙箱内执行 Shell 命令 |
+| `read` | 读取工作区文件 |
+| `write` | 创建或覆盖文件 |
+| `edit` | 字符串替换式修改文件 |
+| `glob` | 按 glob 模式查找文件 |
+| `grep` | 按正则搜索文件内容 |
 
-| 工具 | 功能 | 示例 |
-|------|------|------|
-| `exec` | 在沙箱内执行 Shell 命令 | `python script.py` |
-| `read` | 读取工作区文件内容 | 读取 `/workspace/data.json` |
-| `write` | 创建或覆盖文件 | 写入新配置文件 |
-| `edit` | 编辑现有文件（字符串替换） | 修改代码中的某个函数 |
-| `glob` | 按模式匹配查找文件 | 查找 `**/*.py` 文件 |
-| `grep` | 按正则表达式搜索文件内容 | 在代码中搜索关键字 |
+`exec` 在沙箱容器内运行；其余五个直接读写主机映射到 `/workspace` 的目录。
 
 <Note>
-- `exec` 工具在沙箱容器内执行命令；`read`/`write`/`edit`/`glob`/`grep` 直接操作主机上映射到 `/workspace` 的目录。
-- 当没有任何后端（Docker/Nsjail/E2B）可用时，这些工具将不会提供给 Agent。
-- 这些内置工具面向内置 Agent 使用。使用 Dify、n8n、Langflow、Coze 等外部 Runner 时，应以外部平台自己的工具机制为准。
+这些工具面向内置 Agent。使用 Dify、n8n、Langflow、Coze 等外部 Runner 时，请使用对应平台自己的工具机制。
 </Note>
 
-## 沙箱作用域与生命周期
+## 沙箱作用域
 
-### 作用域配置
+在流水线 AI 配置中可选择沙箱在不同消息间如何共享。默认"每个会话"足够大多数场景使用。
 
-在流水线的 AI 配置中，可以设置**沙箱作用域**（Sandbox Scope），决定沙箱环境在不同消息间的共享方式：
-
-| 作用域 | 模板 | 说明 |
-|--------|------|------|
-| 全局 | `{global}` | 所有用户共享同一个沙箱 |
-| 每个会话（推荐） | `{launcher_type}_{launcher_id}` | 同一会话内的消息共享沙箱 |
-| 会话中每个用户 | `{launcher_type}_{launcher_id}_{sender_id}` | 同一会话中不同用户隔离 |
-| 每个对话上下文 | `{launcher_type}_{launcher_id}_{conversation_id}` | 按对话上下文隔离 |
-| 每条消息 | `{query_id}` | 每条消息完全隔离 |
-
-### 生命周期
-
-沙箱 Session 的生命周期规则：
-
-| 条件 | 行为 |
-|------|------|
-| 空闲超时 | 默认 5 分钟（300 秒）未使用后自动清理 |
-| 有 Box 托管进程运行 | 不会自动清理，例如 stdio MCP 进程结束后才会释放 |
-| 设置 `persistent: true` | 永不自动清理 |
+| 作用域 | 模板 | 共享范围 |
+|--------|------|---------|
+| 全局 | `{global}` | 所有用户共用一个沙箱 |
+| 每个会话（默认） | `{launcher_type}_{launcher_id}` | 同一群/私聊共用 |
+| 每个用户 | `{launcher_type}_{launcher_id}_{sender_id}` | 群里每位成员独立 |
+| 每个对话 | `{launcher_type}_{launcher_id}_{conversation_id}` | 按对话隔离 |
+| 每条消息 | `{query_id}` | 完全无状态 |
 
 <Warning>
-同一 Session 内的命令共享文件系统状态。如果需要完全隔离，使用"每条消息"作用域。
+同一作用域内的命令共享文件系统状态。需要完全隔离请选"每条消息"。
 </Warning>
 
-## 工作目录与文件挂载
+## 生命周期
 
-### 目录结构
-
-不同后端的默认工作目录：
-
-| 后端 | 容器内路径 | 说明 |
-|------|-----------|------|
-| Docker | `/workspace` | 挂载主机的 `host_root` 目录 |
-| Nsjail | `/workspace` | 挂载主机的 `host_root` 目录 |
-| E2B | `/home/user/workspace` | 云端沙箱的 writable 目录 |
-
-Agent 通过 `exec`/`read`/`write`/`edit` 工具操作的都是 `/workspace` 目录下的文件。E2B 后端会自动将路径映射到 `/home/user/workspace`。
-
-### 挂载配置
-
-在 `config.yaml` 中配置主机挂载：
-
-```yaml
-box:
-  local:
-    host_root: './data/box'           # 主机上的工作目录
-    skills_root: 'skills'             # Skill 包目录，默认 host_root/skills
-    allowed_mount_roots:              # 允许 Agent 挂载的目录白名单
-      - './data/box'
-      - '/tmp'
-```
-
-- `host_root`：默认的工作目录，映射到沙箱内的 `/workspace`
-- `skills_root`：Box Runtime 管理的 Skill 包目录。相对路径会解析到 `host_root` 下，默认是 `host_root/skills`
-- `allowed_mount_roots`：Agent 可以请求额外挂载的目录白名单
+| 情况 | 行为 |
+|------|------|
+| 空闲超过 5 分钟 | 自动清理 |
+| 有 Box 托管进程（如 stdio MCP）在跑 | 不清理，进程结束后才释放 |
+| 配置 `persistent: true` | 永不自动清理 |
 
 ## 快速开始
 
-1. 确保 Docker 已安装并运行（或选择其他后端）
-2. 在 `config.yaml` 中配置沙箱：
+1. **准备后端**：本机装好 Docker，或选择 Nsjail / E2B
+2. **写入 `config.yaml`**：
+   ```yaml
+   box:
+     enabled: true
+     backend: 'local'
+     local:
+       host_root: './data/box'
+   ```
+3. **启动 LangBot**：沙箱自动启用
+4. **在流水线里**选择内置 Agent + 支持函数调用的模型
 
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'default'
-    host_root: './data/box'
-    skills_root: 'skills'
-```
+之后 Agent 会自动获得六个工具。详细配置见[沙箱配置](./config)。
 
-3. 启动 LangBot，沙箱功能自动启用
-4. 在流水线中选择内置 Agent，并使用支持函数调用的模型
-5. Agent 将自动获得 `exec`/`read`/`write`/`edit`/`glob`/`grep` 工具
+## 关闭沙箱
 
-<Tip>
-沙箱功能默认启用（`box.enabled: true`）——只要后端可用，内置 Agent 就会获得内置工具，无需在流水线中单独开启 sandbox。如需完全关闭沙箱，可设置 `box.enabled: false`。
-</Tip>
+设置 `box.enabled: false`。所有依赖沙箱的能力（内置工具、Skill 创建/编辑/激活、stdio MCP）会一并停用；http/sse 模式的 MCP 不受影响。
 
 ## 下一步
 
-- [运行时与扩展关系](./runtime-relationships) - 区分 Sandbox、Box Runtime、MCP、Skills 和插件
-- [沙箱配置](./config) - 后端选择、安全预设和常用配置项
+- [沙箱配置](./config) — 后端、安全预设、挂载、环境变量
+- [运行时与扩展关系](./runtime-relationships) — 沙箱、Skills、MCP、插件如何分工

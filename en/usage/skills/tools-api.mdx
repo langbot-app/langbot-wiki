@@ -2,49 +2,37 @@
 title: "Skill Tools API"
 ---
 
-The Skills system provides two tools for Agents to activate and register skills. The design follows Claude Code's progressive disclosure pattern, using Tool Call mechanism for skill activation.
+The Skills system gives the Agent two tools. Both require the sandbox backend to be available — they are not exposed to the Agent when Box is unavailable.
 
-## Tools Overview
-
-| Tool | Function | Needs Sandbox |
-|------|----------|---------------|
-| `activate` | Activate a skill | Yes |
-| `register_skill` | Register skill from sandbox directory | Yes |
-
-<Note>
-Both tools require Box Runtime and a sandbox backend. Pipeline binding controls which Skill index is injected into the Local Agent prompt; in the current implementation, `activate` resolves skills by global Skill name and does not enforce binding at invocation time.
-</Note>
+| Tool | Purpose |
+|------|---------|
+| `activate` | Activate an existing skill and pull its SKILL.md into context |
+| `register_skill` | Register a directory prepared in the sandbox as a new skill |
 
 ---
 
-## activate
-
-Activate a skill, injecting the skill instructions into the current conversation context.
-
-### Use Cases
-
-- Activate existing skills to gain specialized capabilities
-- Get full instructions and runtime context of a skill
+## `activate`
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `skill_name` | string | Yes | The skill name to activate (no arguments) |
+| `skill_name` | string | Yes | Name of the skill to activate |
 
-### How It Works
+### Behavior
 
-1. The Agent calls `activate` with a skill name
-2. The system returns the Skill's SKILL.md content as a Tool Result
-3. The Skill is marked as activated and addressed through `/workspace/.skills/{skill-name}/`
-4. `read`/`glob`/`grep` can inspect visible Skills; `exec`/`write`/`edit` against a Skill package require activation
+1. Looks up the name in the skill store
+2. Returns SKILL.md content as a Tool Result and injects it into the current conversation context
+3. Marks the skill as activated; it is reachable through `/workspace/.skills/{skill_name}/`
 
-### Example
+After activation:
+- `read` / `glob` / `grep` can read every mounted skill
+- `exec` / `write` / `edit` against a skill package is limited to **activated** skills
+
+### Example Call
 
 ```json
-{
-  "skill_name": "pdf"
-}
+{ "skill_name": "pdf" }
 ```
 
 ### Return Value
@@ -54,65 +42,58 @@ Activate a skill, injecting the skill instructions into the current conversation
   "activated": true,
   "skill_name": "pdf",
   "mount_path": "/workspace/.skills/pdf",
-  "content": "<command-message>The \"pdf\" skill is activated</command-message>\n<skill-activation>\n<skill-name>pdf</skill-name>\n<mount-path>/workspace/.skills/pdf</mount-path>\n<package-root>/path/to/skill</package-root>\n\n## Instructions\n...\n\n## Runtime Context\nThe skill package is mounted at /workspace/.skills/pdf. Use the standard tools to interact with it:\n- Use `read` to inspect files under /workspace/.skills/pdf\n- Use `exec` with workdir set to /workspace/.skills/pdf to run commands in that package\n- Use `write` and `edit` on that path when the instructions require updating files\n</skill-activation>"
+  "content": "<command-message>The \"pdf\" skill is activated</command-message>\n<skill-activation>\n  ...SKILL.md content...\n</skill-activation>"
 }
 ```
 
 ### Errors
 
-- `skill_name is required`: Skill name not provided
-- `Skill "xxx" not found`: Skill does not exist
+- `skill_name is required` — name not provided
+- `Skill "xxx" not found` — skill does not exist
 
 ---
 
-## register_skill
+## `register_skill`
 
-Register a skill package from a sandbox workspace directory to the LangBot skill store. When the sandbox backend is available, the target store is owned by the Box Runtime and defaults to `<box.local.host_root>/skills`.
-
-### Use Cases
-
-- Register a skill after creating it in the sandbox
-- Import pre-prepared skill packages
-
-### Prerequisites
-
-- Sandbox feature is enabled
-- Target directory exists under `/workspace`
-- The directory, or one of its subdirectories up to two levels deep, contains `SKILL.md`
+Registers a directory prepared under `/workspace` into the skill store.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `path` | string | Yes | Directory path in sandbox (must be under `/workspace`; this directory or a subdirectory up to two levels deep must contain SKILL.md) |
-| `name` | string | No | Override skill name, defaults to name in SKILL.md or directory name |
-| `display_name` | string | No | Override display name |
-| `description` | string | No | Override description |
-| `instructions` | string | No | Override instruction content |
+| `path` | string | Yes | Directory path in the sandbox; must be under `/workspace` |
+| `name` | string | No | Override the skill name (defaults to `name` in SKILL.md or the directory name) |
+| `display_name` | string | No | Override the display name |
+| `description` | string | No | Override the description |
+| `instructions` | string | No | Override the instruction body |
 
-### Workflow
+### Prerequisites
+
+- Sandbox is enabled and available
+- `path` is under `/workspace`
+- The directory itself, or a subdirectory within two levels, contains `SKILL.md`
+
+### Typical Flow
 
 ```
-1. Prepare skill directory in sandbox
+1. Agent prepares a directory in the sandbox:
    /workspace/my-skill/
-   |-- SKILL.md
-   `-- scripts/
-       `-- main.py
+   ├── SKILL.md
+   └── scripts/main.py
 
-2. Call register_skill
+2. Agent calls register_skill(path="/workspace/my-skill")
 
-3. Skill is registered to skill store
-   - Can be activated via activate tool
-   - Defaults to the Box Runtime-managed skills root
+3. The skill is written to the Box Runtime skill store,
+   and any later session can activate it.
 ```
 
-### Example
+### Example Call
 
 ```json
 {
   "path": "/workspace/my-skill",
   "name": "data-processor",
-  "description": "Process and transform data files"
+  "description": "Process and transform CSV/JSON data"
 }
 ```
 
@@ -126,71 +107,16 @@ Register a skill package from a sandbox workspace directory to the LangBot skill
   "skill": {
     "name": "data-processor",
     "display_name": "Data Processing Tool",
-    "description": "Process and transform data files",
-    "instructions": "...",
-    "package_root": "/path/to/box/skills/data-processor"
+    "description": "Process and transform CSV/JSON data",
+    "package_root": "/.../skills/data-processor"
   }
 }
 ```
 
 ### Errors
 
-- `path is required`: Path not provided
-- `path must be under /workspace`: Path not in workspace
-- `Directory does not exist`: Directory does not exist
-- `No SKILL.md found in ...`: No SKILL.md file in the directory or within two levels of subdirectories
-- `Multiple skill directories found...`: The target path contains more than one Skill package; point `path` to one specific Skill directory
-
----
-
-## Activation Mechanism
-
-The Skills system uses Tool Call mechanism for skill activation, not text markers. This aligns with Claude Code's design.
-
-### Activation Method
-
-Agent activates a skill by calling the `activate` tool:
-
-```json
-{
-  "skill_name": "pdf"
-}
-```
-
-### Effects After Activation
-
-1. **Instruction Injection**: SKILL.md content is returned as a Tool Result and injected into context
-2. **Activation marker**: The Skill is marked as activated and exposed through `/workspace/.skills/{skill-name}/`
-3. **File Operations**: `read`/`glob`/`grep` can inspect visible Skills; `exec`/`write`/`edit` against a Skill package require activation
-
-### Design Advantages
-
-| Feature | Description |
-|---------|-------------|
-| **KV Cache Protection** | Skill instructions are loaded on-demand via Tool Result, not affecting conversation history cache efficiency |
-| **Progressive Disclosure** | Tool description only shows skill metadata (name, description), full instructions obtained after activation |
-| **Runtime Isolation** | Each activated skill has independent mount path, avoiding file conflicts |
-
-### Comparison with Text Markers
-
-| Aspect | Old Approach (Text Marker) | New Approach (Tool Call) |
-|--------|---------------------------|--------------------------|
-| Activation Method | `[ACTIVATE_SKILL: name]` | `activate` tool call |
-| Instruction Injection | Pre-injected into System Prompt | Dynamically loaded via Tool Result |
-| KV Cache | Affected | Protected |
-| Multi-Skill Support | Multiple markers | Multiple calls |
-
----
-
-## Creating New Skills
-
-There are two common ways to create new skills:
-
-1. Use the WebUI Skills page to create, edit, import from GitHub, or upload a zip package
-2. Let the Agent prepare a skill directory under `/workspace`, then call `register_skill`
-
-After registration, the new skill can be used via `activate`.
-
-<Note>
-New skills are registered to the Box Runtime-managed skill store. If Box Runtime or its backend is unavailable, skill create/import/edit/register operations are unavailable; LangBot does not fall back to `data/skills/`.
-</Note>
+- `path is required` — path not provided
+- `path must be under /workspace` — path is not in the workspace
+- `Directory does not exist` — directory does not exist
+- `No SKILL.md found in ...` — no `SKILL.md` in the directory or within two levels of subdirectories
+- `Multiple skill directories found...` — the path contains multiple skill directories; point `path` to a specific subdirectory

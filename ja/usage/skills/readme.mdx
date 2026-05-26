@@ -1,320 +1,114 @@
 ---
-title: "スキルシステム (Skills)"
+title: "スキル (Skills)"
 ---
 
-Skills（スキル）は LangBot の動的スキルシステムで、AI Agent が Tool Call メカニズムを通じてオンデマンドで特定のタスクを起動・実行できるようにします。Skills を通じて、Agent が必要な時に専門分野の知識やツールを自動的に読み込むことができます。
+Skill は **オンデマンドで起動される指示パック** です。ユーザーの記述にマッチしたとき、Agent が `activate` ツールを呼び出してその Skill の指示をコンテキストに取り込み、指示に従ってタスクを実行します。
 
-## Skills とは？
+Agent に **専門的なワークフロー、テンプレート、スクリプト** を追加するのに適しています。たとえば「Python プロジェクトを分析する」「PDF フォームに入力する」「コードレビューを行う」など。すべての指示を毎回 System Prompt に詰め込む必要はありません。
 
-Skills は軽量な拡張メカニズムで、Agent に以下の機能を提供します：
+## プラグイン・MCP との違い
 
-- Tool Call でオンデマンドに専門分野の知識を読み込む
-- 特定タスクのワークフローを実行する
-- 定義済みのコードとリソースにアクセスする
-- 複数のスキルを動的に組み合わせる
+| やりたいこと | これを使う |
+|------------|--------|
+| オンデマンドで発火するワークフロー（任意でスクリプト／テンプレート付き） | Skill |
+| 既存の MCP ツールサービスに接続する | MCP サーバー |
+| 長期常駐機能、設定ページ、イベント監視、ナレッジベース | プラグイン |
 
-プラグインとは異なり、Skills はより軽量で柔軟、特定タスクのワークフローや命令の定義に適しています。
+詳しくは [ランタイムと拡張機能の関係](../sandbox/runtime-relationships) を参照してください。
 
-## 設計理念
-
-### 業界の実践
-
-Skills システムの設計は、業界の主要な Agent 拡張パターンを参考にしています：
-
-| システム | メカニズム | 特徴 |
-|----------|------------|------|
-| **Claude Code** | Skills + Commands | Tool Call による起動、Tool Result による注入（KV Cache を保護） |
-| **OpenAI GPTs** | Actions + Knowledge | ツール呼び出しと知識注入を分離 |
-| **Cursor** | Rules + Tools | ルールシステムとツールシステムを独立設定 |
-
-### Claude Code からの啓示
-
-Claude Code の Skills システムには重要な設計決定があります：**スキルコンテンツは Tool Result を通じて注入され、System Prompt を直接変更しません**。
-
-この設計の理由：
-
-1. **KV Cache の保護**: System Prompt を直接変更すると、以前の KV Cache が無効になり、毎回再計算が必要になる
-2. **オンデマンド読み込み**: Agent が `activate` ツールを能動的に呼び出した時だけスキルが注入され、不必要なトークン消費を削減
-3. **増分コンテキスト**: Tool Result は増分コンテンツで、既存のキャッシュに影響しない
-
-### LangBot の設計
-
-LangBot は Claude Code の設計パターンを完全に採用しています：
-
-```mermaid
-flowchart TB
-    request[ユーザーリクエスト<br/>「この Python プロジェクトを分析して」]
-    decision[Agent の判断<br/>python-analyzer にマッチ]
-    activate[activate ツールを呼び出し<br/>skill_name = python-analyzer]
-    result[Tool Result<br/>SKILL.md 内容 + マウントパス]
-    continue[Agent がスキルコンテキスト付きで継続<br/>exec / read / write / edit でスキルパッケージを操作]
-
-    request --> decision --> activate --> result --> continue
-```
-
-### なぜこの設計なのか？
-
-**1. KV Cache 保護**
-
-スキル命令は Tool Result として増分コンテンツで返され、既存の KV Cache を無効化しません。
-
-**2. プログレッシブディスクロージャー**
-
-- `activate` ツール説明にはスキルメタデータ（名前、説明）のみ表示
-- 完全な命令は起動後に Tool Result で取得
-- Agent は必要に応じて起動するか選択可能
-
-**3. 統一されたインタラクションパターン**
-
-- 他のツール呼び出しと一貫したセマンティクス
-- Agent 設計パターンにより適合
-- Function Calling をサポートするモデルに友好的
-
-**4. サンドボックスバックエンドが必要**
-
-`activate` と `register_skill` ツールはサンドボックスバックエンドが利用可能である必要があります：
-- スキルパッケージは `/workspace/.skills/{skill-name}/` にマウント
-- Agent は `exec`/`read`/`write`/`edit`/`glob`/`grep` でスキルファイルを操作
-
-## Skill ファイル構造
-
-各 Skill は `SKILL.md` ファイルを含むディレクトリです。サンドボックスバックエンドが利用可能な場合、Skill パッケージは Box Runtime が管理し、`box.local.skills_root` に保存されます。デフォルトは `<box.local.host_root>/skills` です：
+## ワークフロー
 
 ```
-<box.local.host_root>/skills/
-|-- my-skill/
-|   |-- SKILL.md           # 必須: スキル定義ファイル
-|   |-- scripts/           # オプション: スクリプトファイル
-|   |   `-- analyze.py
-|   `-- templates/         # オプション: テンプレートファイル
-|       `-- report.md
-`-- another-skill/
-    `-- SKILL.md
+ユーザー: 「この Python プロジェクトを分析して」
+   ↓
+Agent が <available_skills> から python-analyzer を発見
+   ↓
+Agent が activate(skill_name="python-analyzer") を呼び出し
+   ↓
+SKILL.md の内容が Tool Result として返される
+   ↓
+Agent が指示に従って実行（read / exec / write などのツールを使用）
 ```
 
-<Note>
-現在の実装では、Skills は Box Runtime 管理の skill store からのみ読み込まれます。Box Runtime または backend が利用できない場合、Skill キャッシュは空になり、作成・インポート・編集・`register_skill` は利用できません。`data/skills/` への自動フォールバックはありません。
-</Note>
+Agent はマッチすると判断したときだけ Skill を起動します。未起動の Skill はコンテキストを消費しません。
 
-### SKILL.md フォーマット
+## 前提条件
 
-YAML frontmatter を使用してメタデータを定義：
+Skills はサンドボックスバックエンドに依存します。`box.enabled` を `true` にし、バックエンド（Docker / Nsjail / E2B）が利用可能である必要があります。Box が利用できない場合、Skill 一覧は空になり、追加／編集／起動はいずれも利用できません。
 
-```markdown
----
-name: python-analyzer
-display_name: Python プロジェクトアナライザー
-description: Python プロジェクトの構造、コード品質、依存関係を分析
----
+[サンドボックス設定](../sandbox/config) を参照してください。
 
-## 使用場面
+## 最小限の Skill
 
-ユーザーが Python プロジェクトを分析する必要がある場合、以下の手順で実行：
-
-1. `read` ツールでプロジェクト構造を読み込む
-2. `exec` で分析スクリプトを実行
-3. 分析レポートを生成
-
-## 利用可能なスクリプト
-
-- `scripts/analyze.py`: メイン分析スクリプト
-- `scripts/dependency_check.py`: 依存関係チェック
-
-## 出力フォーマット
-
-分析レポートに含める項目：
-- プロジェクト構造の概要
-- コード品質スコア
-- 依存関係グラフ
-```
-
-## 起動メカニズム
-
-### Tool Call による起動
-
-Agent は `activate` ツールを呼び出してスキルを起動：
-
-```json
-{
-  "skill_name": "python-analyzer"
-}
-```
-
-### 起動後の効果
-
-1. **Tool Result 注入**: SKILL.md 内容が Tool Result として返され、コンテキストに注入
-2. **Activation marker**: Skill は activated として記録され、`/workspace/.skills/{skill-name}/` 経由で参照される
-3. **ツールアクセス**: `read`/`glob`/`grep` は可視 Skill を参照でき、Skill パッケージに対する `exec`/`write`/`edit` には activation が必要
-
-### 戻り内容の例
+Skill はディレクトリと `SKILL.md` 1 つだけです:
 
 ```
-<command-message>The "python-analyzer" skill is activated</command-message>
-<skill-activation>
-<skill-name>python-analyzer</skill-name>
-<mount-path>/workspace/.skills/python-analyzer</mount-path>
-<package-root>/path/to/skill</package-root>
-
-## Instructions
-...SKILL.md 内容...
-
-## Runtime Context
-The skill package is mounted at /workspace/.skills/python-analyzer. Use the standard tools to interact with it:
-- Use `read` to inspect files under /workspace/.skills/python-analyzer
-- Use `exec` with workdir set to /workspace/.skills/python-analyzer to run commands
-- Use `write` and `edit` on that path when the instructions require updating files
-</skill-activation>
+my-skill/
+└── SKILL.md
 ```
 
-## 組み込みツール
-
-Skills システムは Agent が使用する2つのツールを提供：
-
-| ツール | 機能 | サンドボックス必要 |
-|--------|------|-------------------|
-| `activate` | スキルを起動 | 必要 |
-| `register_skill` | サンドボックスディレクトリからスキルを登録 | 必要 |
-
-<Note>
-これらのツールはサンドボックスバックエンド（Docker/Nsjail/E2B）が利用可能である必要があります。バックエンドがない場合、ツールは Agent に提供されません。
-</Note>
-
-## スキルタイプ
-
-### プロンプトのみのスキル
-
-命令のみを含み、追加ファイル不要：
+`SKILL.md`:
 
 ```markdown
 ---
 name: code-reviewer
 display_name: コードレビューアシスタント
-description: コードをレビューし、改善提案を提供
+description: コードをレビューして改善提案を行う。ユーザーが review、レビュー、コード改善に言及したときに起動
 ---
-
-## レビュー手順
-
-1. コード構造とスタイルを分析
-2. 潜在的なバグとセキュリティ問題をチェック
-3. 改善提案を提供
-
-## レビュー基準
-
-- コード可読性
-- パフォーマンス最適化
-- セキュリティベストプラクティス
-```
-
-### ファイルパッケージスキル
-
-スクリプト、テンプレートなどのリソースファイルを含む：
-
-```
-data-analyzer/
-|-- SKILL.md
-|-- scripts/
-|   |-- analyze.py
-|   `-- visualize.py
-|-- templates/
-|   `-- report.md
-`-- requirements.txt
-```
-
-## クイックスタート
-
-### 1. 最初のスキルを作成
-
-WebUI の Skills ページで作成するか、サンドボックス `/workspace` に Skill パッケージを準備して `register_skill` で登録します。手動で準備する場合：
-
-```bash
-mkdir -p /workspace/my-first-skill
-```
-
-`SKILL.md` を作成：
-
-```markdown
----
-name: my-first-skill
-display_name: 私の最初のスキル
-description: シンプルなサンプルスキル
----
-
-## タスク説明
-
-これは基本的なスキル機能をデモンストレーションするサンプルスキルです。
 
 ## 実行手順
 
-1. ユーザーリクエストを理解
-2. 対応する操作を実行
-3. 結果を返す
+1. `read` で関連ファイルをざっと確認
+2. 可読性、潜在的なバグ、セキュリティ問題をチェック
+3. 優先度順に改善提案を提示
 ```
 
-### 2. 登録して起動をテスト
+`description` を明確に書くほど、Agent はいつ起動すべきかを正確に判断できます。これが良い Skill を書くうえで最も重要なポイントです。
 
-`register_skill(path="/workspace/my-first-skill")` を呼び出してスキルを登録します。サンドボックスバックエンドが利用可能であることを確認し、スキルの説明にマッチするリクエストを Agent に送信します。Tool Call をサポートするモデルは通常、プロンプトに基づいて `activate` を呼び出します。
+詳細なフィールド説明と追加のサンプルは [SKILL.md フォーマット](./skill-format) を参照してください。
 
-### 3. パイプラインで Skill を有効化
+## Skill を作成する
 
-Skills はパイプライン拡張です。作成、インポート、登録した後、パイプライン拡張設定で許可する必要があります。
+**方法 1: WebUI** — Skills ページで作成、zip アップロード、GitHub からのインポートが可能
 
-- すべての Skills を有効化する
-- または指定した Skills だけをバインドする
+**方法 2: サンドボックス + `register_skill`**
+1. サンドボックスの `/workspace` 配下にディレクトリと `SKILL.md` を準備
+2. Agent に `register_skill(path="/workspace/my-skill")` を呼び出させる
 
-バインドは、Agent から見える Skills を制御するだけです。完全な `SKILL.md` 指示は事前にコンテキストへ入りません。Agent が `activate` を呼び出した後に Tool Result として返されます。
+いずれの方法でも Box Runtime が管理する skill store に書き込まれます。
 
-<Note>
-Skills は現在、組み込みの Local Agent 向けで、Tool Call と sandbox backend に依存します。外部 Runner では、それぞれのツールとコンテキスト機構を使用します。
-</Note>
+## パイプラインで有効化する
 
-## 新しいスキルの作成
+Skill をインストールした後、パイプライン拡張設定で Agent から見える Skill を決定する必要があります:
 
-### 方法1: WebUI またはインポートを使用
+- 「すべての Skill を有効化」をオンにする、または
+- 指定した Skill のみをバインドする
 
-WebUI の Skills ページでは、作成、編集、GitHub からのインポート、zip パッケージのアップロードができます。サンドボックスバックエンドが利用可能な場合、これらのスキルは Box Runtime 管理の skill store に書き込まれます。
+バインドは `<available_skills>` 一覧（Agent が選択できる対象）のみに影響します。完全な指示は `activate` が呼ばれた後にのみ注入されます。
 
-### 方法2: Agent にサンドボックス内で作成させる
+## Agent が使えるツール
 
-1. サンドボックス `/workspace` 下にスキルディレクトリを作成
-2. `SKILL.md` と関連ファイルを記述
-3. `register_skill(path="/workspace/my-skill")` を呼び出して登録
+| ツール | 用途 |
+|------|------|
+| `activate` | Skill を起動し、SKILL.md をコンテキストに取り込む |
+| `register_skill` | サンドボックスに用意したディレクトリを Skill として登録 |
 
-## ベストプラクティス
-
-### 1. スキル命名
-
-- 小文字、数字、ハイフン、アンダースコアを使用
-- 名前は簡潔で説明的に
-- 例: `python-analyzer`、`data-visualizer`
-
-### 2. 説明の記述
-
-- スキルの用途と適用場面を明確に記述
-- LLM がいつ起動するか正しく判断できるよう支援
-- 説明は `activate` ツールの `<available_skills>` リストに表示
-
-### 3. 命令設計
-
-- 明確な実行手順を提供
-- 利用可能なリソースとツールを説明
-- 出力フォーマットを定義
-
-### 4. リソース整理
-
-- スクリプトは `scripts/` ディレクトリに
-- テンプレートは `templates/` ディレクトリに
-- 構造を明確に保つ
+パラメータと戻り値は [ツール API](./tools-api) を参照してください。
 
 ## よくある問題
 
-| 症状 | 確認すること |
-|------|--------------|
-| Skill リストが空 | Box Runtime が利用可能か、`box.local.skills_root` が期待するディレクトリを指しているか |
-| Agent が `activate` を呼び出さない | Skill の description が明確か、パイプラインでバインドされているか、モデルが function calling をサポートするか |
-| 有効化後にファイルが見つからない | ファイルが Skill パッケージ内にあるか、`/workspace/.skills/{skill-name}/` パスを使っているか |
-| `register_skill` が失敗する | 対象パスは `/workspace` 配下である必要があり、ディレクトリまたは 2 階層以内のサブディレクトリに `SKILL.md` が必要です |
+| 症状 | 確認項目 |
+|------|--------|
+| Skill 一覧が空 | `box.enabled`、Box Runtime の状態、`box.local.skills_root` |
+| Agent が Skill を起動しない | `description` が具体的か、パイプラインでバインドされているか、モデルが関数呼び出しに対応しているか |
+| 起動後にファイルが見つからない | ファイルは Skill パッケージ内に置く必要があり、パスは `/workspace/.skills/{skill-name}/` |
+| `register_skill` がエラー | パスは `/workspace` 配下である必要があり、ディレクトリまたは 2 階層以内のサブディレクトリに `SKILL.md` が必要 |
+
+<Note>
+Skills は現在、組み込み Agent 向けで、関数呼び出しとサンドボックスバックエンドに依存します。外部 Runner では各プラットフォームの同等機構を利用してください。
+</Note>
 
 ## 次のステップ
 
-- [SKILL.md フォーマットリファレンス](./skill-format) - 詳細なファイルフォーマット説明
-- [ツール API](./tools-api) - スキルツールの完全な API ドキュメント
+- [SKILL.md フォーマット](./skill-format) — フィールド、ディレクトリ構造、執筆のヒント
+- [ツール API](./tools-api) — `activate` と `register_skill` のパラメータと戻り値

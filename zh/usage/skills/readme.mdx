@@ -1,320 +1,114 @@
 ---
-title: "技能系统 (Skills)"
+title: "技能 (Skills)"
 ---
 
-Skills（技能）是 LangBot 的动态技能系统，允许 AI Agent 通过 Tool Call 机制按需激活和执行特定任务的能力。通过 Skills，您可以让 Agent 在需要时自动加载专业领域的知识和工具。
+Skill 是一个**按需激活**的指令包：用户描述匹配时，Agent 调 `activate` 工具把这个技能的指令拉进上下文，然后按指令完成任务。
 
-## 什么是 Skills？
+适合给 Agent 加一段**专业流程、模板或脚本**——比如"分析 Python 项目"、"做 PDF 表单填充"、"代码评审"——而不是每个对话都把所有指令塞进 System Prompt。
 
-Skills 是一种轻量级的扩展机制，让 Agent 能够：
+## 与插件、MCP 的区别
 
-- 通过 Tool Call 按需加载专业领域知识
-- 执行特定任务的工作流
-- 访问预定义的代码和资源
-- 动态组合多个技能
+| 你想做的事 | 用这个 |
+|------------|--------|
+| 一段按需触发的工作流（含可选脚本/模板） | Skill |
+| 接入已有的 MCP 工具服务 | MCP Server |
+| 长期能力、配置页、事件监听、知识库 | 插件 |
 
-与插件不同，Skills 更轻量、更灵活，适合定义特定任务的工作流和指令。
+详见[运行时与扩展关系](../sandbox/runtime-relationships)。
 
-## 设计理念
-
-### 业界实践
-
-Skills 系统的设计参考了业界主流的 Agent 扩展模式：
-
-| 系统 | 机制 | 特点 |
-|------|------|------|
-| **Claude Code** | Skills + Commands | Tool Call 激活，Tool Result 注入（保护 KV Cache） |
-| **OpenAI GPTs** | Actions + Knowledge | 分离工具调用和知识注入 |
-| **Cursor** | Rules + Tools | 规则系统和工具系统独立配置 |
-
-### Claude Code 的设计启示
-
-Claude Code 的 Skills 系统有一个关键设计决策：**技能内容通过 Tool Result 注入，而非直接修改 System Prompt**。
-
-这种设计的原因是：
-
-1. **保护 KV Cache**：直接修改 System Prompt 会导致之前的 KV Cache 失效，每次都需要重新计算
-2. **按需加载**：技能只有在 Agent 主动调用 `activate` 工具时才会被注入，减少不必要的 token 消耗
-3. **增量上下文**：Tool Result 是增量内容，不会影响已有的缓存
-
-### LangBot 的设计
-
-LangBot 完全采用了 Claude Code 的设计模式：
-
-```mermaid
-flowchart TB
-    request[用户请求<br/>“帮我分析这个 Python 项目”]
-    decision[Agent 判断<br/>匹配 python-analyzer]
-    activate[调用 activate 工具<br/>skill_name = python-analyzer]
-    result[Tool Result<br/>SKILL.md 内容 + 挂载路径]
-    continue[Agent 带技能上下文继续执行<br/>使用 exec / read / write / edit 操作技能包]
-
-    request --> decision --> activate --> result --> continue
-```
-
-### 为什么这样设计？
-
-**1. KV Cache 保护**
-
-技能指令通过 Tool Result 返回，是增量内容，不会使已有的 KV Cache 失效。
-
-**2. 渐进式披露**
-
-- `activate` 工具描述中只显示技能元数据（名称、描述）
-- 完整指令在激活后通过 Tool Result 获取
-- Agent 可以根据需要选择是否激活
-
-**3. 统一的交互模式**
-
-- 与其他工具调用语义一致
-- 更符合 Agent 设计模式
-- 对支持 Function Calling 的模型更友好
-
-**4. 需要沙箱后端**
-
-`activate` 和 `register_skill` 工具需要沙箱后端可用：
-- 技能包挂载到 `/workspace/.skills/{skill-name}/`
-- Agent 使用 `exec`/`read`/`write`/`edit`/`glob`/`grep` 操作技能文件
-
-## Skill 文件结构
-
-每个 Skill 是一个包含 `SKILL.md` 文件的目录。沙箱后端可用时，Skill 包由 Box Runtime 管理，默认存放在 `box.local.skills_root`，也就是 `<box.local.host_root>/skills`：
+## 工作流程
 
 ```
-<box.local.host_root>/skills/
-|-- my-skill/
-|   |-- SKILL.md           # 必需：技能定义文件
-|   |-- scripts/           # 可选：脚本文件
-|   |   `-- analyze.py
-|   `-- templates/         # 可选：模板文件
-|       `-- report.md
-`-- another-skill/
-    `-- SKILL.md
+用户："帮我分析这个 Python 项目"
+   ↓
+Agent 从 <available_skills> 看到 python-analyzer
+   ↓
+Agent 调用 activate(skill_name="python-analyzer")
+   ↓
+SKILL.md 内容作为 Tool Result 返回
+   ↓
+Agent 按指令执行（用 read / exec / write 等工具）
 ```
 
-<Note>
-当前实现中，Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端不可用时，Skill 列表为空，创建、导入、编辑和 `register_skill` 不可用；不会自动回退扫描 `data/skills/`。
-</Note>
+Agent 只在判断匹配时才激活技能，未激活的技能不占用上下文。
 
-### SKILL.md 格式
+## 前置条件
 
-使用 YAML frontmatter 定义元数据：
+Skills 依赖沙箱后端。`box.enabled` 必须为 `true` 且后端可用（Docker / Nsjail / E2B）。Box 不可用时，技能列表为空，新增/编辑/激活都不可用。
 
-```markdown
----
-name: python-analyzer
-display_name: Python 项目分析器
-description: 分析 Python 项目结构、代码质量和依赖关系
----
+参见[沙箱配置](../sandbox/config)。
 
-## 使用场景
+## 一个最小技能
 
-当用户需要分析 Python 项目时，按以下步骤执行：
-
-1. 使用 `read` 工具读取项目结构
-2. 使用 `exec` 运行分析脚本
-3. 生成分析报告
-
-## 可用脚本
-
-- `scripts/analyze.py`: 主分析脚本
-- `scripts/dependency_check.py`: 依赖检查
-
-## 输出格式
-
-分析报告应包含：
-- 项目结构概览
-- 代码质量评分
-- 依赖关系图
-```
-
-## 激活机制
-
-### Tool Call 激活
-
-Agent 通过调用 `activate` 工具来激活技能：
-
-```json
-{
-  "skill_name": "python-analyzer"
-}
-```
-
-### 激活后效果
-
-1. **Tool Result 注入**：SKILL.md 内容作为 Tool Result 返回，注入到上下文
-2. **激活标记**：该 Skill 被记录为已激活，后续可在 `/workspace/.skills/{skill-name}/` 访问
-3. **工具访问**：`read`/`glob`/`grep` 可读取可见 Skill；对 Skill 包执行 `exec`/`write`/`edit` 需要先激活
-
-### 返回内容示例
+技能就是一个目录加一个 `SKILL.md`：
 
 ```
-<command-message>The "python-analyzer" skill is activated</command-message>
-<skill-activation>
-<skill-name>python-analyzer</skill-name>
-<mount-path>/workspace/.skills/python-analyzer</mount-path>
-<package-root>/path/to/skill</package-root>
-
-## Instructions
-...SKILL.md 内容...
-
-## Runtime Context
-The skill package is mounted at /workspace/.skills/python-analyzer. Use the standard tools to interact with it:
-- Use `read` to inspect files under /workspace/.skills/python-analyzer
-- Use `exec` with workdir set to /workspace/.skills/python-analyzer to run commands
-- Use `write` and `edit` on that path when the instructions require updating files
-</skill-activation>
+my-skill/
+└── SKILL.md
 ```
 
-## 内置工具
-
-Skills 系统提供两个工具供 Agent 使用：
-
-| 工具 | 功能 | 需要沙箱 |
-|------|------|---------|
-| `activate` | 激活一个技能 | 是 |
-| `register_skill` | 从沙箱目录注册技能 | 是 |
-
-<Note>
-这两个工具需要沙箱后端（Docker/Nsjail/E2B）可用。如果没有任何后端可用，工具将不会提供给 Agent。
-</Note>
-
-## 技能类型
-
-### 纯提示词技能
-
-只包含指令，不需要额外文件：
+`SKILL.md`：
 
 ```markdown
 ---
 name: code-reviewer
-display_name: 代码审查助手
-description: 审查代码并提供改进建议
+display_name: 代码评审助手
+description: 审查代码并给出改进建议；用户提到 review、评审、代码改进时触发
 ---
-
-## 审查步骤
-
-1. 分析代码结构和风格
-2. 检查潜在的 bug 和安全问题
-3. 提供改进建议
-
-## 审查标准
-
-- 代码可读性
-- 性能优化
-- 安全最佳实践
-```
-
-### 文件包技能
-
-包含脚本、模板等资源文件：
-
-```
-data-analyzer/
-|-- SKILL.md
-|-- scripts/
-|   |-- analyze.py
-|   `-- visualize.py
-|-- templates/
-|   `-- report.md
-`-- requirements.txt
-```
-
-## 快速开始
-
-### 1. 创建第一个技能
-
-可以在 WebUI 的 Skills 页面创建，也可以先在沙箱 `/workspace` 下准备技能包，再用 `register_skill` 注册。手动准备时：
-
-```bash
-mkdir -p /workspace/my-first-skill
-```
-
-创建 `SKILL.md`：
-
-```markdown
----
-name: my-first-skill
-display_name: 我的第一个技能
-description: 一个简单的示例技能
----
-
-## 任务说明
-
-这是一个示例技能，演示基本的技能功能。
 
 ## 执行步骤
 
-1. 理解用户请求
-2. 执行相应操作
-3. 返回结果
+1. 用 `read` 浏览相关文件
+2. 检查可读性、潜在 bug、安全问题
+3. 给出按优先级排序的改进建议
 ```
 
-### 2. 注册并测试激活
+`description` 写得越清晰，Agent 越能准确判断何时激活——这是写好技能最重要的一件事。
 
-调用 `register_skill(path="/workspace/my-first-skill")` 注册技能。确保沙箱后端可用，然后向 Agent 发送匹配技能描述的请求；支持 Tool Call 的模型通常会根据提示调用 `activate`。
+详细字段说明和更多示例见 [SKILL.md 格式](./skill-format)。
 
-### 3. 在流水线中启用 Skill
+## 创建技能
 
-Skill 属于流水线扩展。创建、导入或注册后，需要在流水线扩展配置中允许它：
+**方式一：WebUI** — Skills 页面创建、上传 zip、从 GitHub 导入
 
-- 开启“启用所有技能”
-- 或绑定指定 Skill
+**方式二：沙箱 + `register_skill`**
+1. 在沙箱 `/workspace` 下准备好目录和 `SKILL.md`
+2. 让 Agent 调用 `register_skill(path="/workspace/my-skill")`
 
-绑定只决定 Agent 能看到哪些 Skill。完整的 `SKILL.md` 指令不会预先进入上下文，只有当 Agent 调用 `activate` 后才会通过 Tool Result 注入。
+两种方式都会写入 Box Runtime 管理的 skill store。
 
-<Note>
-Skills 当前面向内置 Agent 使用，并依赖 Tool Call 和沙箱后端。外部 Runner 使用自己的工具和上下文机制。
-</Note>
+## 在流水线启用
 
-## 创建新技能
+技能装好之后，还要在流水线扩展配置里决定 Agent 能看到哪些：
 
-### 方式一：使用 WebUI 或导入
+- 开启"启用所有技能"，或
+- 只绑定指定技能
 
-在 WebUI 的 Skills 页面可以创建、编辑、从 GitHub 导入或上传 zip 包。沙箱后端可用时，这些技能会写入 Box Runtime 管理的 skill store。
+绑定只影响 `<available_skills>` 列表（即 Agent 能选什么）。完整指令永远等 `activate` 被调用后才注入。
 
-### 方式二：让 Agent 在沙箱中创建
+## Agent 可用的工具
 
-1. 在沙箱 `/workspace` 下创建技能目录
-2. 编写 `SKILL.md` 和相关文件
-3. 调用 `register_skill(path="/workspace/my-skill")` 注册
+| 工具 | 用途 |
+|------|------|
+| `activate` | 激活一个技能，把 SKILL.md 拉进上下文 |
+| `register_skill` | 把沙箱里准备好的目录注册为技能 |
 
-## 最佳实践
-
-### 1. 技能命名
-
-- 使用小写字母、数字、连字符、下划线
-- 名称应简洁且具有描述性
-- 示例：`python-analyzer`、`data-visualizer`
-
-### 2. 描述编写
-
-- 清晰说明技能的用途和适用场景
-- 帮助 LLM 正确判断何时激活
-- 描述会显示在 `activate` 工具的 `<available_skills>` 列表中
-
-### 3. 指令设计
-
-- 提供清晰的执行步骤
-- 说明可用的资源和工具
-- 定义输出格式
-
-### 4. 资源组织
-
-- 脚本放在 `scripts/` 目录
-- 模板放在 `templates/` 目录
-- 保持结构清晰
+参数和返回值见[工具 API](./tools-api)。
 
 ## 常见问题
 
 | 现象 | 检查项 |
 |------|--------|
-| Skill 列表为空 | Box Runtime 是否可用，`box.local.skills_root` 是否指向正确目录 |
-| Agent 没有调用 `activate` | 描述是否足够明确，流水线是否绑定该 Skill，模型是否支持函数调用 |
-| 激活后找不到文件 | 确认文件在 Skill 包内，并使用 `/workspace/.skills/{skill-name}/` 路径访问 |
-| `register_skill` 失败 | 目标路径必须在 `/workspace` 下，目录或两层以内子目录需要包含 `SKILL.md` |
+| 技能列表为空 | `box.enabled`、Box Runtime 状态、`box.local.skills_root` |
+| Agent 不激活技能 | `description` 是否具体、流水线是否绑定、模型是否支持函数调用 |
+| 激活后找不到文件 | 文件需在 Skill 包内，路径是 `/workspace/.skills/{skill-name}/` |
+| `register_skill` 报错 | 路径必须在 `/workspace` 下，目录或两层内子目录需含 `SKILL.md` |
+
+<Note>
+Skills 当前面向内置 Agent，依赖函数调用和沙箱后端。外部 Runner 请使用各自平台的等价机制。
+</Note>
 
 ## 下一步
 
-- [SKILL.md 格式参考](./skill-format) - 详细的文件格式说明
-- [工具 API](./tools-api) - 技能工具的完整 API 文档
+- [SKILL.md 格式](./skill-format) — 字段、目录结构、写作建议
+- [工具 API](./tools-api) — `activate` 和 `register_skill` 的参数与返回值

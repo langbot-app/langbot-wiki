@@ -1,362 +1,134 @@
 ---
-title: "SKILL.md Format Reference"
+title: "SKILL.md Format"
 ---
 
-SKILL.md is the core file for defining skills, using YAML frontmatter format.
+Each skill is a directory with a `SKILL.md` at its root. `SKILL.md` has two parts: a **metadata frontmatter** and an **instruction body**.
 
-<Note>
-LangBot's SKILL.md format follows the Agent Skills style: YAML frontmatter describes skill metadata, and the Markdown body stores skill instructions. The current implementation reads only top-level `name`, `display_name`, and `description` frontmatter fields.
-</Note>
-
-## File Format
+## Overall Structure
 
 ```markdown
 ---
-# YAML Frontmatter (Metadata)
-name: skill-name
-description: Skill description
+name: my-skill
+display_name: My Skill
+description: Short description used by the Agent to decide when to activate
 ---
 
-# Markdown Body (Instructions)
-## Use Cases
-...
+## Steps
+
+1. ...
+2. ...
 ```
 
 ## Frontmatter Fields
 
-### Fields
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | When creating/registering | Unique identifier. 1–64 characters, letters, digits, hyphens, underscores. Can be omitted when scanning an existing directory — the directory name is used |
+| `description` | Strongly recommended | Short description; determines whether the Agent can find this skill |
+| `display_name` | No | Display name (used in the UI) |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | string | Unique identifier for the skill. Required when creating/registering; direct directory scans can omit it and fall back to the directory name |
-| `description` | string | Brief description for LLM activation decisions. The current implementation allows an empty value, but providing it is strongly recommended |
-| `display_name` | string | Display name. The current implementation supports it as a top-level field |
+Other common fields (`license` / `compatibility` / `metadata` / `allowed-tools`) are not read today, but can stay for future compatibility or human reading.
 
-<Note>
-The `activate` tool's `<available_skills>` list shows only skill names and `description`. Missing descriptions do not block loading, but they make correct tool selection much less reliable.
-</Note>
+### Writing a Good `description`
 
-### Field Details
-
-#### `name`
-
-The unique identifier for the skill, used for activation and reference.
+`description` is the only thing the Agent uses to "pick a skill" — it shows up in the `<available_skills>` list. A vague description means the skill won't be activated.
 
 ```yaml
-name: python-analyzer
+# ❌ Too vague
+description: Helps with PDFs
+
+# ✅ Covers capability, scenario, and trigger keywords
+description: Extracts text and tables from PDFs, fills PDF forms, merges multiple PDFs; triggered when the user mentions PDF, forms, or document extraction
 ```
 
-Current implementation rules:
-- 1-64 characters
-- Only letters, numbers, hyphens (`-`), and underscores (`_`)
-- Prefer lowercase letters, numbers, and hyphens for cross-platform compatibility
-- Recommended to match the skill directory name
-
-#### `description`
-
-Brief description of the skill. The LLM uses this to determine whether to activate the skill.
-
-```yaml
-description: Analyze Python project structure, code quality, and dependencies
-```
-
-Writing guidelines:
-- Strongly recommended
-- Describe the skill's functionality and purpose
-- Explain applicable scenarios and trigger keywords
-- Help LLM determine when to activate
-
-**Good example:**
-```yaml
-description: Extracts text and tables from PDF files, fills PDF forms, and merges multiple PDFs. Use when working with PDF documents or when user mentions PDFs, forms, or document extraction.
-```
-
-**Poor example:**
-```yaml
-description: Helps with PDFs.
-```
-
-### Fields Not Read Today
-
-Fields such as `license`, `compatibility`, `metadata`, and `allowed-tools` can remain in the file for human readers or future compatibility, but the current LangBot/Box Skill Store does not read them. Use top-level `display_name` for the display name.
+Writing tips:
+- State the **capability** (what it does)
+- State the **scenarios** (when to use it)
+- Include **trigger keywords** (how users might phrase it)
 
 ## Instruction Body
 
-The content after the frontmatter is the skill's instructions. After the Agent calls `activate`, these instructions are returned as a Tool Result into the current conversation context.
+Anything after the frontmatter is Markdown body. After the Agent calls `activate`, the entire body is returned as a Tool Result and injected into context.
 
-### Recommended Structure
+Suggested structure (not enforced):
 
 ```markdown
----
-name: data-analyzer
-display_name: Data Analyzer
-description: Analyze data files and generate reports
----
-
 ## Use Cases
+What kinds of requests this skill fits.
 
-Use this skill when users need to analyze CSV, JSON, or other data files.
-
-## Execution Steps
-
-1. Use `read` tool to read data files
-2. Use `exec` to run analysis scripts
-3. Generate structured report
+## Steps
+1. ...
+2. ...
 
 ## Available Resources
-
-- `scripts/analyze.py`: Data analysis script
-- `templates/report.md`: Report template
+List files under scripts/, templates/, and what each does.
 
 ## Output Format
-
-Analysis report should include:
-- Data overview
-- Statistical summary
-- Visualization suggestions
-
-## Notes
-
-- Process large files in batches
-- Pay attention to data privacy
+Describe any specific output format here.
 ```
 
-### Best Practices for Writing Instructions
+Keep it short: aim for under 500 lines. Put longer reference material in subdirectories and load it on demand with the `read` tool.
 
-#### 1. Clarify Use Cases
-
-```markdown
-## Use Cases
-
-Activate this skill when users request:
-- Analyze Python project structure
-- Check code quality
-- Generate dependency reports
-
-Not suitable for:
-- Simple code snippet execution
-- Non-Python project analysis
-```
-
-#### 2. Provide Clear Execution Steps
-
-```markdown
-## Execution Steps
-
-1. **Confirm Target**: Clarify the project path to analyze
-2. **Scan Structure**: Use `exec` to run `find . -type f -name "*.py"`
-3. **Analyze Code**: Run `scripts/analyze.py`
-4. **Generate Report**: Output results based on template
-```
-
-#### 3. Explain Available Tools and Resources
-
-```markdown
-## Available Tools
-
-| Tool | Purpose |
-|------|---------|
-| `read` | Read project files |
-| `exec` | Execute analysis scripts |
-| `write` | Output report files |
-
-## Available Scripts
-
-- `scripts/analyze.py`: Main analysis script
-- `scripts/complexity.py`: Complexity analysis
-```
-
-#### 4. Define Output Format
-
-```markdown
-## Output Format
-
-```json
-{
-  "project": "Project Name",
-  "files": 100,
-  "lines": 5000,
-  "quality_score": 85,
-  "recommendations": ["..."]
-}
-```
-```
-
-## Complete Examples
-
-### Prompt-Only Skill
-
-```markdown
----
-name: code-reviewer
-display_name: Code Review Assistant
-description: Review code and provide improvement suggestions, supports multiple programming languages
----
-
-## Use Cases
-
-Activate when users request code review, code inspection, or code improvement suggestions.
-
-## Review Dimensions
-
-### 1. Code Quality
-- Readability and naming conventions
-- Code structure and organization
-- Comments and documentation
-
-### 2. Potential Issues
-- Bugs and logic errors
-- Security vulnerabilities
-- Performance issues
-
-### 3. Best Practices
-- Language-specific best practices
-- Design pattern application
-- Test coverage
-
-## Review Process
-
-1. Analyze code structure and style
-2. Identify potential issues
-3. Provide specific improvement suggestions
-4. Prioritize recommendations
-
-## Output Format
-
-### Issue Report
-- **Severity**: High/Medium/Low
-- **Location**: filename:line_number
-- **Description**: Issue description
-- **Suggestion**: Improvement suggestion
-
-### Summary
-- Overall score (1-10)
-- Key findings
-- Priority improvements
-```
-
-### File Package Skill
+## Full Example
 
 ```markdown
 ---
 name: api-tester
 display_name: API Testing Tool
-description: Test REST API endpoints, validate responses and performance
+description: Tests REST API endpoints, validates responses, and runs performance benchmarks; triggered when the user mentions API testing, endpoint validation, or load testing
 ---
 
 ## Use Cases
 
-Activate when users need to test APIs, validate interfaces, or debug APIs.
+When the user needs to fire HTTP requests, validate responses, or load-test a single endpoint.
+
+## Steps
+
+1. Extract method, URL, headers, and body from user input
+2. Use `exec` to run `scripts/request.py`
+3. Validate status code and response body
+4. If performance testing is needed, call `scripts/benchmark.py`
+5. Output the result following the template
 
 ## Available Resources
 
-### Scripts
-- `scripts/request.py`: HTTP request tool
-- `scripts/benchmark.py`: Performance benchmarking
-
-### Templates
-- `templates/test_report.md`: Test report template
-
-## Execution Steps
-
-1. **Parse Request**: Extract API information from user input
-2. **Execute Request**: Use `exec` to run `scripts/request.py`
-3. **Validate Response**: Check status code and response body
-4. **Generate Report**: Output test results
-
-## Example Commands
-
-```bash
-# Basic request test
-python scripts/request.py GET https://api.example.com/users
-
-# Authenticated request
-python scripts/request.py POST https://api.example.com/data \
-  --header "Authorization: Bearer token" \
-  --body '{"key": "value"}'
-
-# Performance test
-python scripts/benchmark.py https://api.example.com/endpoint --requests 100
-```
+- `scripts/request.py` — single HTTP request
+- `scripts/benchmark.py` — concurrent load test
+- `templates/test_report.md` — report template
 
 ## Output Format
 
-### Single Test
-- Request URL
-- Response status code
-- Response time
-- Response body summary
-
-### Batch Test
-- Success/failure count
-- Average response time
-- Error details list
+Single: URL, status code, response time, response body summary
+Batch: success/failure counts, average response time, error list
 ```
 
-## File Location
+## Directory Layout
 
-When the sandbox backend is available, Skill files should be placed under the Box Runtime-managed skills root:
-
-```
-box.local.host_root/skills/
-|-- {skill-name}/
-|   `-- SKILL.md
-```
-
-By default, `box.local.skills_root` is the relative path `skills`. Relative paths are resolved under `box.local.host_root`, so the usual effective path is `box.local.host_root/skills`. LangBot does not automatically fall back to `data/skills/` when Box is unavailable.
-
-## Multi-File Skills
-
-For skills containing multiple files:
+Minimal:
 
 ```
-box.local.host_root/skills/
-`-- my-skill/
-    |-- SKILL.md           # Required
-    |-- scripts/           # Optional: scripts
-    |   |-- main.py
-    |   `-- utils.py
-    |-- templates/         # Optional: templates
-    |   `-- output.md
-    `-- requirements.txt   # Optional: dependencies
+my-skill/
+└── SKILL.md
 ```
 
-Agent can access these files through `/workspace/.skills/{skill-name}/`.
-
-## Relationship with Agent Skills Standard
-
-LangBot's SKILL.md format follows the Agent Skills style, but the supported fields are those implemented by LangBot/Box Skill Store.
-
-### Standard Directory Structure
+With resources:
 
 ```
-skill-name/
-|-- SKILL.md          # Required: metadata + instructions
-|-- scripts/          # Optional: executable code
-|-- references/       # Optional: reference documentation
-`-- assets/           # Optional: static resources
+my-skill/
+├── SKILL.md           # Required
+├── scripts/           # Optional: executable scripts
+├── templates/         # Optional: templates
+└── requirements.txt   # Optional: dependencies (Agent can pip install on demand)
 ```
 
-### Progressive Loading Model
+After activation, the Agent accesses these files through `/workspace/.skills/{skill-name}/`.
 
-Agent Skills standard adopts progressive loading to optimize context usage:
+## Storage Location
 
-| Stage | Content Loaded | Recommended Size | When |
-|-------|----------------|------------------|------|
-| Discovery | `name` + `description` | ~100 tokens | Agent startup |
-| Activation | SKILL.md body | < 5000 tokens | Skill activation |
-| Execution | scripts/, references/, assets/ | On-demand | Task execution |
+When the sandbox backend is available, skills live in the skill store managed by Box Runtime, default path:
 
-**Best Practice**: Keep SKILL.md body under 500 lines, put detailed content in the references/ directory.
-
-### LangBot Compatibility Notes
-
-The current implementation reads top-level `name`, `display_name`, and `description`, and does not read `metadata.display_name`. Use this format for new skills:
-
-```yaml
----
-name: my-skill
-display_name: My Skill
-description: Skill description
----
 ```
+<box.local.host_root>/skills/<skill-name>/SKILL.md
+```
+
+`box.local.skills_root` defaults to the relative path `skills`, which resolves under `host_root`. When Box is unavailable the skill list is empty; there is no fallback to other directories.

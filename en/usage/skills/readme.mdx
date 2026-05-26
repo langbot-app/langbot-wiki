@@ -1,320 +1,114 @@
 ---
-title: "Skills System"
+title: "Skills"
 ---
 
-Skills is LangBot's dynamic skill system that allows AI Agents to activate and execute specific tasks on demand through Tool Call mechanism. Through Skills, you can enable Agents to automatically load domain-specific knowledge and tools when needed.
+A Skill is an **on-demand instruction package**: when the user's request matches, the Agent calls the `activate` tool to pull the skill's instructions into context, then follows them to finish the task.
 
-## What are Skills?
+It's the right fit for adding a **specialized workflow, template, or script** to the Agent — say "analyze a Python project", "fill PDF forms", or "code review" — instead of stuffing every instruction into the System Prompt for every conversation.
 
-Skills is a lightweight extension mechanism that enables Agents to:
+## How Skills Compare to Plugins and MCP
 
-- Load domain-specific knowledge on demand via Tool Call
-- Execute workflows for specific tasks
-- Access predefined code and resources
-- Dynamically combine multiple skills
+| What you want to do | Use this |
+|---------------------|----------|
+| An on-demand workflow (with optional scripts/templates) | Skill |
+| Connect an existing MCP tool service | MCP Server |
+| Long-lived capability, config page, event listeners, knowledge components | Plugin |
 
-Unlike plugins, Skills are more lightweight and flexible, suitable for defining workflows and instructions for specific tasks.
+See [Runtimes & Extensions Compared](../sandbox/runtime-relationships) for details.
 
-## Design Philosophy
-
-### Industry Practices
-
-The Skills system design draws from mainstream Agent extension patterns in the industry:
-
-| System | Mechanism | Characteristics |
-|--------|-----------|-----------------|
-| **Claude Code** | Skills + Commands | Tool Call activation, Tool Result injection (protects KV Cache) |
-| **OpenAI GPTs** | Actions + Knowledge | Separates tool calling from knowledge injection |
-| **Cursor** | Rules + Tools | Independent configuration for rules and tools |
-
-### Insights from Claude Code
-
-Claude Code's Skills system has a key design decision: **skill content is injected through Tool Result, not by directly modifying the System Prompt**.
-
-The reasons for this design:
-
-1. **Protect KV Cache**: Directly modifying the System Prompt invalidates previous KV Cache, requiring recalculation every time
-2. **On-demand Loading**: Skills are only injected when the Agent actively calls the `activate` tool, reducing unnecessary token consumption
-3. **Incremental Context**: Tool Result is incremental content that doesn't affect existing cache
-
-### LangBot's Design
-
-LangBot fully adopts Claude Code's design pattern:
-
-```mermaid
-flowchart TB
-    request[User request<br/>“Help me analyze this Python project”]
-    decision[Agent decision<br/>matches python-analyzer]
-    activate[Call activate tool<br/>skill_name = python-analyzer]
-    result[Tool Result<br/>SKILL.md content + mount path]
-    continue[Agent continues with skill context<br/>uses exec / read / write / edit on the skill package]
-
-    request --> decision --> activate --> result --> continue
-```
-
-### Why This Design?
-
-**1. KV Cache Protection**
-
-Skill instructions are returned through Tool Result as incremental content, not invalidating existing KV Cache.
-
-**2. Progressive Disclosure**
-
-- `activate` tool description only shows skill metadata (name, description)
-- Full instructions are obtained after activation via Tool Result
-- Agent can choose whether to activate based on needs
-
-**3. Unified Interaction Pattern**
-
-- Consistent semantics with other tool calls
-- More aligned with Agent design patterns
-- Friendlier for models supporting Function Calling
-
-**4. Requires Sandbox Backend**
-
-`activate` and `register_skill` tools require sandbox backend availability:
-- Skill package is mounted to `/workspace/.skills/{skill-name}/`
-- Agent uses `exec`/`read`/`write`/`edit`/`glob`/`grep` to operate skill files
-
-## Skill File Structure
-
-Each Skill is a directory containing a `SKILL.md` file. When the sandbox backend is available, Skill packages are owned by the Box Runtime and are stored under `box.local.skills_root`, which defaults to `<box.local.host_root>/skills`:
+## Workflow
 
 ```
-<box.local.host_root>/skills/
-|-- my-skill/
-|   |-- SKILL.md           # Required: skill definition file
-|   |-- scripts/           # Optional: script files
-|   |   `-- analyze.py
-|   `-- templates/         # Optional: template files
-|       `-- report.md
-`-- another-skill/
-    `-- SKILL.md
+User: "Help me analyze this Python project"
+   ↓
+Agent sees python-analyzer in <available_skills>
+   ↓
+Agent calls activate(skill_name="python-analyzer")
+   ↓
+SKILL.md content is returned as a Tool Result
+   ↓
+Agent follows the instructions (using read / exec / write, etc.)
 ```
 
-<Note>
-In the current implementation, Skills are loaded only from the Box Runtime-managed skill store. If Box Runtime or its backend is unavailable, the skill cache is empty and skill create/import/edit/register operations are unavailable; LangBot does not automatically fall back to `data/skills/`.
-</Note>
+The Agent only activates a skill when it judges a match. Inactive skills don't take up context.
 
-### SKILL.md Format
+## Prerequisites
 
-Use YAML frontmatter to define metadata:
+Skills depend on the sandbox backend. `box.enabled` must be `true` and a backend (Docker / Nsjail / E2B) must be available. When Box is unavailable, the skill list is empty, and creating, editing, or activating skills is disabled.
 
-```markdown
----
-name: python-analyzer
-display_name: Python Project Analyzer
-description: Analyze Python project structure, code quality and dependencies
----
+See [Sandbox Configuration](../sandbox/config).
 
-## Use Cases
+## A Minimal Skill
 
-When users need to analyze Python projects, follow these steps:
-
-1. Use the `read` tool to read project structure
-2. Use `exec` to run analysis scripts
-3. Generate analysis report
-
-## Available Scripts
-
-- `scripts/analyze.py`: Main analysis script
-- `scripts/dependency_check.py`: Dependency checking
-
-## Output Format
-
-Analysis report should include:
-- Project structure overview
-- Code quality score
-- Dependency graph
-```
-
-## Activation Mechanism
-
-### Tool Call Activation
-
-Agent activates a skill by calling the `activate` tool:
-
-```json
-{
-  "skill_name": "python-analyzer"
-}
-```
-
-### Effects After Activation
-
-1. **Tool Result Injection**: SKILL.md content is returned as Tool Result and injected into context
-2. **Activation marker**: The Skill is marked as activated and addressed through `/workspace/.skills/{skill-name}/`
-3. **Tool Access**: `read`/`glob`/`grep` can inspect visible Skills; `exec`/`write`/`edit` against a Skill package require activation
-
-### Return Content Example
+A skill is a directory plus a `SKILL.md`:
 
 ```
-<command-message>The "python-analyzer" skill is activated</command-message>
-<skill-activation>
-<skill-name>python-analyzer</skill-name>
-<mount-path>/workspace/.skills/python-analyzer</mount-path>
-<package-root>/path/to/skill</package-root>
-
-## Instructions
-...SKILL.md content...
-
-## Runtime Context
-The skill package is mounted at /workspace/.skills/python-analyzer. Use the standard tools to interact with it:
-- Use `read` to inspect files under /workspace/.skills/python-analyzer
-- Use `exec` with workdir set to /workspace/.skills/python-analyzer to run commands
-- Use `write` and `edit` on that path when the instructions require updating files
-</skill-activation>
+my-skill/
+└── SKILL.md
 ```
 
-## Built-in Tools
-
-The Skills system provides two tools for Agents:
-
-| Tool | Function | Needs Sandbox |
-|------|----------|---------------|
-| `activate` | Activate a skill | Yes |
-| `register_skill` | Register skill from sandbox directory | Yes |
-
-<Note>
-These tools require a sandbox backend (Docker/Nsjail/E2B) to be available. If no backend is available, the tools will not be provided to the Agent.
-</Note>
-
-## Skill Types
-
-### Prompt-Only Skills
-
-Contains only instructions, no additional files:
+`SKILL.md`:
 
 ```markdown
 ---
 name: code-reviewer
 display_name: Code Review Assistant
-description: Review code and provide improvement suggestions
+description: Reviews code and gives improvement suggestions; triggered when the user mentions review, code review, or code improvement
 ---
 
-## Review Steps
+## Steps
 
-1. Analyze code structure and style
-2. Check for potential bugs and security issues
-3. Provide improvement suggestions
-
-## Review Criteria
-
-- Code readability
-- Performance optimization
-- Security best practices
+1. Use `read` to browse the relevant files
+2. Check readability, potential bugs, and security issues
+3. Provide improvement suggestions, sorted by priority
 ```
 
-### File Package Skills
+The clearer the `description`, the better the Agent can decide when to activate — this is the single most important thing about writing a good skill.
 
-Contains scripts, templates, and other resource files:
+See [SKILL.md Format](./skill-format) for full field reference and more examples.
 
-```
-data-analyzer/
-|-- SKILL.md
-|-- scripts/
-|   |-- analyze.py
-|   `-- visualize.py
-|-- templates/
-|   `-- report.md
-`-- requirements.txt
-```
+## Creating a Skill
 
-## Quick Start
+**Option 1: WebUI** — create, upload a zip, or import from GitHub on the Skills page
 
-### 1. Create Your First Skill
+**Option 2: Sandbox + `register_skill`**
+1. Prepare the directory and `SKILL.md` under the sandbox `/workspace`
+2. Have the Agent call `register_skill(path="/workspace/my-skill")`
 
-Create a skill from the WebUI Skills page, or prepare a skill package under sandbox `/workspace` and register it with `register_skill`. For manual preparation:
+Both options write to the skill store managed by Box Runtime.
 
-```bash
-mkdir -p /workspace/my-first-skill
-```
+## Enabling in a Pipeline
 
-Create `SKILL.md`:
+Once a skill is installed, the pipeline extension config decides which skills the Agent can see:
 
-```markdown
----
-name: my-first-skill
-display_name: My First Skill
-description: A simple example skill
----
+- Enable "all skills", or
+- Bind only specific skills
 
-## Task Description
+Binding only affects the `<available_skills>` list (what the Agent can choose from). The full instructions are always injected only after `activate` is called.
 
-This is an example skill demonstrating basic skill functionality.
+## Tools Available to the Agent
 
-## Execution Steps
+| Tool | Purpose |
+|------|---------|
+| `activate` | Activate a skill and pull its SKILL.md into context |
+| `register_skill` | Register a directory prepared in the sandbox as a skill |
 
-1. Understand user request
-2. Execute corresponding operations
-3. Return results
-```
+See [Tools API](./tools-api) for parameters and return values.
 
-### 2. Register and Test Activation
+## Common Issues
 
-Call `register_skill(path="/workspace/my-first-skill")` to register the skill. Ensure the sandbox backend is available, then send a request matching the skill description to the Agent. A model with Tool Call support will usually choose to call `activate` based on the prompt.
-
-### 3. Enable the Skill in a Pipeline
-
-Skills are pipeline extensions. After creating, importing, or registering a Skill, allow it in the pipeline extension settings:
-
-- Enable all Skills
-- Or bind selected Skills
-
-Binding only controls which Skills are visible to the Agent. The full `SKILL.md` instructions are not preloaded into context; they are returned as Tool Result only after the Agent calls `activate`.
+| Symptom | What to check |
+|---------|---------------|
+| Skill list is empty | `box.enabled`, Box Runtime status, `box.local.skills_root` |
+| Agent doesn't activate a skill | Whether `description` is specific, whether the pipeline has the skill bound, whether the model supports function calling |
+| Files missing after activation | Files must live inside the Skill package; the path is `/workspace/.skills/{skill-name}/` |
+| `register_skill` errors | The path must be under `/workspace`, and the directory or subdirectories within two levels must contain `SKILL.md` |
 
 <Note>
-Skills are currently designed for the built-in Local Agent and depend on Tool Call plus a sandbox backend. External runners use their own tool and context mechanisms.
+Skills currently target the built-in Agent and depend on function calling plus a sandbox backend. External runners should use their platform's equivalent mechanism.
 </Note>
-
-## Creating New Skills
-
-### Method 1: Use WebUI or Import
-
-The WebUI Skills page can create, edit, import from GitHub, or upload zip packages. When the sandbox backend is available, these skills are written to the Box Runtime-managed skill store.
-
-### Method 2: Let the Agent Create in the Sandbox
-
-1. Create skill directory under sandbox `/workspace`
-2. Write `SKILL.md` and related files
-3. Call `register_skill(path="/workspace/my-skill")` to register
-
-## Best Practices
-
-### 1. Skill Naming
-
-- Use lowercase letters, numbers, hyphens, underscores
-- Names should be concise and descriptive
-- Examples: `python-analyzer`, `data-visualizer`
-
-### 2. Description Writing
-
-- Clearly state the skill's purpose and applicable scenarios
-- Help LLM correctly determine when to activate
-- Description is shown in the `activate` tool's `<available_skills>` list
-
-### 3. Instruction Design
-
-- Provide clear execution steps
-- Explain available resources and tools
-- Define output formats
-
-### 4. Resource Organization
-
-- Put scripts in `scripts/` directory
-- Put templates in `templates/` directory
-- Keep structure clear
-
-## Troubleshooting
-
-| Symptom | Check |
-|---------|-------|
-| Skill list is empty | Box Runtime availability and whether `box.local.skills_root` points to the expected directory |
-| Agent does not call `activate` | Skill description clarity, pipeline Skill binding, and model function calling support |
-| Files are missing after activation | Ensure files are inside the Skill package and use `/workspace/.skills/{skill-name}/` paths |
-| `register_skill` fails | Target path must be under `/workspace`, and the directory or subdirectories up to depth 2 must contain `SKILL.md` |
 
 ## Next Steps
 
-- [SKILL.md Format Reference](./skill-format) - Detailed file format documentation
-- [Tools API](./tools-api) - Complete API documentation for skill tools
+- [SKILL.md Format](./skill-format) — fields, directory layout, writing tips
+- [Tools API](./tools-api) — parameters and return values for `activate` and `register_skill`

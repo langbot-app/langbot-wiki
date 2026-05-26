@@ -1,362 +1,134 @@
 ---
-title: "SKILL.md フォーマットリファレンス"
+title: "SKILL.md フォーマット"
 ---
 
-SKILL.md はスキルを定義するコアファイルで、YAML frontmatter フォーマットを使用します。
+各 Skill は 1 つのディレクトリで、そのルートに `SKILL.md` を配置します。`SKILL.md` は **メタデータ frontmatter** と **指示本文** の 2 つで構成されます。
 
-<Note>
-LangBot の SKILL.md フォーマットは Agent Skills 風の構造を参考にしています。YAML frontmatter でスキルメタデータを記述し、Markdown 本文にスキル命令を保存します。現在の実装が読み取る frontmatter フィールドは、トップレベルの `name`、`display_name`、`description` のみです。
-</Note>
-
-## ファイルフォーマット
+## 全体構造
 
 ```markdown
 ---
-# YAML Frontmatter (メタデータ)
-name: skill-name
-description: スキルの説明
+name: my-skill
+display_name: 私のスキル
+description: Agent がいつ起動するかを判断するための簡潔な説明
 ---
 
-# Markdown 本文 (命令)
-## 使用場面
-...
+## 実行手順
+
+1. ...
+2. ...
 ```
 
 ## Frontmatter フィールド
 
-### フィールド
+| フィールド | 必須 | 説明 |
+|------|------|------|
+| `name` | 作成／登録時 | 一意の識別子。1〜64 文字、英数字・ハイフン・アンダースコア。既存ディレクトリを直接スキャンする場合は省略可能で、ディレクトリ名が使用される |
+| `description` | 強く推奨 | 簡潔な説明。Agent がこの Skill を見つけられるかを左右する |
+| `display_name` | 任意 | 表示名（UI 用） |
 
-| フィールド | 型 | 説明 |
-|------------|-----|------|
-| `name` | string | スキルの一意識別子。作成/登録時は必須。既存ディレクトリの直接スキャンでは省略でき、ディレクトリ名にフォールバックします |
-| `description` | string | LLM が起動を判断するための簡潔な説明。現在の実装では空でも許可されますが、提供を強く推奨します |
-| `display_name` | string | 表示名。現在の実装ではトップレベルフィールドとしてサポートされます |
+その他のよくあるフィールド（`license` / `compatibility` / `metadata` / `allowed-tools`）は現在読み取られませんが、将来の互換性や人間が読むために残しておけます。
 
-<Note>
-`activate` ツールの `<available_skills>` リストには、スキル名と `description` だけが表示されます。説明がなくても読み込みはできますが、Agent が正しく選択しにくくなります。
-</Note>
+### `description` を上手く書く
 
-### フィールド詳細
-
-#### `name`
-
-スキルの一意識別子。起動と参照に使用されます。
+`description` は Agent が「Skill を選ぶ」ための唯一の判断材料で、`<available_skills>` 一覧に表示されます。説明が曖昧だと、この Skill は起動されないも同然です。
 
 ```yaml
-name: python-analyzer
+# ❌ あいまいすぎる
+description: PDF の処理を手伝う
+
+# ✅ 機能、シナリオ、トリガーキーワードを含む
+description: PDF からテキストやテーブルを抽出、PDF フォームへの入力、複数 PDF の結合。ユーザーが PDF、フォーム、ドキュメント抽出に言及したときに起動
 ```
 
-現在の実装の命名規則：
-- 1-64 文字
-- 英字、数字、ハイフン (`-`)、アンダースコア (`_`) のみ
-- クロスプラットフォーム互換性のため、小文字、数字、ハイフンの使用を推奨
-- スキルディレクトリ名と一致することを推奨
+執筆のポイント:
+- **機能**（何ができるか）を明確に
+- **適用シーン**（どんなときに使うか）を明確に
+- **トリガーキーワード**（ユーザーが言いそうな表現）を含める
 
-#### `description`
+## 指示本文
 
-スキルの簡潔な説明。LLM はこれを使用してスキルを起動するかどうかを判断します。
+frontmatter の後ろは Markdown 本文です。Agent が `activate` を呼び出すと、本文全体が Tool Result として返され、コンテキストに注入されます。
 
-```yaml
-description: Python プロジェクトの構造、コード品質、依存関係を分析
-```
-
-記述ガイドライン：
-- 提供を強く推奨
-- スキルの機能と目的を記述
-- 適用場面とトリガーキーワードを説明
-- LLM がいつ起動するか判断できるよう支援
-
-**良い例:**
-```yaml
-description: PDF ファイルからテキストとテーブルを抽出し、PDF フォームに入力し、複数の PDF を結合します。PDF ドキュメントを扱う場合や、ユーザーが PDF、フォーム、ドキュメント抽出に言及した場合に使用します。
-```
-
-**悪い例:**
-```yaml
-description: PDF を処理します。
-```
-
-### 現在読み取られないフィールド
-
-`license`、`compatibility`、`metadata`、`allowed-tools` などのフィールドは、人間向けまたは将来互換性のためにファイル内へ残せますが、現在の LangBot/Box Skill Store は読み取りません。表示名にはトップレベルの `display_name` を使用してください。
-
-## 命令本文
-
-frontmatter 以降の内容はスキルの命令です。Agent が `activate` を呼び出すと、これらの命令は Tool Result として現在の会話コンテキストに返されます。
-
-### 推奨構造
+推奨構造（必須ではありません）:
 
 ```markdown
----
-name: data-analyzer
-display_name: データアナライザー
-description: データファイルを分析しレポートを生成
----
-
 ## 使用場面
-
-ユーザーが CSV、JSON などのデータファイルを分析する必要がある場合に使用。
+どのようなリクエストにこの Skill が適しているか。
 
 ## 実行手順
-
-1. `read` ツールでデータファイルを読み込む
-2. `exec` で分析スクリプトを実行
-3. 構造化レポートを生成
+1. ...
+2. ...
 
 ## 利用可能なリソース
-
-- `scripts/analyze.py`: データ分析スクリプト
-- `templates/report.md`: レポートテンプレート
+scripts/、templates/ 配下で利用できるファイルとその用途。
 
 ## 出力フォーマット
-
-分析レポートに含める項目：
-- データ概要
-- 統計サマリー
-- 可視化提案
-
-## 注意事項
-
-- 大きなファイルはバッチ処理
-- データプライバシーに注意
+出力に特定のフォーマットがある場合はここに記載。
 ```
 
-### 命令記述のベストプラクティス
-
-#### 1. 使用場面を明確化
-
-```markdown
-## 使用場面
-
-以下のタスクをリクエストされた場合にこのスキルを起動：
-- Python プロジェクト構造の分析
-- コード品質のチェック
-- 依存関係レポートの生成
-
-適していない場面：
-- 単純なコードスニペットの実行
-- Python 以外のプロジェクト分析
-```
-
-#### 2. 明確な実行手順を提供
-
-```markdown
-## 実行手順
-
-1. **ターゲット確認**: 分析するプロジェクトパスを明確化
-2. **構造スキャン**: `exec` で `find . -type f -name "*.py"` を実行
-3. **コード分析**: `scripts/analyze.py` を実行
-4. **レポート生成**: テンプレートに基づいて結果を出力
-```
-
-#### 3. 利用可能なツールとリソースを説明
-
-```markdown
-## 利用可能なツール
-
-| ツール | 目的 |
-|--------|------|
-| `read` | プロジェクトファイルの読み込み |
-| `exec` | 分析スクリプトの実行 |
-| `write` | レポートファイルの出力 |
-
-## 利用可能なスクリプト
-
-- `scripts/analyze.py`: メイン分析スクリプト
-- `scripts/complexity.py`: 複雑度分析
-```
-
-#### 4. 出力フォーマットを定義
-
-```markdown
-## 出力フォーマット
-
-```json
-{
-  "project": "プロジェクト名",
-  "files": 100,
-  "lines": 5000,
-  "quality_score": 85,
-  "recommendations": ["..."]
-}
-```
-```
+本文の長さに注意: 500 行以内が目安です。大量のリファレンスはサブディレクトリに置き、必要に応じて `read` ツールで読み込みます。
 
 ## 完全な例
-
-### プロンプトのみのスキル
-
-```markdown
----
-name: code-reviewer
-display_name: コードレビューアシスタント
-description: コードをレビューし改善提案を提供、複数のプログラミング言語をサポート
----
-
-## 使用場面
-
-ユーザーがコードレビュー、コード検査、コード改善提案をリクエストした場合に起動。
-
-## レビュー観点
-
-### 1. コード品質
-- 可読性と命名規則
-- コード構造と組織
-- コメントとドキュメント
-
-### 2. 潜在的な問題
-- バグとロジックエラー
-- セキュリティ脆弱性
-- パフォーマンス問題
-
-### 3. ベストプラクティス
-- 言語固有のベストプラクティス
-- デザインパターンの適用
-- テストカバレッジ
-
-## レビュープロセス
-
-1. コード構造とスタイルを分析
-2. 潜在的な問題を特定
-3. 具体的な改善提案を提供
-4. 優先順位をつけて推奨事項を提示
-
-## 出力フォーマット
-
-### 問題レポート
-- **重大度**: 高/中/低
-- **場所**: ファイル名:行番号
-- **説明**: 問題の説明
-- **提案**: 改善提案
-
-### サマリー
-- 総合スコア (1-10)
-- 主な発見事項
-- 優先改善項目
-```
-
-### ファイルパッケージスキル
 
 ```markdown
 ---
 name: api-tester
 display_name: API テストツール
-description: REST API エンドポイントをテスト、レスポンスとパフォーマンスを検証
+description: REST API エンドポイントのテスト、レスポンス検証、パフォーマンスベンチマーク。ユーザーが API テスト、インターフェース検証、負荷テストに言及したときに起動
 ---
 
 ## 使用場面
 
-ユーザーが API のテスト、インターフェースの検証、API デバッグを必要とする場合に起動。
-
-## 利用可能なリソース
-
-### スクリプト
-- `scripts/request.py`: HTTP リクエストツール
-- `scripts/benchmark.py`: パフォーマンスベンチマーク
-
-### テンプレート
-- `templates/test_report.md`: テストレポートテンプレート
+HTTP リクエストを発行する、レスポンスを検証する、または単一のエンドポイントに対して負荷テストを行う必要があるとき。
 
 ## 実行手順
 
-1. **リクエスト解析**: ユーザー入力から API 情報を抽出
-2. **リクエスト実行**: `exec` で `scripts/request.py` を実行
-3. **レスポンス検証**: ステータスコードとレスポンスボディをチェック
-4. **レポート生成**: テスト結果を出力
+1. ユーザー入力からメソッド、URL、ヘッダー、ボディを抽出
+2. `exec` で `scripts/request.py` を呼び出す
+3. ステータスコードとレスポンスボディを検証
+4. パフォーマンステストが必要な場合は `scripts/benchmark.py` を呼び出す
+5. テンプレートに従って結果を出力
 
-## コマンド例
+## 利用可能なリソース
 
-```bash
-# 基本リクエストテスト
-python scripts/request.py GET https://api.example.com/users
-
-# 認証付きリクエスト
-python scripts/request.py POST https://api.example.com/data \
-  --header "Authorization: Bearer token" \
-  --body '{"key": "value"}'
-
-# パフォーマンステスト
-python scripts/benchmark.py https://api.example.com/endpoint --requests 100
-```
+- `scripts/request.py` — 単発の HTTP リクエスト
+- `scripts/benchmark.py` — 並列負荷テスト
+- `templates/test_report.md` — レポートテンプレート
 
 ## 出力フォーマット
 
-### 単一テスト
-- リクエスト URL
-- レスポンスステータスコード
-- レスポンス時間
-- レスポンスボディサマリー
-
-### バッチテスト
-- 成功/失敗数
-- 平均レスポンス時間
-- エラー詳細リスト
+単発: URL、ステータスコード、レスポンス時間、レスポンスボディ要約
+バッチ: 成功／失敗件数、平均レスポンス時間、エラー一覧
 ```
 
-## ファイル配置
+## ディレクトリ構成
 
-サンドボックスバックエンドが利用可能な場合、スキルファイルは Box Runtime が管理する skills root に配置します：
-
-```
-box.local.host_root/skills/
-|-- {skill-name}/
-|   `-- SKILL.md
-```
-
-デフォルトでは `box.local.skills_root` は相対パス `skills` です。相対パスは `box.local.host_root` 配下に解決されるため、通常の実効パスは `box.local.host_root/skills` です。Box が利用できない場合でも `data/skills/` への自動フォールバックはありません。
-
-## マルチファイルスキル
-
-複数のファイルを含むスキルの場合：
+最小:
 
 ```
-box.local.host_root/skills/
-`-- my-skill/
-    |-- SKILL.md           # 必須
-    |-- scripts/           # オプション: スクリプト
-    |   |-- main.py
-    |   `-- utils.py
-    |-- templates/         # オプション: テンプレート
-    |   `-- output.md
-    `-- requirements.txt   # オプション: 依存関係
+my-skill/
+└── SKILL.md
 ```
 
-Agent は `/workspace/.skills/{skill-name}/` 経由でこれらのファイルにアクセスできます。
-
-## Agent Skills 標準との関係
-
-LangBot の SKILL.md フォーマットは Agent Skills 風の構造を参考にしていますが、サポートされるフィールドは LangBot/Box Skill Store の実装が基準です。
-
-### 標準ディレクトリ構造
+リソース付き:
 
 ```
-skill-name/
-|-- SKILL.md          # 必須: メタデータ + 命令
-|-- scripts/          # オプション: 実行可能コード
-|-- references/       # オプション: リファレンスドキュメント
-`-- assets/           # オプション: 静的リソース
+my-skill/
+├── SKILL.md           # 必須
+├── scripts/           # 任意: 実行可能スクリプト
+├── templates/         # 任意: テンプレート
+└── requirements.txt   # 任意: 依存関係（Agent が必要に応じて pip install）
 ```
 
-### プログレッシブローディングモデル
+起動後、Agent は `/workspace/.skills/{skill-name}/` 経由でこれらのファイルにアクセスします。
 
-Agent Skills 標準はプログレッシブローディングを採用し、コンテキスト使用を最適化：
+## 配置場所
 
-| ステージ | 読み込み内容 | 推奨サイズ | タイミング |
-|----------|--------------|------------|------------|
-| 発見 | `name` + `description` | ~100 tokens | Agent 起動時 |
-| 起動 | SKILL.md 本文 | < 5000 tokens | スキル起動時 |
-| 実行 | scripts/、references/、assets/ | オンデマンド | タスク実行時 |
+サンドボックスバックエンドが利用可能な場合、Skill は Box Runtime が管理する skill store に保存されます。デフォルトのパス:
 
-**ベストプラクティス**: SKILL.md 本文は 500 行以内に保ち、詳細な内容は references/ ディレクトリに配置。
-
-### LangBot 互換性ノート
-
-現在の実装はトップレベルの `name`、`display_name`、`description` を読み取り、`metadata.display_name` は読み取りません。新しいスキルには次の形式を使用してください：
-
-```yaml
----
-name: my-skill
-display_name: 私のスキル
-description: スキルの説明
----
 ```
+<box.local.host_root>/skills/<skill-name>/SKILL.md
+```
+
+`box.local.skills_root` はデフォルトで相対パス `skills` で、`host_root` 配下に解決されます。Box が利用できない場合、Skill 一覧は空になり、他のディレクトリへのフォールバックはありません。

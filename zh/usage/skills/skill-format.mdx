@@ -1,362 +1,134 @@
 ---
-title: "SKILL.md 格式参考"
+title: "SKILL.md 格式"
 ---
 
-SKILL.md 是定义技能的核心文件，使用 YAML frontmatter 格式。
+每个技能是一个目录，根目录下放一个 `SKILL.md`。`SKILL.md` 包含**元数据 frontmatter** 和**指令正文**两部分。
 
-<Note>
-LangBot 的 SKILL.md 格式参考 Agent Skills 风格：使用 YAML frontmatter 描述技能元数据，正文保存技能指令。当前实现只读取顶层 `name`、`display_name`、`description` 三个 frontmatter 字段。
-</Note>
-
-## 文件格式
+## 整体结构
 
 ```markdown
 ---
-# YAML Frontmatter（元数据）
-name: skill-name
-description: 技能描述
+name: my-skill
+display_name: 我的技能
+description: 简短描述，用于 Agent 判断何时激活
 ---
 
-# Markdown 正文（指令）
-## 使用场景
-...
+## 执行步骤
+
+1. ...
+2. ...
 ```
 
 ## Frontmatter 字段
 
-### 字段
-
-| 字段 | 类型 | 说明 |
+| 字段 | 必需 | 说明 |
 |------|------|------|
-| `name` | string | 技能的唯一标识符。创建/注册时必需；直接扫描已有目录时可省略并回退为目录名 |
-| `description` | string | 简短描述，用于 LLM 判断是否激活。当前实现允许为空，但强烈建议提供 |
-| `display_name` | string | 显示名称。当前实现支持顶层字段 |
+| `name` | 创建/注册时 | 唯一标识。1–64 字符，字母数字短横线下划线。直接扫描已存在的目录时可省略，会使用目录名 |
+| `description` | 强烈建议 | 简短描述，决定 Agent 能否找到这个技能 |
+| `display_name` | 否 | 显示名称（用于 UI） |
 
-<Note>
-`activate` 工具的 `<available_skills>` 列表只展示技能名和 `description`。缺少描述不会阻止加载，但会显著降低 Agent 正确选择技能的概率。
-</Note>
+其它常见字段（`license` / `compatibility` / `metadata` / `allowed-tools`）当前不会被读取，可保留供未来兼容或人类阅读。
 
-### 字段详解
+### 把 `description` 写好
 
-#### `name`
-
-技能的唯一标识符，用于激活和引用。
+`description` 是 Agent 唯一用来"挑技能"的依据——它会出现在 `<available_skills>` 列表里。描述模糊就等于这个技能不会被激活。
 
 ```yaml
-name: python-analyzer
+# ❌ 太模糊
+description: 帮助处理 PDF
+
+# ✅ 包含功能、场景、触发关键词
+description: 从 PDF 提取文本和表格，填充 PDF 表单，合并多个 PDF；用户提到 PDF、表单、文档提取时触发
 ```
 
-当前实现的命名规则：
-- 1-64 个字符
-- 只能包含字母、数字、连字符（`-`）和下划线（`_`）
-- 建议使用小写字母、数字和连字符，便于跨平台兼容
-- 建议与技能目录名匹配
-
-#### `description`
-
-技能的简短描述，LLM 会根据此描述判断是否激活技能。
-
-```yaml
-description: 分析 Python 项目结构、代码质量和依赖关系
-```
-
-编写建议：
-- 强烈建议提供
-- 描述技能的功能和用途
-- 说明适用的场景和触发关键词
-- 帮助 LLM 判断何时激活
-
-**好的示例：**
-```yaml
-description: 从 PDF 文件提取文本和表格，填充 PDF 表单，合并多个 PDF。适用于处理 PDF 文档，或用户提到 PDF、表单、文档提取时。
-```
-
-**不好的示例：**
-```yaml
-description: 帮助处理 PDF。
-```
-
-### 当前未读取的字段
-
-`license`、`compatibility`、`metadata`、`allowed-tools` 等字段可以保留在文件中供人类阅读或未来兼容，但当前 LangBot/Box Skill Store 不会读取这些字段。显示名称请使用顶层 `display_name`。
+写作要点：
+- 说清楚**功能**（做什么）
+- 说清楚**适用场景**（什么情况下用）
+- 包含**触发关键词**（用户可能怎么说）
 
 ## 指令正文
 
-Frontmatter 之后的内容是技能的指令。Agent 调用 `activate` 后，这些指令会作为 Tool Result 返回到当前对话上下文中。
+Frontmatter 之后是 Markdown 正文。Agent 调用 `activate` 后，整个正文会作为 Tool Result 返回，注入到上下文。
 
-### 结构建议
+建议结构（不强制）：
 
 ```markdown
----
-name: data-analyzer
-display_name: 数据分析器
-description: 分析数据文件并生成报告
----
-
 ## 使用场景
-
-当用户需要分析 CSV、JSON 等数据文件时使用此技能。
+具体什么样的请求适合用这个技能。
 
 ## 执行步骤
-
-1. 使用 `read` 工具读取数据文件
-2. 使用 `exec` 运行分析脚本
-3. 生成结构化报告
+1. ...
+2. ...
 
 ## 可用资源
-
-- `scripts/analyze.py`: 数据分析脚本
-- `templates/report.md`: 报告模板
+列出 scripts/、templates/ 下能用的文件，及其用途。
 
 ## 输出格式
-
-分析报告应包含：
-- 数据概览
-- 统计摘要
-- 可视化建议
-
-## 注意事项
-
-- 大文件需分批处理
-- 注意数据隐私
+如果输出有特定格式，在这里说明。
 ```
 
-### 指令编写最佳实践
-
-#### 1. 明确使用场景
-
-```markdown
-## 使用场景
-
-当用户请求以下任务时激活此技能：
-- 分析 Python 项目结构
-- 检查代码质量
-- 生成依赖报告
-
-不适合的场景：
-- 简单的代码片段执行
-- 非 Python 项目分析
-```
-
-#### 2. 提供清晰的执行步骤
-
-```markdown
-## 执行步骤
-
-1. **确认目标**：明确用户要分析的项目路径
-2. **扫描结构**：使用 `exec` 运行 `find . -type f -name "*.py"`
-3. **分析代码**：运行 `scripts/analyze.py`
-4. **生成报告**：基于模板输出结果
-```
-
-#### 3. 说明可用工具和资源
-
-```markdown
-## 可用工具
-
-| 工具 | 用途 |
-|------|------|
-| `read` | 读取项目文件 |
-| `exec` | 执行分析脚本 |
-| `write` | 输出报告文件 |
-
-## 可用脚本
-
-- `scripts/analyze.py`: 主分析脚本
-- `scripts/complexity.py`: 复杂度分析
-```
-
-#### 4. 定义输出格式
-
-```markdown
-## 输出格式
-
-```json
-{
-  "project": "项目名称",
-  "files": 100,
-  "lines": 5000,
-  "quality_score": 85,
-  "recommendations": ["..."]
-}
-```
-```
+控制长度：正文建议在 500 行以内。超长的参考资料放到子目录里，按需用 `read` 工具加载。
 
 ## 完整示例
-
-### 纯提示词技能
-
-```markdown
----
-name: code-reviewer
-display_name: 代码审查助手
-description: 审查代码并提供改进建议，支持多种编程语言
----
-
-## 使用场景
-
-当用户请求代码审查、代码评审或代码改进建议时激活。
-
-## 审查维度
-
-### 1. 代码质量
-- 可读性和命名规范
-- 代码结构和组织
-- 注释和文档
-
-### 2. 潜在问题
-- Bug 和逻辑错误
-- 安全漏洞
-- 性能问题
-
-### 3. 最佳实践
-- 语言特定的最佳实践
-- 设计模式应用
-- 测试覆盖
-
-## 审查流程
-
-1. 分析代码结构和风格
-2. 识别潜在问题
-3. 提供具体改进建议
-4. 给出优先级排序
-
-## 输出格式
-
-### 问题报告
-- **严重程度**: 高/中/低
-- **位置**: 文件名:行号
-- **描述**: 问题描述
-- **建议**: 改进建议
-
-### 总结
-- 整体评分（1-10）
-- 主要发现
-- 优先改进项
-```
-
-### 文件包技能
 
 ```markdown
 ---
 name: api-tester
 display_name: API 测试工具
-description: 测试 REST API 端点，验证响应和性能
+description: 测试 REST API 端点，验证响应、跑性能基准；用户提到 API 测试、接口验证、压测时触发
 ---
 
 ## 使用场景
 
-当用户需要测试 API、验证接口或进行 API 调试时激活。
-
-## 可用资源
-
-### 脚本
-- `scripts/request.py`: HTTP 请求工具
-- `scripts/benchmark.py`: 性能基准测试
-
-### 模板
-- `templates/test_report.md`: 测试报告模板
+需要发起 HTTP 请求、校验响应、或对单个端点做性能压测时。
 
 ## 执行步骤
 
-1. **解析请求**：从用户输入提取 API 信息
-2. **执行请求**：使用 `exec` 运行 `scripts/request.py`
-3. **验证响应**：检查状态码和响应体
-4. **生成报告**：输出测试结果
+1. 从用户输入提取方法、URL、headers、body
+2. 用 `exec` 调用 `scripts/request.py`
+3. 校验状态码和响应体
+4. 如需性能测试，调用 `scripts/benchmark.py`
+5. 按模板输出结果
 
-## 示例命令
+## 可用资源
 
-```bash
-# 基本请求测试
-python scripts/request.py GET https://api.example.com/users
-
-# 带认证的请求
-python scripts/request.py POST https://api.example.com/data \
-  --header "Authorization: Bearer token" \
-  --body '{"key": "value"}'
-
-# 性能测试
-python scripts/benchmark.py https://api.example.com/endpoint --requests 100
-```
+- `scripts/request.py` — 单次 HTTP 请求
+- `scripts/benchmark.py` — 并发压测
+- `templates/test_report.md` — 报告模板
 
 ## 输出格式
 
-### 单次测试
-- 请求 URL
-- 响应状态码
-- 响应时间
-- 响应体摘要
-
-### 批量测试
-- 成功/失败数量
-- 平均响应时间
-- 错误详情列表
+单次：URL、状态码、响应时间、响应体摘要
+批量：成功/失败数、平均响应时间、错误列表
 ```
 
-## 文件位置
+## 目录布局
 
-沙箱后端可用时，Skill 文件应放置在 Box Runtime 管理的 skills root 中：
-
-```
-box.local.host_root/skills/
-|-- {skill-name}/
-|   `-- SKILL.md
-```
-
-默认情况下，`box.local.skills_root` 为相对路径 `skills`，会解析到 `box.local.host_root` 下，因此常见实际路径是 `box.local.host_root/skills`。当前实现不会在 Box 不可用时自动回退扫描 `data/skills/`。
-
-## 多文件技能
-
-对于包含多个文件的技能：
+最小：
 
 ```
-box.local.host_root/skills/
-`-- my-skill/
-    |-- SKILL.md           # 必需
-    |-- scripts/           # 可选：脚本
-    |   |-- main.py
-    |   `-- utils.py
-    |-- templates/         # 可选：模板
-    |   `-- output.md
-    `-- requirements.txt   # 可选：依赖
+my-skill/
+└── SKILL.md
 ```
 
-Agent 可以通过 `/workspace/.skills/{skill-name}/` 访问这些文件。
-
-## 与 Agent Skills 标准的关系
-
-LangBot 的 SKILL.md 格式参考 Agent Skills 风格，但当前实现以 LangBot/Box Skill Store 支持的字段为准。
-
-### 标准目录结构
+带资源：
 
 ```
-skill-name/
-|-- SKILL.md          # 必需：元数据 + 指令
-|-- scripts/          # 可选：可执行代码
-|-- references/       # 可选：参考文档
-`-- assets/           # 可选：静态资源
+my-skill/
+├── SKILL.md           # 必需
+├── scripts/           # 可选：可执行脚本
+├── templates/         # 可选：模板
+└── requirements.txt   # 可选：依赖（Agent 可按需 pip install）
 ```
 
-### 渐进式加载模型
+激活后，Agent 通过 `/workspace/.skills/{skill-name}/` 访问这些文件。
 
-Agent Skills 标准采用渐进式加载，优化上下文使用：
+## 存放位置
 
-| 阶段 | 加载内容 | 建议大小 | 时机 |
-|------|----------|----------|------|
-| 发现 | `name` + `description` | ~100 tokens | Agent 启动时 |
-| 激活 | SKILL.md 正文 | < 5000 tokens | 技能激活时 |
-| 执行 | scripts/、references/、assets/ | 按需 | 任务执行时 |
+沙箱后端可用时，技能存放在 Box Runtime 管理的 skill store，默认路径：
 
-**最佳实践**：保持 SKILL.md 正文在 500 行以内，详细内容放入 references/ 目录。
-
-### LangBot 兼容性说明
-
-当前实现读取顶层 `name`、`display_name`、`description`，不会读取 `metadata.display_name`。建议新技能使用以下格式：
-
-```yaml
----
-name: my-skill
-display_name: 我的技能
-description: 技能描述
----
 ```
+<box.local.host_root>/skills/<skill-name>/SKILL.md
+```
+
+`box.local.skills_root` 默认为相对路径 `skills`，会解析到 `host_root` 下。Box 不可用时技能列表为空，不会回退到其他目录。

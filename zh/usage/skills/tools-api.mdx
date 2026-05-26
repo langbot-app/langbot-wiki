@@ -2,49 +2,37 @@
 title: "技能工具 API"
 ---
 
-Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设计遵循 Claude Code 的渐进式披露模式，通过 Tool Call 机制激活技能。
+Skills 系统给 Agent 提供两个工具。两个工具都需要沙箱后端可用——Box 不可用时不会暴露给 Agent。
 
-## 工具概览
-
-| 工具 | 功能 | 需要沙箱 |
-|------|------|---------|
-| `activate` | 激活一个技能 | 是 |
-| `register_skill` | 从沙箱目录注册技能 | 是 |
-
-<Note>
-这两个工具需要 Box Runtime 和沙箱后端可用。流水线绑定会影响注入给 Local Agent 的 Skill 索引；当前 `activate` 工具本身按全局 Skill 名称查找，不在调用时强制校验绑定范围。
-</Note>
+| 工具 | 用途 |
+|------|------|
+| `activate` | 激活一个已有技能，把 SKILL.md 拉入上下文 |
+| `register_skill` | 把沙箱里准备好的目录注册为新技能 |
 
 ---
 
-## activate
-
-激活一个技能，将技能指令注入到当前对话上下文中。
-
-### 使用场景
-
-- 激活已有的技能以获取专业能力
-- 获取技能的完整指令和运行时上下文
+## `activate`
 
 ### 参数
 
 | 参数 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `skill_name` | string | 是 | 要激活的技能名称（无需参数） |
+| `skill_name` | string | 是 | 要激活的技能名称 |
 
-### 工作原理
+### 行为
 
-1. Agent 调用 `activate` 工具，传入技能名称
-2. 系统返回技能的 SKILL.md 内容作为 Tool Result
-3. 该 Skill 被标记为已激活，可通过 `/workspace/.skills/{skill-name}/` 访问
-4. `read`/`glob`/`grep` 可读取可见 Skill；对 Skill 包执行 `exec`/`write`/`edit` 需要先激活
+1. 在 skill store 里查找该名称
+2. 把 SKILL.md 内容作为 Tool Result 返回，注入到当前对话上下文
+3. 该技能标记为已激活，可通过 `/workspace/.skills/{skill_name}/` 访问
 
-### 示例
+激活后：
+- `read` / `glob` / `grep` 可以读所有已挂载的技能
+- 对技能包执行 `exec` / `write` / `edit` 仅限**已激活**的技能
+
+### 调用示例
 
 ```json
-{
-  "skill_name": "pdf"
-}
+{ "skill_name": "pdf" }
 ```
 
 ### 返回值
@@ -54,65 +42,58 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
   "activated": true,
   "skill_name": "pdf",
   "mount_path": "/workspace/.skills/pdf",
-  "content": "<command-message>The \"pdf\" skill is activated</command-message>\n<skill-activation>\n<skill-name>pdf</skill-name>\n<mount-path>/workspace/.skills/pdf</mount-path>\n<package-root>/path/to/skill</package-root>\n\n## Instructions\n...\n\n## Runtime Context\nThe skill package is mounted at /workspace/.skills/pdf. Use the standard tools to interact with it:\n- Use `read` to inspect files under /workspace/.skills/pdf\n- Use `exec` with workdir set to /workspace/.skills/pdf to run commands in that package\n- Use `write` and `edit` on that path when the instructions require updating files\n</skill-activation>"
+  "content": "<command-message>The \"pdf\" skill is activated</command-message>\n<skill-activation>\n  ...SKILL.md 内容...\n</skill-activation>"
 }
 ```
 
 ### 错误
 
-- `skill_name is required`: 未提供技能名称
-- `Skill "xxx" not found`: 技能不存在
+- `skill_name is required` — 未提供名称
+- `Skill "xxx" not found` — 技能不存在
 
 ---
 
-## register_skill
+## `register_skill`
 
-从沙箱工作区目录注册技能包到 LangBot 技能存储。沙箱后端可用时，目标存储由 Box Runtime 管理，默认位于 `<box.local.host_root>/skills`。
-
-### 使用场景
-
-- 在沙箱中创建新技能后注册
-- 导入预先准备的技能包
-
-### 前提条件
-
-- 沙箱功能已启用
-- 目标目录存在于 `/workspace` 下
-- 目录或其两层以内的子目录包含 `SKILL.md` 文件
+把 `/workspace` 下准备好的目录注册到 skill store。
 
 ### 参数
 
 | 参数 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `path` | string | 是 | 沙箱内的目录路径（必须在 `/workspace` 下；该目录或两层以内子目录需包含 SKILL.md） |
-| `name` | string | 否 | 覆盖技能名称，默认使用 SKILL.md 中的名称或目录名 |
-| `display_name` | string | 否 | 覆盖显示名称 |
+| `path` | string | 是 | 沙箱内目录路径，必须在 `/workspace` 下 |
+| `name` | string | 否 | 覆盖技能名（默认用 SKILL.md 的 `name` 或目录名） |
+| `display_name` | string | 否 | 覆盖显示名 |
 | `description` | string | 否 | 覆盖描述 |
-| `instructions` | string | 否 | 覆盖指令内容 |
+| `instructions` | string | 否 | 覆盖指令正文 |
 
-### 工作流程
+### 前置条件
+
+- 沙箱已启用且可用
+- `path` 在 `/workspace` 下
+- 该目录本身、或两层以内子目录里包含 `SKILL.md`
+
+### 典型流程
 
 ```
-1. 在沙箱中准备技能目录
+1. Agent 在沙箱里准备目录：
    /workspace/my-skill/
-   |-- SKILL.md
-   `-- scripts/
-       `-- main.py
+   ├── SKILL.md
+   └── scripts/main.py
 
-2. 调用 register_skill
+2. Agent 调用 register_skill(path="/workspace/my-skill")
 
-3. 技能被注册到技能存储
-   - 可通过 activate 工具激活使用
-   - 默认写入 Box Runtime 管理的 skills root
+3. 技能写入 Box Runtime 的 skill store，
+   之后任意会话都能通过 activate 使用
 ```
 
-### 示例
+### 调用示例
 
 ```json
 {
   "path": "/workspace/my-skill",
   "name": "data-processor",
-  "description": "处理和转换数据文件"
+  "description": "处理和转换 CSV/JSON 数据"
 }
 ```
 
@@ -126,71 +107,16 @@ Skills 系统为 Agent 提供了两个工具，用于激活和注册技能。设
   "skill": {
     "name": "data-processor",
     "display_name": "数据处理工具",
-    "description": "处理和转换数据文件",
-    "instructions": "...",
-    "package_root": "/path/to/box/skills/data-processor"
+    "description": "处理和转换 CSV/JSON 数据",
+    "package_root": "/.../skills/data-processor"
   }
 }
 ```
 
 ### 错误
 
-- `path is required`: 未提供路径
-- `path must be under /workspace`: 路径不在工作区内
-- `Directory does not exist`: 目录不存在
-- `No SKILL.md found in ...`: 目录及其两层以内子目录中没有 SKILL.md 文件
-- `Multiple skill directories found...`: 目标路径下发现多个 Skill 目录，请把 `path` 指向具体 Skill 目录
-
----
-
-## 激活机制
-
-Skills 系统采用 Tool Call 机制激活技能，而非文本标记。这与 Claude Code 的设计保持一致。
-
-### 激活方式
-
-Agent 通过调用 `activate` 工具来激活技能：
-
-```json
-{
-  "skill_name": "pdf"
-}
-```
-
-### 激活后效果
-
-1. **指令注入**：SKILL.md 内容作为 Tool Result 返回，注入到上下文
-2. **激活标记**：Skill 被记录为已激活，并通过 `/workspace/.skills/{skill-name}/` 暴露给工具
-3. **文件操作**：`read`/`glob`/`grep` 可读取可见 Skill；对 Skill 包执行 `exec`/`write`/`edit` 需要先激活
-
-### 设计优势
-
-| 特性 | 说明 |
-|------|------|
-| **KV Cache 保护** | 技能指令通过 Tool Result 按需加载，不影响对话历史的缓存效率 |
-| **渐进式披露** | 工具描述中只显示技能元数据（名称、描述），完整指令在激活后获取 |
-| **运行时隔离** | 每个激活的技能有独立的挂载路径，避免文件冲突 |
-
-### 与文本标记的区别
-
-| 方面 | 旧方案（文本标记） | 新方案（Tool Call） |
-|------|------------------|-------------------|
-| 激活方式 | `[ACTIVATE_SKILL: name]` | `activate` 工具调用 |
-| 指令注入 | 预先注入 System Prompt | Tool Result 动态加载 |
-| KV Cache | 影响 | 保护 |
-| 多技能支持 | 多个标记 | 多次调用 |
-
----
-
-## 创建新技能
-
-创建新技能有两种常用方式：
-
-1. 在 WebUI 的 Skills 页面创建、编辑、从 GitHub 导入或上传 zip 包
-2. 让 Agent 在 `/workspace` 下准备技能目录，然后调用 `register_skill` 注册
-
-注册后，新技能即可通过 `activate` 使用。
-
-<Note>
-新技能会注册到 Box Runtime 管理的 skill store。Box Runtime 或后端不可用时，创建、导入、编辑和 `register_skill` 不可用；不会自动回退到 `data/skills/`。
-</Note>
+- `path is required` — 未提供路径
+- `path must be under /workspace` — 路径不在工作区
+- `Directory does not exist` — 目录不存在
+- `No SKILL.md found in ...` — 目录及两层以内子目录没有 `SKILL.md`
+- `Multiple skill directories found...` — 路径下有多个技能目录，请把 `path` 指向具体子目录

@@ -2,74 +2,53 @@
 title: "Runtimes and Extensions"
 ---
 
-LangBot has plugins, MCP servers, Skills, and the sandbox. They can all contribute to an Agent workflow, but they are managed by different runtimes and enter the conversation at different points.
+LangBot ships four extension mechanisms in parallel — **plugins, MCP, Skills, and the sandbox** — and they are easy to confuse. This page sorts out what each one does and when to use it.
 
-## Short Version
+## One-line Summary
 
-**Sandbox is the execution environment. Box Runtime powers sandbox tools, stdio MCP hosting, and the skill store. Skills are lightweight capability packages activated through Tool Call. Plugins are extension processes managed by Plugin Runtime.**
+- **Sandbox**: an execution environment that lets the Agent run commands and read/write files
+- **Skills**: on-demand instruction packages that hand the Agent a specialized workflow when needed
+- **MCP Server**: connects to external tool services
+- **Plugin**: a long-running extension process that can ship its own config page, event listeners, and knowledge components
 
-## Component Map
+## Comparison
 
-| Component | Managed by | Main purpose | How it reaches the Agent |
-|-----------|------------|--------------|--------------------------|
-| Plugins | Plugin Runtime | Long-lived extensions such as plugin tools, events, pages, and knowledge components | Enabled through pipeline extensions, then exposed by the plugin system |
-| MCP Servers | LangBot MCP Loader; stdio mode can be hosted by Box Runtime | Connect external MCP tools | Enabled through pipeline extensions, then exposed as Agent tools |
-| Skills | Box Runtime skill store | On-demand instructions, scripts, templates, and resources | Returned as Tool Result after the Agent calls `activate` |
-| Sandbox | Box Runtime | Execute commands, read/write workspace files, and host stdio MCP processes | Provides `exec/read/write/edit/glob/grep` when Local Agent and a Box backend are available |
+| Capability | Provided by | How the Agent sees it | When to use |
+|------------|-------------|-----------------------|-------------|
+| Sandbox | Box Runtime | The six tools `exec/read/write/edit/glob/grep` are attached directly | Agent needs to run code or read/write files |
+| Skills | Box Runtime skill store | After the Agent calls `activate`, instructions are injected via Tool Result | Hand the Agent a workflow, template, or script, triggered on demand |
+| MCP Server | LangBot MCP Loader (stdio mode is hosted by Box) | Tools land directly in the Agent's tool list | Connect an existing MCP service |
+| Plugin | Plugin Runtime | Capabilities are exposed through the plugin system | Long-lived capability with a config page, event listeners, or knowledge components |
 
-## Two Runtimes
+## How to Choose
 
-### Plugin Runtime
-
-Plugin Runtime manages plugin processes. Use plugins for long-lived extensions that need lifecycle hooks, configuration, custom pages, event listeners, knowledge components, or standalone tool components.
-
-Common entry points:
-
-- WebUI plugin management
-- Plugin marketplace
-- Plugin development documentation
-
-### Box Runtime
-
-Box Runtime manages code execution environments. It is responsible for:
-
-- Starting Docker/Nsjail/E2B sandbox backends
-- Providing `exec/read/write/edit/glob/grep`
-- Hosting long-running stdio MCP server processes
-- Managing Box-backed Skills storage
-
-In Docker Compose deployments, Box Runtime normally runs as a separate `langbot_box` service.
-
-## Which Extension Should I Use?
-
-| Need | Recommended option |
-|------|--------------------|
-| Add a long-lived configurable system capability | Plugin |
+| Need | Use this |
+|------|----------|
+| Let the Agent run code, install dependencies, or read/write temporary files | Sandbox |
+| Add a specialized workflow or template for the Agent | Skill |
 | Connect an existing MCP tool service | MCP Server |
-| Add a specialized workflow, script, or template for the Agent | Skill |
-| Let the Agent run code, read/write temporary files, or install dependencies | Sandbox |
+| Long-lived capability + background config + events | Plugin |
 
 ## Pipeline Binding
 
-Plugins, MCP Servers, and Skills are pipeline extensions. After installing or creating them, configure the pipeline to:
+Skills, MCP Servers, and plugins are all **pipeline extensions**. After installing or creating them in the WebUI, the pipeline extension config still decides where they're enabled:
 
-- Enable all extensions
-- Or bind only selected plugins, MCP Servers, and Skills
+- Enable all extensions, or
+- Bind only specific extensions
 
-Skill binding only controls which skills are visible to the Agent. The full skill instructions are still loaded only after the Agent calls `activate`.
-
-<Note>
-Sandbox native tools and Skills are currently designed for the built-in Local Agent. When using external runners such as Dify, n8n, Langflow, or Coze, use that platform's own tool and execution model.
-</Note>
+Skill binding decides **which skills the Agent can see** (it controls the `<available_skills>` list). The actual skill content is only injected after the Agent calls `activate`.
 
 ## Troubleshooting Map
 
 | Symptom | Check first |
 |---------|-------------|
-| Agent has no `exec/read/write` tools | Box Runtime status, backend availability, and whether the pipeline uses Local Agent |
-| Sandbox fails in Docker deployment | Whether `langbot_box` mounts `docker.sock`, and whether the Box root source and target paths are identical |
-| File operations fail | `box.local.host_root`, `box.local.default_workspace`, and `box.local.allowed_mount_roots` |
-| Skills do not appear | `box.local.skills_root`, Box skill store, and pipeline Skill binding |
-| stdio MCP fails to start | Box Runtime status, MCP command/args/env, dependency install logs, and `startup_timeout_sec` |
-| Backend selection does not work | Ensure `BOX__BACKEND` writes `box.backend` and is set on the `langbot` service |
+| Agent has no `exec/read/write` tools | `box.enabled`, backend availability, and whether the pipeline uses the built-in Agent |
+| Skill list is empty | Box Runtime status, `box.local.skills_root`, pipeline binding |
+| stdio MCP fails to start | Box Runtime status, MCP command and environment variables, startup timeout |
+| Sandbox fails to start in Docker deployment | Whether `langbot_box` mounts `docker.sock`, and whether Box root paths match |
+| File read/write fails | `box.local.host_root`, `box.local.allowed_mount_roots` |
+| Backend selection has no effect | Confirm `BOX__BACKEND` is set on the `langbot` service, not on `langbot_box` |
 
+<Note>
+Sandbox built-in tools and Skills currently target the built-in Agent. External runners (Dify, n8n, Langflow, Coze, etc.) should use their own tools and execution model.
+</Note>

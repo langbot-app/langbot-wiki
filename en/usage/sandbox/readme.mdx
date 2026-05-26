@@ -2,170 +2,72 @@
 title: "Sandbox"
 ---
 
-LangBot's sandbox feature allows AI agents to safely execute commands, read/write files, run MCP servers, and more in an isolated environment. This gives your AI bot real code execution capabilities.
+The sandbox gives the built-in Agent an isolated execution environment: run commands, read and write files, and host long-lived processes. Everyday Agent use cases (data processing, file operations, running user code, hosting stdio MCP) all rely on it.
 
-## What is a Sandbox?
-
-A sandbox is an isolated execution environment where agents can:
-
-- Execute shell commands (e.g., `python`, `npm`, `curl`)
-- Create, read, and modify files
-- Run long-lived processes (e.g., MCP servers)
-- Access network resources (based on configuration)
-
-Meanwhile, the sandbox provides security isolation:
-
-- Execution doesn't affect the host system
-- Resource usage is limited (CPU, memory, process count)
-- File access scope is controlled
-
-## Use Cases
-
-| Scenario | Description |
-|----------|-------------|
-| **Data Analysis** | Agent executes Python scripts to process data, generate charts |
-| **Code Execution** | Run user-provided code snippets and return results |
-| **File Operations** | Read, edit documents, manage project files |
-| **MCP Server** | Run MCP tool services in isolated environment |
-| **Automation** | Execute ad-hoc scripts or commands requested by the Agent |
-
-## How It Works
-
-```mermaid
-flowchart TB
-    subgraph langbot[LangBot Main Process]
-        agent[Agent / LLM]
-        tools[Native Tools<br/>exec · read · write · edit · glob · grep]
-        service[BoxService]
-        connector[BoxRuntimeConnector]
-        agent --> tools --> service --> connector
-    end
-
-    subgraph runtime[Box Runtime Process]
-        backend[Backend<br/>Docker · Nsjail · E2B]
-        sandbox[Isolated Sandbox<br/>Independent filesystem · Configurable network isolation · Resource limits]
-        backend --> sandbox
-    end
-
-    connector -- Action RPC --> backend
-```
-
-## Backend Types
-
-LangBot supports multiple sandbox backends:
-
-| Backend | Dependency | Features | Use Case |
-|---------|------------|----------|----------|
-| **Docker** | `docker` CLI | Full container isolation, custom images | Production, complete isolation needed |
-| **Nsjail** | `nsjail` binary | Lightweight Linux sandbox, no container | Linux servers, lightweight deployment |
-| **E2B** | `e2b` SDK | Cloud sandbox service | No local infrastructure needed |
-
-<Tip>
-Use the `backend` config option: `local` auto-selects Docker or Nsjail; `docker`/`nsjail`/`e2b` forces a specific backend.
-</Tip>
+Once the sandbox is enabled, the built-in Agent automatically gains six tools — no need to wire each one into the pipeline.
 
 ## Built-in Tools
 
-The sandbox feature provides six built-in tools for agents:
+| Tool | Purpose |
+|------|---------|
+| `exec` | Run shell commands inside the sandbox |
+| `read` | Read workspace files |
+| `write` | Create or overwrite files |
+| `edit` | Modify files via string replacement |
+| `glob` | Find files by glob pattern |
+| `grep` | Search file contents by regex |
 
-| Tool | Function | Example |
-|------|----------|---------|
-| `exec` | Execute shell commands in sandbox | `python script.py` |
-| `read` | Read workspace file contents | Read `/workspace/data.json` |
-| `write` | Create or overwrite files | Write new config file |
-| `edit` | Edit existing files (string replacement) | Modify a function in code |
-| `glob` | Find files by pattern matching | Find `**/*.py` files |
-| `grep` | Search file contents by regex | Search for keywords in code |
+`exec` runs inside the sandbox container; the other five operate directly on the host directory mapped to `/workspace`.
 
 <Note>
-- The `exec` tool runs commands inside the sandbox container; `read`/`write`/`edit`/`glob`/`grep` operate directly on the host directory mapped to `/workspace`.
-- When no backend (Docker/Nsjail/E2B) is available, these tools will not be provided to the Agent.
-- These native tools are designed for the built-in Local Agent. External runners such as Dify, n8n, Langflow, and Coze use their own tool mechanisms.
+These tools target the built-in Agent. When using external runners such as Dify, n8n, Langflow, or Coze, use that platform's own tool mechanism.
 </Note>
 
-## Scope and Lifecycle
+## Sandbox Scope
 
-### Scope Configuration
+The pipeline's AI configuration lets you choose how the sandbox is shared across messages. The default "per chat" works for most cases.
 
-In the pipeline's AI configuration, you can set the **Sandbox Scope**, which determines how sandbox environments are shared across messages:
-
-| Scope | Template | Description |
-|--------|------|------|
-| Global | `{global}` | All users share the same sandbox |
-| Per chat (Recommended) | `{launcher_type}_{launcher_id}` | Messages in the same chat share sandbox |
-| Per user in chat | `{launcher_type}_{launcher_id}_{sender_id}` | Different users in same chat are isolated |
-| Per conversation context | `{launcher_type}_{launcher_id}_{conversation_id}` | Isolated by conversation context |
-| Per message | `{query_id}` | Each message is completely isolated |
-
-### Lifecycle
-
-Sandbox Session lifecycle rules:
-
-| Condition | Behavior |
-|------|------|
-| Idle timeout | Automatically cleaned up after 5 minutes (300 seconds) of inactivity |
-| Running Box-managed processes | Not cleaned up; for example, waits for stdio MCP processes to exit |
-| `persistent: true` | Never automatically cleaned up |
+| Scope | Template | Shared across |
+|-------|----------|---------------|
+| Global | `{global}` | All users share one sandbox |
+| Per chat (default) | `{launcher_type}_{launcher_id}` | Same group or DM shares one |
+| Per user | `{launcher_type}_{launcher_id}_{sender_id}` | Each member in a group is isolated |
+| Per conversation | `{launcher_type}_{launcher_id}_{conversation_id}` | Isolated by conversation |
+| Per message | `{query_id}` | Fully stateless |
 
 <Warning>
-Commands within the same Session share filesystem state. Use "per message" scope for complete isolation.
+Commands within the same scope share filesystem state. Choose "per message" for full isolation.
 </Warning>
 
-## Working Directory and File Mounts
+## Lifecycle
 
-### Directory Structure
-
-Default working directory for different backends:
-
-| Backend | Container Path | Description |
-|---------|-----------|------|
-| Docker | `/workspace` | Mounts host's `host_root` directory |
-| Nsjail | `/workspace` | Mounts host's `host_root` directory |
-| E2B | `/home/user/workspace` | Cloud sandbox writable directory |
-
-Agent operations via `exec`/`read`/`write`/`edit`/`glob`/`grep` tools all work on files under `/workspace`. E2B backend automatically maps paths to `/home/user/workspace`.
-
-### Mount Configuration
-
-Configure host mounts in `config.yaml`:
-
-```yaml
-box:
-  local:
-    host_root: './data/box'           # Host working directory
-    skills_root: 'skills'             # Skill package directory, defaults to host_root/skills
-    allowed_mount_roots:              # Whitelist of directories Agent can mount
-      - './data/box'
-      - '/tmp'
-```
-
-- `host_root`: Default working directory, mapped to `/workspace` in sandbox
-- `skills_root`: Box Runtime-owned Skill package directory. Relative paths are resolved under `host_root`; default is `host_root/skills`
-- `allowed_mount_roots`: Whitelist of directories Agent can request to mount
+| Condition | Behavior |
+|-----------|----------|
+| Idle for more than 5 minutes | Cleaned up automatically |
+| Box-managed processes running (e.g. stdio MCP) | Kept alive until those processes exit |
+| `persistent: true` configured | Never cleaned up automatically |
 
 ## Quick Start
 
-1. Ensure Docker is installed and running (or choose another backend)
-2. Configure sandbox in `config.yaml`:
+1. **Prepare the backend**: install Docker locally, or pick Nsjail / E2B
+2. **Edit `config.yaml`**:
+   ```yaml
+   box:
+     enabled: true
+     backend: 'local'
+     local:
+       host_root: './data/box'
+   ```
+3. **Start LangBot**: the sandbox is enabled automatically
+4. **In the pipeline**, select the built-in Agent plus a model that supports function calling
 
-```yaml
-box:
-  backend: 'local'
-  local:
-    profile: 'default'
-    host_root: './data/box'
-    skills_root: 'skills'
-```
+The Agent will then automatically receive the six tools. See [Sandbox Configuration](./config) for details.
 
-3. Start LangBot, sandbox feature is automatically enabled
-4. Select Local Agent in the pipeline and use a model with function calling support
-5. Agent will automatically have `exec`/`read`/`write`/`edit`/`glob`/`grep` tools
+## Disabling the Sandbox
 
-<Tip>
-The sandbox feature is enabled by default (`box.enabled: true`). As long as the backend is available, Local Agent receives the built-in tools, and no separate sandbox switch is required in the pipeline. To fully disable the sandbox, set `box.enabled: false`.
-</Tip>
+Set `box.enabled: false`. Everything that depends on the sandbox (built-in tools, Skill create/edit/activate, stdio MCP) is disabled together; MCP servers in http/sse mode are unaffected.
 
 ## Next Steps
 
-- [Runtimes and Extensions](./runtime-relationships) - How Sandbox, Box Runtime, MCP, Skills, and plugins relate
-- [Sandbox Configuration](./config) - Backend selection, security profiles, and common options
+- [Sandbox Configuration](./config) — backends, security profiles, mounts, environment variables
+- [Runtimes & Extensions Compared](./runtime-relationships) — how the sandbox, Skills, MCP, and plugins divide responsibilities
