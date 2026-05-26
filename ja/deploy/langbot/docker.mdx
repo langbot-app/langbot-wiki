@@ -19,19 +19,19 @@ git clone https://github.com/langbot-app/LangBot
 cd LangBot/docker
 ```
 
-コンテナを起動します:
+推奨の `all` profile でコンテナを起動します。これにより、サンドボックス、stdio MCP ホスティング、Skill の追加/編集など Box Runtime に依存する機能がデフォルトで有効になります:
+
+```bash
+docker compose --profile all up
+```
+
+これにより `langbot`、`langbot_plugin_runtime`、`langbot_box` が起動します。Box Runtime を有効にせず、基本サービスのみを使う場合は次を実行します：
 
 ```bash
 docker compose up
 ```
 
-デフォルトでは `langbot` と `langbot_plugin_runtime` が起動します。サンドボックス、stdio MCP ホスティング、Skill の追加/編集など Box Runtime に依存する機能を使う場合は、次を実行します：
-
-```bash
-docker compose --profile box up
-```
-
-これにより `langbot_box` も起動します。`langbot_box` はホスト Docker socket 経由でサンドボックスコンテナを作成するため、Box root のホスト側パスとコンテナ内パスは同一である必要があります：
+`langbot_box` はホスト Docker socket 経由でサンドボックスコンテナを作成するため、Box root のホスト側パスとコンテナ内パスは同一である必要があります：
 
 ```yaml
 services:
@@ -50,7 +50,7 @@ services:
 ```
 
 <Warning>
-`langbot_box` は `LANGBOT_BOX_*` や `BOX__*` 環境変数を直接読み取りません。`BOX__LOCAL__*` は `langbot` に設定し、LangBot が INIT RPC 経由で Box Runtime に渡します。Box root を変更する場合は `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile box up` のように絶対パスを指定してください。
+`langbot_box` は `LANGBOT_BOX_*` や `BOX__*` 環境変数を直接読み取りません。`BOX__LOCAL__*` は `langbot` に設定し、LangBot が INIT RPC 経由で Box Runtime に渡します。Box root を変更する場合は `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up` のように絶対パスを指定してください。
 </Warning>
 
 コンテナはWebUIアクセス用にポート`5300`をマッピングします。`http://127.0.0.1:5300`にアクセスしてWebUIを表示できます。

@@ -20,19 +20,19 @@ git clone https://github.com/langbot-app/LangBot
 cd LangBot/docker
 ```
 
-启动容器：
+启动容器（推荐启用 `all` profile，以默认启用沙箱、stdio MCP 托管、Skill 添加/编辑等依赖 Box Runtime 的功能）：
+
+```bash
+docker compose --profile all up
+```
+
+这会启动 `langbot`、`langbot_plugin_runtime` 和 `langbot_box`。如果只需要基础服务，不启用 Box Runtime，可以使用：
 
 ```bash
 docker compose up
 ```
 
-默认会启动 `langbot` 和 `langbot_plugin_runtime`。如果需要启用沙箱、stdio MCP 托管、Skill 添加/编辑等依赖 Box Runtime 的功能，请使用：
-
-```bash
-docker compose --profile box up
-```
-
-这会额外启动 `langbot_box` 服务。`langbot_box` 通过主机 Docker socket 创建沙箱容器，因此 Box 根目录的宿主机路径和容器内路径必须一致：
+`langbot_box` 通过主机 Docker socket 创建沙箱容器，因此 Box 根目录的宿主机路径和容器内路径必须一致：
 
 ```yaml
 services:
@@ -51,7 +51,7 @@ services:
 ```
 
 <Warning>
-`langbot_box` 不直接读取 `LANGBOT_BOX_*` 或 `BOX__*` 环境变量；Box 配置由 `langbot` 读取 `BOX__LOCAL__*` 后通过 INIT RPC 传给 Box Runtime。若要改 Box 根目录，请使用绝对路径设置 `LANGBOT_BOX_ROOT`，例如 `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile box up`。
+`langbot_box` 不直接读取 `LANGBOT_BOX_*` 或 `BOX__*` 环境变量；Box 配置由 `langbot` 读取 `BOX__LOCAL__*` 后通过 INIT RPC 传给 Box Runtime。若要改 Box 根目录，请使用绝对路径设置 `LANGBOT_BOX_ROOT`，例如 `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up`。
 </Warning>
 
 <Info>
