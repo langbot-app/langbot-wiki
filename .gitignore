@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 /.omc
 .mintlify-last/
+
+# Per-user Claude Code settings (skill symlinks under .claude/skills/ stay tracked)
+.claude/settings.local.json
