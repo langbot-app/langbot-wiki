@@ -20,15 +20,6 @@ LangBot ships four extension mechanisms in parallel — **plugins, MCP, Skills, 
 | MCP Server | LangBot MCP Loader (stdio mode is hosted by Box) | Tools land directly in the Agent's tool list | Connect an existing MCP service |
 | Plugin | Plugin Runtime | Capabilities are exposed through the plugin system | Long-lived capability with a config page, event listeners, or knowledge components |
 
-## How to Choose
-
-| Need | Use this |
-|------|----------|
-| Let the Agent run code, install dependencies, or read/write temporary files | Sandbox |
-| Add a specialized workflow or template for the Agent | Skill |
-| Connect an existing MCP tool service | MCP Server |
-| Long-lived capability + background config + events | Plugin |
-
 ## Pipeline Binding
 
 Skills, MCP Servers, and plugins are all **pipeline extensions**. After installing or creating them in the WebUI, the pipeline extension config still decides where they're enabled:
