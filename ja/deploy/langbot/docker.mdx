@@ -49,6 +49,16 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
+`No sandbox backend (Docker/nsjail/E2B) is ready` と表示される場合は、まず現在のユーザーが Docker にアクセスできるか確認してください:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker info
+```
+
+`docker info` が正常に出力される場合は、LangBot を再起動してください。
+
 <Warning>
 `langbot_box` は `LANGBOT_BOX_*` や `BOX__*` 環境変数を直接読み取りません。`BOX__LOCAL__*` は `langbot` に設定し、LangBot が INIT RPC 経由で Box Runtime に渡します。Box root を変更する場合は `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up` のように絶対パスを指定してください。
 </Warning>

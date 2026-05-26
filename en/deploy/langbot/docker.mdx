@@ -50,6 +50,16 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
+If you see `No sandbox backend (Docker/nsjail/E2B) is ready`, first make sure the current user can access Docker:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker info
+```
+
+If `docker info` works, restart LangBot.
+
 <Warning>
 `langbot_box` does not read `LANGBOT_BOX_*` or `BOX__*` variables directly. Set `BOX__LOCAL__*` on `langbot`; LangBot forwards the effective Box config to Box Runtime through INIT RPC. To change the Box root, set `LANGBOT_BOX_ROOT` to an absolute path, for example `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up`.
 </Warning>
