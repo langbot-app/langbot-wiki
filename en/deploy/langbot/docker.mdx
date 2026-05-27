@@ -20,16 +20,56 @@ git clone https://github.com/langbot-app/LangBot
 cd LangBot/docker
 ```
 
-Start the container:
+Start the containers with the recommended `all` profile, which enables Box Runtime-dependent features by default, including the sandbox, stdio MCP hosting, and Skill add/edit:
+
+```bash
+docker compose --profile all up
+```
+
+This starts `langbot`, `langbot_plugin_runtime`, and `langbot_box`. If you only need the basic services and do not want to enable Box Runtime, run:
 
 ```bash
 docker compose up
 ```
 
+`langbot_box` creates sandbox containers through the host Docker socket, so the Box root path must be identical on the host and inside the container:
+
+```yaml
+services:
+  langbot:
+    environment:
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+
+  langbot_box:
+    profiles: ["box", "all"]
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
+If you see `No sandbox backend (Docker/nsjail/E2B) is ready`, first make sure the current user can access Docker:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker info
+```
+
+If `docker info` works, restart LangBot.
+
+<Warning>
+`langbot_box` does not read `LANGBOT_BOX_*` or `BOX__*` variables directly. Set `BOX__LOCAL__*` on `langbot`; LangBot forwards the effective Box config to Box Runtime through INIT RPC. To change the Box root, set `LANGBOT_BOX_ROOT` to an absolute path, for example `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up`.
+</Warning>
+
 The container maps port `5300` for WebUI access. You can visit `http://127.0.0.1:5300` to view the WebUI.\
-It also maps ports `2280-2290` for reserved for message platform adapters.
+It also maps ports `2280-2285` reserved for message platform adapters.
 
 After completing the LangBot deployment, please continue reading:
 
-- [Bot Configuration Documentation](/en/deploy/platforms/readme).
-- [Model Configuration Documentation](/en/deploy/models/readme).
+- [Bot Configuration Documentation](/en/usage/platforms/readme).
+- [Model Configuration Documentation](/en/usage/models/readme).
+- [Sandbox Documentation](/en/usage/sandbox/readme).
+- [Skills Documentation](/en/usage/skills/readme).

@@ -20,23 +20,64 @@ git clone https://github.com/langbot-app/LangBot
 cd LangBot/docker
 ```
 
-启动容器：
+启动容器（推荐启用 `all` profile，以默认启用沙箱、stdio MCP 托管、Skill 添加/编辑等依赖 Box Runtime 的功能）：
+
+```bash
+docker compose --profile all up
+```
+
+这会启动 `langbot`、`langbot_plugin_runtime` 和 `langbot_box`。如果只需要基础服务，不启用 Box Runtime，可以使用：
 
 ```bash
 docker compose up
 ```
 
+`langbot_box` 通过主机 Docker socket 创建沙箱容器，因此 Box 根目录的宿主机路径和容器内路径必须一致：
+
+```yaml
+services:
+  langbot:
+    environment:
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+
+  langbot_box:
+    profiles: ["box", "all"]
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
+如果提示 `No sandbox backend (Docker/nsjail/E2B) is ready`，请先确认当前用户可访问 Docker：
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker info
+```
+
+若 `docker info` 正常输出，请重启 LangBot。
+
+<Warning>
+`langbot_box` 不直接读取 `LANGBOT_BOX_*` 或 `BOX__*` 环境变量；Box 配置由 `langbot` 读取 `BOX__LOCAL__*` 后通过 INIT RPC 传给 Box Runtime。若要改 Box 根目录，请使用绝对路径设置 `LANGBOT_BOX_ROOT`，例如 `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up`。
+</Warning>
+
 <Info>
   - 如果你的主机位于中国大陆，可以考虑把 `docker-compose.yaml` 文件中的镜像名称改为`docker.langbot.app/langbot-public/rockchin/langbot:latest`以使用我们提供的镜像源。
   - 推荐[设置 Docker 容器代理](https://docker.github.net.cn/network/proxy/)，以便保证 LangBot 在运行期间的网络访问通畅。
+  - 如果需要禁用或强制沙箱后端，请参考[沙箱配置](/zh/usage/sandbox/config)。
 </Info>
 
 首次启动会输出创建配置文件的提示，请继续按照文件配置。
 
 容器会映射`5300`端口供 WebUI 使用，您可以访问`http://127.0.0.1:5300`查看 WebUI。\
-还会映射`2280-2290`端口供使用 OneBot 协议的消息平台适配器反向连接。
+还会映射`2280-2285`端口供使用 OneBot 协议的消息平台适配器反向连接。
 
 完成 LangBot 部署后，请继续阅读：
 
-- [配置机器人文档](/zh/deploy/platforms/readme)。
-- [配置模型文档](/zh/deploy/models/readme)。
+- [配置机器人文档](/zh/usage/platforms/readme)。
+- [配置模型文档](/zh/usage/models/readme)。
+- [沙箱文档](/zh/usage/sandbox/readme)。
+- [技能系统文档](/zh/usage/skills/readme)。

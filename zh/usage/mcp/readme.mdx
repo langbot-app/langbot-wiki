@@ -1,60 +1,107 @@
 ---
-title: "使用MCP服务器"
+title: "MCP 服务器"
 ---
 
-LangBot 支持使用来自 MCP 服务器的工具，您可以添加 MCP 服务器，使用大语言模型中的工具调用特性，更好的处理 LLM 请求。
+LangBot 支持调用来自 MCP 服务器的工具。添加 MCP 后，启用了工具使用能力的内置 Agent 即可在对话中调用这些工具。
 
-<Info>
-  MCP 服务器推荐获取渠道：
-  - [ModelScope](https://modelscope.cn/mcp)
-  - https://mcp.so
-  - https://composio.dev/toolkits
+<Info title="MCP 支持 Streamable HTTP、SSE 和 stdio 三种模式。">
+  首选从 [LangBot Space](https://space.langbot.app) 安装：已上架的 MCP 服务器配置好、开箱即用。
+
+  也可以从 [ModelScope](https://modelscope.cn/mcp)、[mcp.so](https://mcp.so)、[composio.dev](https://composio.dev/toolkits) 等渠道获取，再按下文手动添加。
 </Info>
 
-## 打开模型的函数调用功能
+## 三种运行模式
 
-如图，将模型的`函数调用`功能打开。
+| 模式 | 适合场景 | 备注 |
+|------|----------|------|
+| Streamable HTTP (`mode: "http"`) | 远程 MCP 服务，支持 Streamable HTTP 传输 | LangBot 直接连接远程 URL |
+| SSE | 远程 MCP 服务，支持 SSE 传输 | LangBot 直接连接远程 URL |
+| stdio | 本地命令启动的 MCP Server | 仅在 Box Runtime 可用时支持 |
 
-<img
-  width="400px"
-  src="/images/zh/deploy/mcp/mcp_01.png"
-  alt="enable function call"
-/>
+<Note>
+MCP 工具需要流水线使用**内置 Agent**，并选择**已开启工具使用能力**的模型——见[模型](../models/readme)。Dify、n8n、Langflow、Coze 等外部 Runner 使用各自平台的工具机制。
+</Note>
 
-## 创建MCP服务器
+## 安装 MCP 服务器
 
-点击`插件管理` -\> `MCP管理`，如图所示：
+### 从 LangBot Space（首选）
 
-<img
-  width="1000px"
-  src="/images/zh/deploy/mcp/mcp02.png"
-  alt="server page"
-/>
+[LangBot Space](https://space.langbot.app) 是 LangBot 的官方市场，已上架多种 MCP 服务器。在 WebUI 的 `插件管理` → `MCP 管理` 页面浏览并一键安装，URL、命令、运行模式等参数由市场提供，无需手动填写。
 
-点击右上角的`添加`，选择`添加 MCP 服务器`，
+适合大多数场景；接入未上架的服务再走下面的方式。
 
-<img
-  width="400px"
-  src="/images/zh/deploy/mcp/mcp03.png"
-  alt="create new mcp server"
-/>
+### 手动添加
 
-比如使用 Fetch HTML 服务器，填写对应的 URL，点击`测试`用来测试 MCP 服务器，点`提交`添加此服务器。
+进入 `插件管理` → `MCP 管理`：
 
-添加完成之后，点击卡片上的开关以连接 MCP 服务器，点击卡片可以看到 MCP 服务器的详情：
+<img width="1000px" src="/images/zh/deploy/mcp/mcp02.png" alt="MCP 管理页面" />
 
-<img
-  width="400px"
-  src="/images/zh/deploy/mcp/mcp05.png"
-  alt="detailed server"
-/>
+点击右上角 `添加` → `添加 MCP 服务器`，填写 URL（HTTP/SSE）或命令（stdio），点 `测试` 验证连通，点 `提交` 保存：
 
-## 效果
+<img width="400px" src="/images/zh/deploy/mcp/mcp03.png" alt="新建 MCP 服务器" />
 
-需要在流水线设置中选用 `内置 Agent` 作为运行器，并使用支持函数调用的模型。
+保存后点击卡片上的开关连接 MCP，点击卡片可查看详情：
 
-<img
-  width="1000px"
-  src="/images/zh/deploy/mcp/mcp04.png"
-  alt="dialog with mcp"
-/>
+<img width="400px" src="/images/zh/deploy/mcp/mcp05.png" alt="MCP 服务器详情" />
+
+## 在流水线启用
+
+MCP 服务器添加后，还要在流水线扩展配置里决定 Agent 能看到哪些：
+
+- 开启"启用所有 MCP Server"，或
+- 只绑定指定 MCP Server
+
+未绑定的 MCP 工具不会进入该流水线的工具列表。
+
+## stdio MCP 高级配置
+
+stdio MCP 由 Box Runtime 托管，连接前 LangBot 会：
+
+1. 创建或复用共享的 MCP Box session
+2. 如果能从命令推断本地项目路径，把项目 staging 到工作区
+3. 项目含 `requirements.txt` / `pyproject.toml` / `setup.py` / `setup.cfg` 时先安装依赖
+4. 通过 WebSocket relay 接 MCP 进程的 stdin/stdout
+
+需要细化挂载、网络、超时等行为时，可在 MCP 配置的 `extra_args` 里加 `box` 覆盖项：
+
+```json
+{
+  "mode": "stdio",
+  "extra_args": {
+    "command": "python",
+    "args": ["server.py"],
+    "env": {},
+    "box": {
+      "host_path": "/path/to/mcp-project",
+      "network": "on",
+      "host_path_mode": "ro",
+      "startup_timeout_sec": 120,
+      "image": "python:3.11-slim"
+    }
+  }
+}
+```
+
+常用字段：
+
+| 字段 | 说明 |
+|------|------|
+| `host_path` | MCP 项目在宿主机上的目录。需在 `box.local.allowed_mount_roots` 允许范围内 |
+| `network` | 是否允许网络（依赖安装常用） |
+| `host_path_mode` | 准备 `host_path` 时的访问模式，默认 `ro`；stdio MCP 通常会先 staging 到工作区 |
+| `startup_timeout_sec` | Box 准备和依赖安装超时，默认 120 秒；连接等待会额外预留约 30 秒 |
+| `image` | Docker 后端使用的运行镜像 |
+
+<Warning>
+stdio MCP 在 Box 中运行，依赖安装和进程启动受 sandbox profile、网络权限、资源限制和挂载白名单影响。
+</Warning>
+
+## 常见问题
+
+| 现象 | 检查项 |
+|------|--------|
+| MCP 连接失败 | URL、命令、参数、环境变量是否正确 |
+| stdio MCP 一直连接中 | Box Runtime 是否可用，`startup_timeout_sec` 是否过短 |
+| 依赖安装失败 | sandbox 是否允许网络，依赖文件是否正确 |
+| 本地文件无法访问 | `host_path` 是否存在，是否在 `allowed_mount_roots` 内 |
+| Agent 看不到 MCP 工具 | 流水线是否使用内置 Agent、模型是否启用工具使用能力、MCP 是否在流水线中绑定 |

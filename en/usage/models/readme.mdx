@@ -1,5 +1,5 @@
 ---
-title: "Configure Models (Models)"
+title: "Models"
 ---
 
 ## LangBot Models
@@ -26,11 +26,16 @@ You can add multiple models, and then select which model to use in the pipeline.
 
 Enter these four parameters: `Model Name`, `Model Provider`, `Request URL`, and `API Key`, then submit.
 
-For model capabilities, please choose according to the specific model characteristics:
+For model capabilities, enable the ones the underlying model actually supports:
 
-- Visual Capability: Needs to be enabled to recognize images
+- **Vision**: enable to recognize images
+- **Tool Use** (function calling / tool use): enable so the LLM can call tools during a conversation
 
-- Function Calling: Needs to be enabled to use Agent tools in conversations
+<Note>
+**Tool Use must be enabled on the model whenever you want to use tools from MCP servers, sandbox built-ins (`exec`/`read`/`write`/`edit`/`glob`/`grep`), or Skills.** Without it, even if the pipeline binds those extensions, the Agent won't call any tools.
+
+The underlying model has to actually support function calling for this checkbox to take effect — check the model provider's docs if unsure.
+</Note>
 
 ### Embedding Model
 

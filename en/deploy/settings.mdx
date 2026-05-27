@@ -112,6 +112,25 @@ monitoring:
         check_interval_hours: 1
         # Number of expired rows to delete per table batch
         delete_batch_size: 1000
+box:
+    enabled: true  # Master switch for Box Runtime. When false, Box-dependent features such as sandbox tools, Skill add/edit, and stdio MCP are disabled.
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. Can be written via BOX__BACKEND.
+    runtime:
+        endpoint: ''  # External Box Runtime base URL, e.g. 'ws://127.0.0.1:5410'. When empty, non-Docker deployments use a locally managed Runtime; Docker deployments connect to langbot_box:5410 on the Compose network.
+    local:
+        profile: 'default'
+        image: ''  # Custom local sandbox image. Leave empty to use the profile default.
+        host_root: './data/box'  # Base host directory for local workspace mounts. Docker deployments should use an absolute host path mounted by langbot_box.
+        default_workspace: ''  # Defaults to '<host_root>/default'.
+        skills_root: 'skills'  # Box-owned Skill package directory. Relative paths are resolved under host_root.
+        allowed_mount_roots:  # Defaults to ['<host_root>'] when left empty.
+            - './data/box'
+            - '/tmp'
+        workspace_quota_mb: null  # Optional disk quota override (>= 0). null = profile default.
+    e2b:
+        api_key: ''  # Can also be set via E2B_API_KEY env var.
+        api_url: ''  # Custom API URL for self-hosted deployments.
+        template: ''  # Default template ID (e.g. 'base', 'python-3.11').
 space:
     # Space service URL for OAuth and API
     url: 'https://space.langbot.app'
@@ -142,5 +161,12 @@ The configuration in `config.yaml` can be set via environment variables. Environ
 - `STORAGE__CLEANUP__LOG_RETENTION_DAYS` represents `storage.cleanup.log_retention_days`
 - `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` represents `monitoring.auto_cleanup.retention_days`
 - `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` represents `plugin.binary_storage.max_value_bytes`
+- `BOX__BACKEND` represents `box.backend`
+- `BOX__LOCAL__HOST_ROOT` represents `box.local.host_root`
+- `BOX__LOCAL__SKILLS_ROOT` represents `box.local.skills_root`
 
 On startup, LangBot reads all environment variables, applies the corresponding configuration to `config.yaml`, and writes it to `data/config.yaml`.
+
+<Note>
+Set Box-related configuration on the `langbot` service with the unified `BOX__*` environment variables. LangBot applies them to `data/config.yaml` on startup and sends the Box configuration to `langbot_box` through INIT RPC. Do not set `LANGBOT_BOX_*` or `BOX__*` on the `langbot_box` service; they are not read directly there.
+</Note>
