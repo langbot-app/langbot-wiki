@@ -50,6 +50,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
+<Note>
+  **Box 控制面的启动方式因部署方式而异。** 容器部署下，Box 控制面以独立的 `langbot_box` **容器**运行，`langbot` 通过 WebSocket（`ws://langbot_box:5410`）连接它；而手动启动 / `uvx` 部署则由 `langbot` 直接拉起一个 stdio 子进程作为 Box 控制面。`langbot_box` 借助挂载的宿主 `docker.sock` 在宿主 Docker 上创建沙箱兄弟容器，LangBot 镜像已内置 `docker` 客户端，无需额外安装。
+</Note>
+
 如果提示 `No sandbox backend (Docker/nsjail/E2B) is ready`，请先确认当前用户可访问 Docker：
 
 ```bash

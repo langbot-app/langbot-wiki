@@ -50,6 +50,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
+<Note>
+  **The Box control plane's transport depends on the deployment method.** In Docker deployments it runs as the standalone `langbot_box` **container**, and `langbot` connects to it over WebSocket (`ws://langbot_box:5410`). In manual / `uvx` deployments, `langbot` instead spawns a stdio subprocess as the Box control plane. `langbot_box` creates sandbox sibling containers on the host Docker through the mounted `docker.sock`; the LangBot image already bundles the `docker` client, so no extra installation is required.
+</Note>
+
 If you see `No sandbox backend (Docker/nsjail/E2B) is ready`, first make sure the current user can access Docker:
 
 ```bash

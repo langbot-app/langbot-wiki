@@ -49,6 +49,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
+<Note>
+  **Box コントロールプレーンの起動方式はデプロイ方法によって異なります。** Docker デプロイでは独立した `langbot_box` **コンテナ**として動作し、`langbot` は WebSocket（`ws://langbot_box:5410`）で接続します。手動起動 / `uvx` デプロイでは、`langbot` が Box コントロールプレーンとして stdio サブプロセスを直接起動します。`langbot_box` はマウントされた `docker.sock` を介してホスト Docker 上にサンドボックスの兄弟コンテナを作成します。LangBot イメージには `docker` クライアントが同梱されているため、追加のインストールは不要です。
+</Note>
+
 `No sandbox backend (Docker/nsjail/E2B) is ready` と表示される場合は、まず現在のユーザーが Docker にアクセスできるか確認してください:
 
 ```bash
