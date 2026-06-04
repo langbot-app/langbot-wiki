@@ -19,16 +19,60 @@ git clone https://github.com/langbot-app/LangBot
 cd LangBot/docker
 ```
 
-コンテナを起動します:
+推奨の `all` profile でコンテナを起動します。これにより、サンドボックス、stdio MCP ホスティング、Skill の追加/編集など Box Runtime に依存する機能がデフォルトで有効になります:
+
+```bash
+docker compose --profile all up
+```
+
+これにより `langbot`、`langbot_plugin_runtime`、`langbot_box` が起動します。Box Runtime を有効にせず、基本サービスのみを使う場合は次を実行します：
 
 ```bash
 docker compose up
 ```
 
+`langbot_box` はホスト Docker socket 経由でサンドボックスコンテナを作成するため、Box root のホスト側パスとコンテナ内パスは同一である必要があります：
+
+```yaml
+services:
+  langbot:
+    environment:
+      - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__LOCAL__DEFAULT_WORKSPACE=default
+      - BOX__LOCAL__SKILLS_ROOT=skills
+      - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+
+  langbot_box:
+    profiles: ["box", "all"]
+    volumes:
+      - ${LANGBOT_BOX_ROOT:-${PWD}/data/box}:${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
+<Note>
+  **Box コントロールプレーンの起動方式はデプロイ方法によって異なります。** Docker デプロイでは独立した `langbot_box` **コンテナ**として動作し、`langbot` は WebSocket（`ws://langbot_box:5410`）で接続します。手動起動 / `uvx` デプロイでは、`langbot` が Box コントロールプレーンとして stdio サブプロセスを直接起動します。`langbot_box` はマウントされた `docker.sock` を介してホスト Docker 上にサンドボックスの兄弟コンテナを作成します。LangBot イメージには `docker` クライアントが同梱されているため、追加のインストールは不要です。
+</Note>
+
+`No sandbox backend (Docker/nsjail/E2B) is ready` と表示される場合は、まず現在のユーザーが Docker にアクセスできるか確認してください:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+docker info
+```
+
+`docker info` が正常に出力される場合は、LangBot を再起動してください。
+
+<Warning>
+`langbot_box` は `LANGBOT_BOX_*` や `BOX__*` 環境変数を直接読み取りません。`BOX__LOCAL__*` は `langbot` に設定し、LangBot が INIT RPC 経由で Box Runtime に渡します。Box root を変更する場合は `LANGBOT_BOX_ROOT=/var/lib/langbot/box docker compose --profile all up` のように絶対パスを指定してください。
+</Warning>
+
 コンテナはWebUIアクセス用にポート`5300`をマッピングします。`http://127.0.0.1:5300`にアクセスしてWebUIを表示できます。
-また、メッセージプラットフォームアダプター用に予約されたポート`2280-2290`もマッピングします。
+また、メッセージプラットフォームアダプター用に予約されたポート`2280-2285`もマッピングします。
 
 LangBotのデプロイ完了後、引き続き以下をお読みください:
 
-- [ボット設定ドキュメント](/en/deploy/platforms/readme)
-- [モデル設定ドキュメント](/en/deploy/models/readme)
+- [ボット設定ドキュメント](/ja/usage/platforms/readme)
+- [モデル設定ドキュメント](/ja/usage/models/readme)
+- [サンドボックスドキュメント](/ja/usage/sandbox/readme)
+- [Skills ドキュメント](/ja/usage/skills/readme)

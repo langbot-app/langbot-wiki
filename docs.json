@@ -54,6 +54,54 @@
   },
   "redirects": [
     {
+      "source": "/en/usage/sandbox/backend",
+      "destination": "/en/usage/sandbox/config"
+    },
+    {
+      "source": "/en/usage/sandbox/profiles",
+      "destination": "/en/usage/sandbox/config"
+    },
+    {
+      "source": "/zh/usage/sandbox/backend",
+      "destination": "/zh/usage/sandbox/config"
+    },
+    {
+      "source": "/zh/usage/sandbox/profiles",
+      "destination": "/zh/usage/sandbox/config"
+    },
+    {
+      "source": "/ja/usage/sandbox/backend",
+      "destination": "/ja/usage/sandbox/config"
+    },
+    {
+      "source": "/ja/usage/sandbox/profiles",
+      "destination": "/ja/usage/sandbox/config"
+    },
+    {
+      "source": "/en/usage/skills/skill-format",
+      "destination": "/en/usage/skills/readme"
+    },
+    {
+      "source": "/en/usage/skills/tools-api",
+      "destination": "/en/usage/skills/readme"
+    },
+    {
+      "source": "/zh/usage/skills/skill-format",
+      "destination": "/zh/usage/skills/readme"
+    },
+    {
+      "source": "/zh/usage/skills/tools-api",
+      "destination": "/zh/usage/skills/readme"
+    },
+    {
+      "source": "/ja/usage/skills/skill-format",
+      "destination": "/ja/usage/skills/readme"
+    },
+    {
+      "source": "/ja/usage/skills/tools-api",
+      "destination": "/ja/usage/skills/readme"
+    },
+    {
       "source": "/en/deploy/platforms/:slug*",
       "destination": "/en/usage/platforms/:slug*"
     },
@@ -272,7 +320,7 @@
                   "en/usage/models/readme",
                   "en/usage/pipelines/readme",
                   {
-                    "group": "LLMOps Integrations",
+                    "group": "LLMOps Platforms",
                     "pages": [
                       "en/usage/pipelines/dify",
                       "en/usage/pipelines/n8n",
@@ -281,7 +329,16 @@
                     ]
                   },
                   "en/usage/knowledge/readme",
-                  "en/usage/mcp/readme"
+                  "en/usage/mcp/readme",
+                  {
+                    "group": "Sandbox",
+                    "pages": [
+                      "en/usage/sandbox/readme",
+                      "en/usage/sandbox/runtime-relationships",
+                      "en/usage/sandbox/config"
+                    ]
+                  },
+                  "en/usage/skills/readme"
                 ]
               },
               {
@@ -473,7 +530,7 @@
                   "zh/usage/models/readme",
                   "zh/usage/pipelines/readme",
                   {
-                    "group": "接入 LLMOps 平台",
+                    "group": "LLMOps 平台",
                     "pages": [
                       "zh/usage/pipelines/dify",
                       "zh/usage/pipelines/n8n",
@@ -483,7 +540,16 @@
                     ]
                   },
                   "zh/usage/knowledge/readme",
-                  "zh/usage/mcp/readme"
+                  "zh/usage/mcp/readme",
+                  {
+                    "group": "沙箱",
+                    "pages": [
+                      "zh/usage/sandbox/readme",
+                      "zh/usage/sandbox/runtime-relationships",
+                      "zh/usage/sandbox/config"
+                    ]
+                  },
+                  "zh/usage/skills/readme"
                 ]
               },
               {
@@ -695,7 +761,7 @@
                   "ja/usage/models/readme",
                   "ja/usage/pipelines/readme",
                   {
-                    "group": "LLMOps プラットフォーム連携",
+                    "group": "LLMOps プラットフォーム",
                     "pages": [
                       "ja/usage/pipelines/dify",
                       "ja/usage/pipelines/n8n",
@@ -704,7 +770,16 @@
                     ]
                   },
                   "ja/usage/knowledge/readme",
-                  "ja/usage/mcp/readme"
+                  "ja/usage/mcp/readme",
+                  {
+                    "group": "サンドボックス",
+                    "pages": [
+                      "ja/usage/sandbox/readme",
+                      "ja/usage/sandbox/runtime-relationships",
+                      "ja/usage/sandbox/config"
+                    ]
+                  },
+                  "ja/usage/skills/readme"
                 ]
               },
               {
