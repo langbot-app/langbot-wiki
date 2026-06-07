@@ -9,7 +9,7 @@ title: "Kubernetes デプロイ"
   - コンテナ間ネットワークと永続ストレージの設定方法
 </Warning>
 
-LangBot リポジトリの `docker/` ディレクトリには、すぐに使える Kubernetes マニフェスト `kubernetes.yaml` と、完全な [`README_K8S.md`](https://github.com/langbot-app/LangBot/blob/master/docker/README_K8S.md) が用意されています。本ページはその要点をまとめたもので、Docker Compose デプロイと最も異なる部分である **Box サンドボックスランタイム** に焦点を当てます。
+LangBot リポジトリの `docker/` ディレクトリには、すぐに使える Kubernetes マニフェスト [`kubernetes.yaml`](https://github.com/langbot-app/LangBot/blob/master/docker/kubernetes.yaml) が用意されています。本ページはこのマニフェストのデプロイガイドで、Docker Compose デプロイと最も異なる部分である **Box サンドボックスランタイム** に焦点を当てます。
 
 ## コンポーネント構成
 
@@ -44,7 +44,7 @@ kubectl port-forward -n langbot svc/langbot 5300:5300
 # http://localhost:5300 にアクセス
 ```
 
-本番環境では Ingress + TLS での公開を推奨します。詳細は `README_K8S.md` を参照してください。
+本番環境では Ingress + TLS での公開を推奨します（マニフェストにはコメントアウトされた Ingress / LoadBalancer / NodePort の例が含まれているので、必要に応じてコメントを解除してください）。
 
 ## Box サンドボックスランタイム
 
@@ -99,4 +99,4 @@ kubectl logs -n langbot -l app=langbot | grep -i "box runtime"
 - [Docker デプロイ](/ja/deploy/langbot/docker)
 - [サンドボックスドキュメント](/ja/usage/sandbox/readme) と [サンドボックス設定](/ja/usage/sandbox/config)
 - [スキルシステムドキュメント](/ja/usage/skills/readme)
-- 完全なマニフェストと運用操作：リポジトリ内の [`docker/README_K8S.md`](https://github.com/langbot-app/LangBot/blob/master/docker/README_K8S.md)
+- マニフェストのソースファイル：リポジトリ内の [`docker/kubernetes.yaml`](https://github.com/langbot-app/LangBot/blob/master/docker/kubernetes.yaml)
