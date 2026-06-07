@@ -325,7 +325,9 @@
                       "en/usage/pipelines/dify",
                       "en/usage/pipelines/n8n",
                       "en/usage/pipelines/langflow",
-                      "en/usage/pipelines/coze"
+                      "en/usage/pipelines/coze",
+                      "en/usage/pipelines/weknora",
+                      "en/usage/pipelines/deerflow"
                     ]
                   },
                   "en/usage/knowledge/readme",
@@ -537,7 +539,9 @@
                       "zh/usage/pipelines/n8n",
                       "zh/usage/pipelines/langflow",
                       "zh/usage/pipelines/tbox",
-                      "zh/usage/pipelines/coze"
+                      "zh/usage/pipelines/coze",
+                      "zh/usage/pipelines/weknora",
+                      "zh/usage/pipelines/deerflow"
                     ]
                   },
                   "zh/usage/knowledge/readme",
@@ -768,7 +772,9 @@
                       "ja/usage/pipelines/dify",
                       "ja/usage/pipelines/n8n",
                       "ja/usage/pipelines/langflow",
-                      "ja/usage/pipelines/coze"
+                      "ja/usage/pipelines/coze",
+                      "ja/usage/pipelines/weknora",
+                      "ja/usage/pipelines/deerflow"
                     ]
                   },
                   "ja/usage/knowledge/readme",
