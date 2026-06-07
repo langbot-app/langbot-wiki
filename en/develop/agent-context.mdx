@@ -26,7 +26,7 @@ LangBot/
 ├── main.py                     # Entrypoint shim -> langbot.__main__.main()
 ├── pyproject.toml              # Python project + deps (uv), pins langbot-plugin==<x.y.z>
 ├── src/langbot/
-│   ├── __main__.py             # Real entrypoint, CLI args (e.g. --standalone-runtime)
+│   ├── __main__.py             # Real entrypoint, CLI args (--standalone-runtime / --standalone-box / --debug)
 │   ├── pkg/                    # Core backend package
 │   │   ├── api/                # HTTP API controllers + services (Quart)
 │   │   ├── core/               # App bootstrap, stages, task manager
@@ -92,7 +92,7 @@ Each plugin runs in its own process, with its lifecycle managed by the plugin ru
 - **Backend ↔ Plugin Runtime**:
   - When LangBot is **started directly** (not in a container), the backend **spawns** the runtime itself and talks over **stdio** (lightweight/personal use). stdio **cannot auto-reconnect** — after a disconnect you must restart LangBot; a common failure is an **orphan runtime process** from a previous backend still holding `5400`/`5401` — kill it and restart.
   - When LangBot runs in a **container**, it connects to a standalone runtime over **WebSocket** (production). Control port defaults to `5400`, debug port to `5401`. Config: `plugin.runtime_ws_url` in `data/config.yaml` (e.g. `ws://langbot_plugin_runtime:5400/control/ws`).
-- **Backend ↔ Box Runtime**: The Box subsystem connects to the Box runtime over a control channel (default port `5410`), which executes sandboxed code in Docker / nsjail / E2B.
+- **Backend ↔ Box Runtime**: The Box subsystem connects to the Box runtime over a control channel (default port `5410`), which executes sandboxed code in Docker / nsjail / E2B. Config (`box:` section of `data/config.yaml`): `box.enabled` (master switch), `box.backend` (`'local'`/`'docker'`/`'nsjail'`/`'e2b'`), `box.runtime.endpoint` (external Box runtime URL, e.g. `ws://127.0.0.1:5410`; empty = local auto-managed). As with the plugin runtime, set that endpoint and start with `--standalone-box` to connect to an external Box runtime.
 - The full guide for debugging the runtime, CLI and SDK is in [Debugging Plugin Runtime, CLI, SDK](/en/develop/plugin-runtime); detailed flags and architecture are in the `langbot-plugin-sdk` repo's `AGENTS.md`.
 
 ## Development Environment Setup

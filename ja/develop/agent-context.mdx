@@ -26,7 +26,7 @@ LangBot/
 ├── main.py                     # エントリーシム -> langbot.__main__.main()
 ├── pyproject.toml              # Python プロジェクト + 依存（uv）、langbot-plugin==<x.y.z> を固定
 ├── src/langbot/
-│   ├── __main__.py             # 実際のエントリーポイント、CLI 引数（例：--standalone-runtime）
+│   ├── __main__.py             # 実際のエントリーポイント、CLI 引数（--standalone-runtime / --standalone-box / --debug）
 │   ├── pkg/                    # コアバックエンドパッケージ
 │   │   ├── api/                # HTTP API コントローラ + サービス（Quart）
 │   │   ├── core/               # アプリ起動、ステージ、タスクマネージャ
@@ -92,7 +92,7 @@ LangBot/
 - **バックエンド ↔ プラグインランタイム**：
   - LangBot を**直接起動**した場合（コンテナ外）、バックエンドが自らランタイムを**起動**し、**stdio** で通信します（軽量/個人向け）。stdio は**自動再接続できません**——切断後は LangBot の再起動が必要です。よくある障害は、前のバックエンドが残した**孤児ランタイムプロセス**が `5400`/`5401` を占有しているケースで、それを kill して再起動します。
   - LangBot を**コンテナ**で実行する場合、**WebSocket** で独立したランタイムに接続します（本番向け）。制御ポートは既定 `5400`、デバッグポートは `5401`。設定：`data/config.yaml` の `plugin.runtime_ws_url`（例：`ws://langbot_plugin_runtime:5400/control/ws`）。
-- **バックエンド ↔ Box ランタイム**：Box サブシステムは制御チャネル（既定ポート `5410`）で Box ランタイムに接続し、ランタイムが Docker / nsjail / E2B でサンドボックスコードを実行します。
+- **バックエンド ↔ Box ランタイム**：Box サブシステムは制御チャネル（既定ポート `5410`）で Box ランタイムに接続し、ランタイムが Docker / nsjail / E2B でサンドボックスコードを実行します。設定（`data/config.yaml` の `box:` セクション）：`box.enabled`（マスタースイッチ）、`box.backend`（`'local'`/`'docker'`/`'nsjail'`/`'e2b'`）、`box.runtime.endpoint`（外部 Box ランタイムの URL、例：`ws://127.0.0.1:5410`、空なら ローカル自動管理）。プラグインランタイムと同様、このエンドポイントを設定し `--standalone-box` で起動すると外部 Box ランタイムに接続できます。
 - ランタイム・CLI・SDK のデバッグ方法の詳細は[「プラグインランタイム、CLI、SDK のデバッグ」](/ja/develop/plugin-runtime)を参照。詳細なフラグとアーキテクチャは `langbot-plugin-sdk` リポジトリの `AGENTS.md` にあります。
 
 ## 開発環境のセットアップ
