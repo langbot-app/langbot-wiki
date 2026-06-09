@@ -38,7 +38,12 @@ Plugin Runtimeは、インストールされた各プラグインを自動的に
 ├── main.py  # プラグインメインプログラム、プラグインライフサイクルをリッスン
 ├── manifest.yaml  # プラグインマニフェストファイル、プラグインメタデータを記述
 ├── README.md  # プラグインドキュメントファイル、プラグイン機能と使用方法を記述、プラグインマーケットプレイスページに表示
-└── requirements.txt  # プラグイン依存関係ファイル
+├── readme
+│   └── README_zh_Hans.md  # 簡体字中国語ドキュメント、多言語ドキュメント用
+├── requirements.txt  # プラグイン依存関係ファイル
+└── .github
+    └── workflows
+        └── release.yml  # GitHub Actions ワークフロー、バージョン変更をプッシュすると自動的にビルドして Release を公開
 ```
 
 main.pyのプラグインクラスは各プラグインの共通コードで、プラグイン起動時に初期化され、コンテキスト情報(設定など)が渡されます。ここでプラグインの初期化とシャットダウンロジックを実装できます。プラグインクラスは`langbot_plugin.api.definition.plugin.BasePlugin`を継承し、[LangBotグローバルAPI](/en/plugin/dev/apis/common)を提供します。

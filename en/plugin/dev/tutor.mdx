@@ -38,7 +38,12 @@ A plugin's directory structure is similar to the following:
 ├── main.py  # Plugin main program, listens to plugin lifecycle
 ├── manifest.yaml  # Plugin manifest file, describes plugin metadata
 ├── README.md  # Plugin documentation file, describes plugin functionality and usage, displayed on the plugin marketplace page
-└── requirements.txt  # Plugin dependencies file
+├── readme
+│   └── README_zh_Hans.md  # Simplified Chinese documentation, for multi-language docs
+├── requirements.txt  # Plugin dependencies file
+└── .github
+    └── workflows
+        └── release.yml  # GitHub Actions workflow, automatically builds and publishes a Release when the version is bumped
 ```
 
 The plugin class in main.py is common code for each plugin, initialized when the plugin starts and passed context information (configuration, etc.). You can implement initialization and shutdown logic for the plugin here. The plugin class inherits from `langbot_plugin.api.definition.plugin.BasePlugin` and provides [LangBot Global APIs](/en/plugin/dev/apis/common).
