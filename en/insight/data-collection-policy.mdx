@@ -19,8 +19,35 @@ When telemetry is enabled (via LangBot Space integration), the following data is
 | `version` | The LangBot version you are running |
 | `instance_id` | A randomly generated UUID identifying your LangBot instance (generated at first launch, not linked to personal identity) |
 | `pipeline_plugins` | Names of pipeline plugins involved in the query |
+| `features` | Anonymous feature-usage counters for the query (see below) |
 | `error` | Error traceback if the query failed (no user content included) |
 | `timestamp` | When the query occurred (UTC) |
+
+#### The `features` object
+
+To understand which capabilities are actually used, each query event may include the following counters and category names — **never the content** of tool calls, retrieved documents, or executed code:
+
+| Key | Description |
+|---|---|
+| `tool_calls` | Number of tool invocations during the query, grouped by tool source (`native` / `plugin` / `mcp` / `skill`) |
+| `tool_call_rounds` | How many agent tool-call rounds the query took |
+| `kb` | Knowledge base usage: number of knowledge bases queried, knowledge engine plugin IDs in use, and the number of retrieved entries — not the retrieved text |
+| `sandbox` | Number of sandbox code executions and sandbox errors — not the executed code or its output |
+| `activated_skills` | Names of skills activated during the query |
+| `mcp_servers` | Names of MCP servers bound to the pipeline (omitted when "all enabled" is used) |
+
+### Instance heartbeat
+
+In addition to per-query events, LangBot sends an anonymous **instance heartbeat** once shortly after startup and then once per day. It describes the instance's configuration profile — never its data:
+
+| Field | Description |
+|---|---|
+| `deploy_platform` | How LangBot is deployed (`docker`, `linux`, `darwin`, `win32`, ...) |
+| `database` | Database kind in use (`sqlite` or `postgresql`) — no connection details |
+| `vdb` | Vector database kind in use (e.g., `chroma`, `milvus`, `qdrant`) — no connection details |
+| `box` | Sandbox configuration: enabled flag, availability, backend kind (`docker` / `nsjail` / `e2b`), deployment topology — no workspace contents |
+| `adapters` | Adapter type names of enabled bots |
+| `bot_count`, `pipeline_count`, `mcp_server_count`, `knowledge_base_count`, `plugin_count`, `skill_count` | Object counts only — no names or contents of these resources |
 
 ### Surveys
 
@@ -65,6 +92,7 @@ space:
 
 When telemetry is disabled:
 - No query data will be sent
+- No instance heartbeats will be sent
 - No surveys will be fetched or displayed
 - All other LangBot features continue to work normally
 
@@ -72,4 +100,4 @@ When telemetry is disabled:
 
 We may update this policy as LangBot evolves. Changes will be documented in our release notes and reflected in this page.
 
-*Last updated: July 2025*
+*Last updated: June 2026*

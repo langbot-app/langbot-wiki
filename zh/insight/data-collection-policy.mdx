@@ -19,8 +19,35 @@ LangBot 收集最少量的匿名遥测数据，以帮助改进产品。本文档
 | `version` | 您正在运行的 LangBot 版本 |
 | `instance_id` | 随机生成的 UUID，标识您的 LangBot 实例（首次启动时生成，不与个人身份关联） |
 | `pipeline_plugins` | 参与查询的管道插件名称 |
+| `features` | 本次查询的匿名功能使用计数（见下文） |
 | `error` | 查询失败时的错误追踪信息（不包含用户内容） |
 | `timestamp` | 查询发生的时间（UTC） |
+
+#### `features` 对象
+
+为了解各项能力的实际使用情况，每个查询事件可能包含以下计数和类别名称 — **绝不包含**工具调用内容、检索到的文档内容或执行的代码：
+
+| 键 | 说明 |
+|---|---|
+| `tool_calls` | 本次查询中的工具调用次数，按工具来源分组（`native` / `plugin` / `mcp` / `skill`） |
+| `tool_call_rounds` | 本次查询经历的 Agent 工具调用轮数 |
+| `kb` | 知识库使用情况：查询的知识库数量、使用的知识引擎插件 ID、检索到的条目数量 — 不包含检索到的文本 |
+| `sandbox` | 沙箱代码执行次数和沙箱错误次数 — 不包含执行的代码或其输出 |
+| `activated_skills` | 本次查询中激活的技能名称 |
+| `mcp_servers` | 绑定到管道的 MCP 服务器名称（使用"全部启用"时不发送） |
+
+### 实例心跳
+
+除每次查询事件外，LangBot 会在启动后不久发送一次匿名**实例心跳**，之后每天发送一次。心跳描述实例的配置概况 — 绝不包含实例数据：
+
+| 字段 | 说明 |
+|---|---|
+| `deploy_platform` | LangBot 的部署方式（`docker`、`linux`、`darwin`、`win32` 等） |
+| `database` | 使用的数据库类型（`sqlite` 或 `postgresql`）— 不包含连接信息 |
+| `vdb` | 使用的向量数据库类型（如 `chroma`、`milvus`、`qdrant`）— 不包含连接信息 |
+| `box` | 沙箱配置：启用状态、可用性、后端类型（`docker` / `nsjail` / `e2b`）、部署拓扑 — 不包含工作区内容 |
+| `adapters` | 已启用机器人的适配器类型名称 |
+| `bot_count`、`pipeline_count`、`mcp_server_count`、`knowledge_base_count`、`plugin_count`、`skill_count` | 仅对象数量 — 不包含这些资源的名称或内容 |
 
 ### 问卷调查
 
@@ -65,6 +92,7 @@ space:
 
 关闭遥测后：
 - 不会发送任何查询数据
+- 不会发送实例心跳
 - 不会获取或展示问卷调查
 - 所有其他 LangBot 功能照常运行
 
@@ -72,4 +100,4 @@ space:
 
 我们可能会随着 LangBot 的发展更新此政策。变更将记录在发布说明中并体现在此页面。
 
-*最后更新：2025 年 7 月*
+*最后更新：2026 年 6 月*
