@@ -3,9 +3,7 @@ title: "Features"
 description: "LangBot is an open-source, production-grade, LLM-native instant messaging bot development platform. Build AI agents for QQ, WeChat, WeCom, Lark, DingTalk, Discord, Telegram, Slack and more — with built-in Agent, RAG knowledge base, MCP, Skills and a code sandbox, plus deep integration with Dify, Coze, n8n and Langflow."
 ---
 
-LangBot is an **open-source, production-grade, LLM-native instant messaging bot development platform**. It connects large language models to chat platforms, letting you build intelligent agents — that converse, call tools, and plug into your existing workflows — from a single codebase, all configured and monitored through a browser-based web panel.
-
-LangBot delivers an out-of-the-box IM bot development experience with built-in **Agent, RAG knowledge base, MCP, Skills and a code sandbox**, supports the world's mainstream instant messaging platforms, integrates deeply with Agent platforms such as Dify, Coze, n8n and Langflow, and exposes rich HTTP APIs and a production-grade plugin system for custom development.
+LangBot is an **open-source, production-grade**, LLM-native instant messaging bot development platform. With a single codebase you can bring AI agents to QQ, WeChat, WeCom, Lark, DingTalk, Discord, Telegram, Slack and more — with built-in **Agent, RAG knowledge base, MCP, Skills and a code sandbox**, deep integration with Agent platforms like Dify, Coze, n8n and Langflow, and everything configured and monitored from a browser-based web panel — no hand-written config files.
 
 <Tip>
 **Don't want to self-host?** Try [LangBot Cloud](https://space.langbot.app/cloud) — no server required, sign up and start instantly.
@@ -14,7 +12,7 @@ LangBot delivers an out-of-the-box IM bot development experience with built-in *
 ## Core Capabilities at a Glance
 
 - **AI Conversation & Agent** — multi-turn dialogue, tool calling (function calling), multimodal (image/audio/file) and streaming output, ready out of the box.
-- **RAG Knowledge Base** — built-in vector retrieval with Rerank re-scoring, so your bot answers from your private knowledge.
+- **RAG Knowledge Base** — a built-in knowledge-base engine (vector retrieval + Rerank re-scoring) so your bot answers from your private knowledge, extensible via plugins to seamlessly connect external knowledge-base services like RAGFlow, Dify and FastGPT.
 - **All-Platform Coverage** — one codebase reaches QQ, WeChat, WeCom, Lark, DingTalk, Discord, Telegram, Slack, LINE, KOOK, Matrix and more.
 - **Deep Agent Platform Integration** — native connectors for Dify, Coze, n8n, Langflow, Deerflow, Aliyun Bailian, Ant TBox and other orchestration & workflow platforms.
 - **Skills & Code Sandbox** — on-demand instruction packs paired with a securely isolated code-execution sandbox, so the agent actually *gets things done*.
@@ -55,7 +53,7 @@ For fine-grained, per-platform feature support (sending/receiving images, audio,
 
 ## Model and Agent Platform Support
 
-Since 4.x, LangBot uses **LiteLLM as a unified model request backend**, so beyond the built-in providers below you can also connect any OpenAI-format or LiteLLM-supported model.
+LangBot uses **LiteLLM as a unified model request backend**, so beyond the built-in providers below you can also connect any OpenAI / Anthropic API-format or LiteLLM-supported model.
 
 ### LLM, Aggregation & GPU Platforms
 
@@ -115,7 +113,7 @@ LangBot turns mainstream LLM application paradigms into out-of-the-box capabilit
 | Paradigm | Status | Notes |
 | --- | --- | --- |
 | Agent | ✅ | Built-in agent with tool calling, multi-turn reasoning, multimodal and streaming output |
-| RAG (Knowledge Base) | ✅ | Uses Chroma as the vector database, supports Rerank re-scoring |
+| RAG (Knowledge Base) | ✅ | Built-in knowledge-base engine (default Chroma vector store + Rerank re-scoring), pluggable into external knowledge bases like RAGFlow, Dify and FastGPT |
 | MCP | ✅ | Acts as an MCP client into the tool ecosystem; supports Stdio and HTTP |
 | Skills | ✅ | On-demand instruction packs, pulled into context only when matched — zero extra overhead |
 | Code Sandbox | ✅ | Securely isolated code-execution environment with Docker / nsjail / E2B backends |
@@ -144,14 +142,14 @@ See the [deployment docs](/en/deploy/langbot/kubernetes) and [quick start](/en/i
 
 ## Case Screenshots
 
-![bot_page](/images/zh/insight/features/bot-page.png)
+![LangBot bot configuration page: bind a web page bot to a pipeline in the web dashboard](/images/zh/insight/features/bot-page.png)
 
-![create_model](/images/zh/insight/features/create-model.png)
+![LangBot model configuration: connect any OpenAI / Anthropic API-compatible LLM such as OpenAI or Anthropic](/images/zh/insight/features/create-model.png)
 
-![edit_pipeline](/images/zh/insight/features/edit-pipeline.png)
+![LangBot pipeline AI configuration: choose the built-in Agent runner and primary model](/images/zh/insight/features/edit-pipeline.png)
 
-![plugin_market](/images/zh/insight/features/plugin-market.png)
+![LangBot extension marketplace: one-click install for hundreds of community plugins and MCP tools](/images/zh/insight/features/plugin-market.png)
 
-![private_chat](/images/zh/insight/private_chat.png)
+![LangBot built-in Agent calling the code sandbox: executing Python in real time for exact computation](/images/zh/insight/features/agent-sandbox.png)
 
-![group_chat](/images/zh/insight/group_chat.png)
+![LangBot Skill-driven Agent: producing structured output following a predefined skill](/images/zh/insight/features/agent-skill.png)
