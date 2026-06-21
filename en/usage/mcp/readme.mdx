@@ -5,19 +5,22 @@ description: "Connect MCP (Model Context Protocol) servers to LangBot to extend 
 
 LangBot can call tools from MCP servers. Once an MCP server is added, the built-in Agent — with tool use enabled on its model — can invoke those tools during a conversation.
 
-<Info title="MCP supports Streamable HTTP, SSE, and stdio modes.">
+<Info title="MCP supports two modes: local (stdio) and remote.">
   Install from [LangBot Space](https://space.langbot.app) for the smoothest setup — listed MCPs are pre-configured and ready to use.
 
   You can also fetch from [ModelScope](https://modelscope.cn/mcp), [mcp.so](https://mcp.so), or [composio.dev](https://composio.dev/toolkits), then add them manually as shown below.
 </Info>
 
-## Three Transport Modes
+## Two Transport Modes
 
 | Mode | When to use | Notes |
 |------|-------------|-------|
-| Streamable HTTP (`mode: "http"`) | Remote MCP service that speaks Streamable HTTP | LangBot connects to the remote URL directly |
-| SSE | Remote MCP service that speaks SSE | LangBot connects to the remote URL directly |
-| stdio | MCP server launched by a local command | Only available when Box Runtime is up |
+| Remote (`mode: "remote"`) | Remote MCP service — just paste the URL | LangBot connects to the remote URL directly and auto-detects the transport (tries Streamable HTTP first, falls back to SSE) — no need to choose by hand |
+| Local / stdio (`mode: "stdio"`) | MCP server launched by a local command | Only available when Box Runtime is up |
+
+<Note>
+Earlier versions split the remote mode into separate `http` (Streamable HTTP) and `sse` options; these are now unified into a single `remote` mode, with the transport auto-detected by the backend. Existing `http` / `sse` rows in the database are normalized to `remote` on upgrade, and their connection args (URL, headers, timeout) are preserved unchanged.
+</Note>
 
 <Note>
 MCP tools require the pipeline to use the **built-in Agent**, with a model that has **tool use enabled** — see [Models](../models/readme). External runners (Dify, n8n, Langflow, Coze, etc.) use their own tool mechanisms.
@@ -37,7 +40,7 @@ Open `Plugin Management` → `MCP Management`:
 
 <img width="1000px" src="/images/zh/deploy/mcp/mcp02.png" alt="MCP management page" />
 
-Click `Add` in the top right, choose `Add MCP Server`, fill in the URL (HTTP/SSE) or command (stdio), click `Test` to verify connectivity, then `Submit`:
+Click `Add` in the top right, choose `Add MCP Server`, pick **Local (stdio)** or **Remote** mode: for remote just paste the URL, for local fill in the launch command. Click `Test` to verify connectivity, then `Submit`:
 
 <img width="400px" src="/images/zh/deploy/mcp/mcp03.png" alt="create new MCP server" />
 
