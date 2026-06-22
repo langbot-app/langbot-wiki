@@ -187,7 +187,23 @@ Sync mode is **lossy** (you lose `sequence` and streaming boundaries) and blocks
 
 ## Reference clients & 5-minute demo
 
-The main repo's [`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) ships Python and TypeScript reference clients (with a callback receiver):
+The main repo's [`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) ships an **interactive playground** plus Python and TypeScript reference clients.
+
+### Interactive playground (run this first)
+
+[`playground.py`](https://github.com/langbot-app/LangBot/blob/master/examples/http-bot/playground.py) is a single-file web app: type a message in your browser → it is signed and POSTed to a **running** `http_bot` bot → replies stream back into the page, with a debug panel showing the signature, the `202` ack, and each callback's `sequence` / verification.
+
+```bash
+# From the LangBot repo root, with the backend running:
+PUBLIC_IP=<your-host-ip> ./.venv/bin/python examples/http-bot/playground.py
+# then open  http://<your-host-ip>:8920/
+```
+
+On startup it reads the API key + the `http_bot` bot from `data/langbot.db` and points that bot's `callback_url` + secrets back at itself via the LangBot API (live reload, no restart). Requires an enabled `http_bot` bot bound to a working pipeline.
+
+### Command-line reference clients
+
+[`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) also ships Python and TypeScript reference clients (with a callback receiver):
 
 ```bash
 cd examples/http-bot

@@ -187,7 +187,23 @@ POST /bots/{bot_uuid}/sync
 
 ## リファレンスクライアントと 5 分デモ
 
-メインリポジトリの [`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) に Python と TypeScript のリファレンスクライアント（コールバックレシーバー付き）があります。
+メインリポジトリの [`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) には**インタラクティブなプレイグラウンド**と Python / TypeScript のリファレンスクライアントがあります。
+
+### インタラクティブ・プレイグラウンド（まずこれを実行）
+
+[`playground.py`](https://github.com/langbot-app/LangBot/blob/master/examples/http-bot/playground.py) は単一ファイルの Web アプリです:ブラウザでメッセージを入力 → 署名して**稼働中**の `http_bot` ボットへ POST → 返信がページにストリーム表示され、右側のデバッグパネルに署名・`202` 確認・各コールバックの `sequence` と検証結果が表示されます。
+
+```bash
+# LangBot リポジトリのルートで、バックエンドが稼働している状態で:
+PUBLIC_IP=<あなたのホストIP> ./.venv/bin/python examples/http-bot/playground.py
+# その後  http://<あなたのホストIP>:8920/  を開く
+```
+
+起動時に `data/langbot.db` から API Key と `http_bot` ボットを読み取り、LangBot API 経由でそのボットの `callback_url` とシークレットを自分自身に向けます(ボットはライブリロード、再起動不要)。有効化され、動作するパイプラインにバインドされた `http_bot` ボットが必要です。
+
+### コマンドラインのリファレンスクライアント
+
+[`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) には Python と TypeScript のリファレンスクライアント（コールバックレシーバー付き）もあります。
 
 ```bash
 cd examples/http-bot

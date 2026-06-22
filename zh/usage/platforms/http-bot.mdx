@@ -187,7 +187,23 @@ POST /bots/{bot_uuid}/sync
 
 ## 参考客户端与 5 分钟体验
 
-LangBot 主仓的 [`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) 提供了 Python 与 TypeScript 参考客户端（含回调接收器）：
+LangBot 主仓的 [`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) 提供了一个**交互式调试台**和 Python / TypeScript 参考客户端。
+
+### 交互式调试台（推荐先跑这个）
+
+[`playground.py`](https://github.com/langbot-app/LangBot/blob/master/examples/http-bot/playground.py) 是一个单文件网页应用:在浏览器里打字 → 自动签名后真实发往运行中的 `http_bot` 机器人 → 回复经回调实时显示在页面上,右侧调试面板展示签名、`202` 确认、以及每条回调的 `sequence` 与验签结果。
+
+```bash
+# 在 LangBot 仓库根目录,后端已在运行的前提下:
+PUBLIC_IP=<你的公网IP> ./.venv/bin/python examples/http-bot/playground.py
+# 然后打开  http://<你的公网IP>:8920/
+```
+
+启动时它会从 `data/langbot.db` 读取 API Key 与 `http_bot` 机器人,并通过 LangBot API 把该机器人的回调地址和密钥指向自身(机器人热加载,无需重启)。前提:有一个已启用、且绑定了可用流水线的 `http_bot` 机器人。
+
+### 命令行参考客户端
+
+[`examples/http-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/http-bot) 还提供了 Python 与 TypeScript 参考客户端（含回调接收器）：
 
 ```bash
 cd examples/http-bot
