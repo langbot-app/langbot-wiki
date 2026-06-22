@@ -47,6 +47,21 @@ Cloudflare Turnstile を有効にして bot 対策を行えます：
 3. LangBot ページボットの対応するフィールドに入力
 4. 保存して反映
 
+## ローカルプレビュー / デモ
+
+自分のサイトに組み込む前に埋め込みウィジェットを試したい場合、LangBot 本体リポジトリの
+[`examples/web-page-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/web-page-bot)
+に自己完結型の単一ファイルデモページ `index.html` が用意されています。ブラウザで開いて
+LangBot のアドレスとページボットの UUID を入力すると、実際の埋め込みウィジェットが読み込まれ、
+サイト訪問者と同じようにボットとチャットでき、さらに自分のサイトに貼り付ける `<script>`
+スニペットもリアルタイムで生成されます。
+
+```bash
+# リポジトリのルートを静的配信し、ブラウザで開く
+python3 -m http.server 8930
+# http://localhost:8930/examples/web-page-bot/ にアクセス
+```
+
 ## 使い方
 
 埋め込みコードをウェブサイトに追加後、ページ右下のチャットバブルをクリックするとボットとチャットできます。

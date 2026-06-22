@@ -47,6 +47,20 @@ icon: "/images/platforms/webpage.svg"
 3. 分别填入 LangBot 页面机器人的对应配置项
 4. 保存即可生效
 
+## 本地预览 / 演示
+
+如果你想在接入自己网站前先体验一下嵌入组件的效果，LangBot 主仓的
+[`examples/web-page-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/web-page-bot)
+提供了一个自包含的单文件演示页 `index.html`：在浏览器中打开它，填上你的 LangBot
+地址和页面机器人 UUID，它就会加载真实的嵌入组件，让你像网站访客一样和机器人对话，
+并实时生成可直接粘贴到自己网站的 `<script>` 代码片段。
+
+```bash
+# 在 LangBot 仓库根目录起一个静态服务，然后在浏览器中打开
+python3 -m http.server 8930
+# 访问 http://localhost:8930/examples/web-page-bot/
+```
+
 ## 开始使用
 
 嵌入代码添加到网站后，访客点击页面右下角的聊天气泡即可与机器人进行对话。

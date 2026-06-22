@@ -47,6 +47,21 @@ To protect against abuse, you can enable Cloudflare Turnstile:
 3. Fill them into the corresponding fields in the LangBot Web Page Bot configuration
 4. Save to take effect
 
+## Local Preview / Demo
+
+Want to try the embed widget before wiring it into your own site? The LangBot
+main repo ships a self-contained single-file demo page `index.html` under
+[`examples/web-page-bot/`](https://github.com/langbot-app/LangBot/tree/master/examples/web-page-bot):
+open it in a browser, fill in your LangBot address and Page Bot UUID, and it
+loads the live embed widget so you can chat with the bot just like a site
+visitor — and generates the exact `<script>` snippet to paste into your own site.
+
+```bash
+# Serve the repo root statically, then open it in a browser
+python3 -m http.server 8930
+# Visit http://localhost:8930/examples/web-page-bot/
+```
+
 ## Start Using
 
 After adding the embed code to your website, visitors can click the chat bubble at the bottom-right corner to start chatting with your bot.
