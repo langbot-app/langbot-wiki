@@ -128,6 +128,8 @@ box:
             - './data/box'
             - '/tmp'
         workspace_quota_mb: null  # オプションのディスククォータオーバーライド (>= 0)。null = プロファイルデフォルト。
+    docker:
+        cpu_limit_enabled: true  # false の場合、Docker サンドボックスコンテナは --cpus なしで起動します。メモリと PID 制限は維持されます。
     e2b:
         api_key: ''  # E2B_API_KEY 環境変数でも設定可能。
         api_url: ''  # セルフホストデプロイ用のカスタム API URL。

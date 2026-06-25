@@ -19,6 +19,8 @@ box:
     profile: 'default'
     host_root: './data/box'
     skills_root: 'skills'
+  docker:
+    cpu_limit_enabled: true
 ```
 
 - `enabled`: master switch. When `false`, all Box-dependent features are disabled (sandbox tools, skill add/edit, stdio MCP hosting).
@@ -26,6 +28,7 @@ box:
 - `local.profile`: security profile — controls network, mounts, and resource limits.
 - `local.host_root`: host workspace directory, mapped to `/workspace` inside the sandbox.
 - `local.skills_root`: skill package directory; relative paths resolve under `host_root` (defaults to `host_root/skills`).
+- `docker.cpu_limit_enabled`: whether Docker sandbox containers get a CPU limit; set to `false` to omit `docker run --cpus` while keeping memory and PID limits.
 
 <Note>
 Skills are loaded only from the Box-managed skill store. When Box Runtime or the backend is unavailable, the skill list is empty and create/edit/`register_skill` are disabled — there's no fallback to `data/skills/`.
@@ -77,6 +80,12 @@ The local backends (`local` / `docker` / `nsjail`) share these settings:
 | `local.allowed_mount_roots` | `[host_root]` | Allowlist of host directories the Agent can mount |
 | `local.workspace_quota_mb` | `null` | Workspace disk quota (MB); `null` = use profile default |
 
+## Docker Backend Configuration (box.docker.*)
+
+| Setting | Default | Notes |
+|---------|---------|-------|
+| `docker.cpu_limit_enabled` | `true` | Docker backend only. When `false`, sandbox containers start without `--cpus`; `--memory` and `--pids-limit` still apply. |
+
 ## Cloud Backend Configuration (box.e2b.*)
 
 Configure after setting `backend: 'e2b'`:
@@ -112,6 +121,7 @@ services:
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - BOX__LOCAL__SKILLS_ROOT=skills
       - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__DOCKER__CPU_LIMIT_ENABLED=${LANGBOT_BOX_DOCKER_CPU_LIMIT_ENABLED:-true}
 ```
 
 <Warning>
@@ -139,6 +149,7 @@ box:
 | `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
 | `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`, comma-separated |
 | `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__DOCKER__CPU_LIMIT_ENABLED` | `box.docker.cpu_limit_enabled` |
 | `BOX__E2B__API_KEY` | `box.e2b.api_key` |
 | `BOX__E2B__API_URL` | `box.e2b.api_url` |
 | `BOX__E2B__TEMPLATE` | `box.e2b.template` |

@@ -129,6 +129,8 @@ box:
             - './data/box'
             - '/tmp'
         workspace_quota_mb: null  # 可选磁盘配额覆盖 (>= 0)。null 表示使用 profile 默认值。
+    docker:
+        cpu_limit_enabled: true  # false 时 Docker 沙箱容器不传 --cpus；内存和 PID 限制仍然生效。
     e2b:
         api_key: ''  # 也可通过 E2B_API_KEY 环境变量设置。
         api_url: ''  # 自托管部署的自定义 API URL。

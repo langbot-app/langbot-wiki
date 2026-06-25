@@ -19,6 +19,8 @@ box:
     profile: 'default'
     host_root: './data/box'
     skills_root: 'skills'
+  docker:
+    cpu_limit_enabled: true
 ```
 
 - `enabled`：サンドボックスのマスタースイッチ。`false` にすると、サンドボックス組み込みツール、Skill の追加 / 編集、stdio MCP のホスティングなど Box 依存の機能はすべて無効になります。
@@ -26,6 +28,7 @@ box:
 - `local.profile`：セキュリティプロファイル。ネットワーク、マウント、リソース制限を制御。
 - `local.host_root`：ホスト側のサンドボックス作業ディレクトリ。サンドボックス内では `/workspace` にマウントされます。
 - `local.skills_root`：Skill パッケージのディレクトリ。相対パスは `host_root` 配下に解決され、デフォルトは `host_root/skills`。
+- `docker.cpu_limit_enabled`：Docker サンドボックスコンテナに CPU 制限を付けるかどうか。`false` にすると `docker run --cpus` を省略し、メモリと PID 制限は維持します。
 
 <Note>
 Skill は Box Runtime が管理する skill store からのみ読み込まれます。Box Runtime またはバックエンドが利用できない場合、Skill 一覧は空になり、追加 / 編集 / `register_skill` も使えません。`data/skills/` へのフォールバックは行いません。
@@ -77,6 +80,12 @@ Skill は Box Runtime が管理する skill store からのみ読み込まれま
 | `local.allowed_mount_roots` | `[host_root]` | Agent がマウント要求できるホストディレクトリの許可リスト |
 | `local.workspace_quota_mb` | `null` | ワークスペースのディスク配額（MB）。`null` = プロファイル既定 |
 
+## Docker バックエンド設定（box.docker.*）
+
+| 設定項目 | 既定値 | 説明 |
+|---------|--------|------|
+| `docker.cpu_limit_enabled` | `true` | Docker バックエンドのみ有効。`false` の場合、サンドボックスコンテナは `--cpus` なしで起動しますが、`--memory` と `--pids-limit` は引き続き適用されます。 |
+
 ## クラウドバックエンド設定（box.e2b.*）
 
 `backend: 'e2b'` を指定したうえで設定します：
@@ -112,6 +121,7 @@ services:
       - BOX__LOCAL__HOST_ROOT=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
       - BOX__LOCAL__SKILLS_ROOT=skills
       - BOX__LOCAL__ALLOWED_MOUNT_ROOTS=${LANGBOT_BOX_ROOT:-${PWD}/data/box}
+      - BOX__DOCKER__CPU_LIMIT_ENABLED=${LANGBOT_BOX_DOCKER_CPU_LIMIT_ENABLED:-true}
 ```
 
 <Warning>
@@ -139,6 +149,7 @@ box:
 | `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
 | `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`、カンマ区切り |
 | `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__DOCKER__CPU_LIMIT_ENABLED` | `box.docker.cpu_limit_enabled` |
 | `BOX__E2B__API_KEY` | `box.e2b.api_key` |
 | `BOX__E2B__API_URL` | `box.e2b.api_url` |
 | `BOX__E2B__TEMPLATE` | `box.e2b.template` |
