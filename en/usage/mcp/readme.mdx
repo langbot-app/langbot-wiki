@@ -95,6 +95,7 @@ Common fields:
 | `host_path_mode` | Access mode when staging `host_path`; defaults to `ro`. stdio MCP usually stages into the workspace |
 | `startup_timeout_sec` | Box prep + dependency install timeout, default 120s. Connection wait gets about 30s extra |
 | `image` | Runtime image when the Docker backend is used |
+| `memory_mb` | Per-server memory cap (MB); overrides global `box.default_memory_mb` for this server |
 
 <Warning>
 stdio MCP runs inside Box. Dependency install and process startup are subject to the sandbox profile, network permission, resource limits, and the mount allowlist.

@@ -79,6 +79,24 @@ Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端�
 | `local.skills_root` | `skills` | Skill 包目录；相对路径解析到 `host_root` 下 |
 | `local.allowed_mount_roots` | `[host_root]` | Agent 可请求挂载的主机目录白名单 |
 | `local.workspace_quota_mb` | `null` | 工作区磁盘配额（MB），`null` = 用 profile 默认 |
+| `default_memory_mb` | `1536` | MCP stdio 进程内存上限（MB）；可通过 `BOX__DEFAULT_MEMORY_MB` 覆盖 |
+
+## Box 沙箱内存配置
+
+`box.default_memory_mb` 控制每个 stdio 模式 MCP 服务进程的 nsjail cgroup 内存上限。
+
+| 配置项 | 说明 | 默认值 |
+|---|---|---|
+| `box.default_memory_mb` | MCP 进程内存上限（MB）| 1536 |
+
+可通过 config.yaml 或环境变量 `BOX__DEFAULT_MEMORY_MB` 设置。
+
+**为什么需要调整：**
+- Node.js 类 MCP（npx/bunx 启动）：V8 引擎 + WebAssembly 模块初始化需要较多内存，建议 ≥ 1536 MB
+- Python 类 MCP（uvx 启动）：通常 512 MB 已足够，但用默认值也没问题
+- 内存不足时进程会被强制终止（return_code=137），在日志里表现为「Box managed process exited unexpectedly」
+
+**单个 MCP 服务覆盖：** 在 MCP 配置的 `box.memory_mb` 字段单独设置，优先级高于全局默认值。
 
 ## Docker 后端配置（box.docker.*）
 
@@ -149,6 +167,7 @@ box:
 | `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
 | `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`，逗号分隔 |
 | `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__DEFAULT_MEMORY_MB` | `box.default_memory_mb` |
 | `BOX__DOCKER__CPU_LIMIT_ENABLED` | `box.docker.cpu_limit_enabled` |
 | `BOX__E2B__API_KEY` | `box.e2b.api_key` |
 | `BOX__E2B__API_URL` | `box.e2b.api_url` |

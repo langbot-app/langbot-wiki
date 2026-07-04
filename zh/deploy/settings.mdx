@@ -128,7 +128,8 @@ box:
         allowed_mount_roots:  # 默认为 ['<host_root>']。
             - './data/box'
             - '/tmp'
-        workspace_quota_mb: null  # 可选磁盘配额覆盖 (>= 0)。null 表示使用 profile 默认值。
+        workspace_quota_mb: null  # 可选磁盘配额上限（>=0）。null=套餐默认值。
+    default_memory_mb: 1536  # 每个 MCP stdio 进程的 nsjail cgroup 内存上限（MB）。Node.js 类 MCP（npx/bunx）因 V8+WASM 需要更多内存，过低会导致进程被 OOM 杀死（return_code=137）。可用 BOX__DEFAULT_MEMORY_MB 覆盖。  # 可选磁盘配额覆盖 (>= 0)。null 表示使用 profile 默认值。
     docker:
         cpu_limit_enabled: true  # false 时 Docker 沙箱容器不传 --cpus；内存和 PID 限制仍然生效。
     e2b:

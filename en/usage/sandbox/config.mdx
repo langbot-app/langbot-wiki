@@ -79,6 +79,24 @@ The local backends (`local` / `docker` / `nsjail`) share these settings:
 | `local.skills_root` | `skills` | Skill package directory; relative paths resolve under `host_root` |
 | `local.allowed_mount_roots` | `[host_root]` | Allowlist of host directories the Agent can mount |
 | `local.workspace_quota_mb` | `null` | Workspace disk quota (MB); `null` = use profile default |
+| `default_memory_mb` | `1536` | Memory limit for each MCP stdio process (MB); overridable via `BOX__DEFAULT_MEMORY_MB` |
+
+## Box Sandbox Memory Configuration
+
+`box.default_memory_mb` sets the nsjail cgroup memory cap for every stdio-mode MCP server process.
+
+| Setting | Notes | Default |
+|---|---|---|
+| `box.default_memory_mb` | MCP process memory cap (MB) | 1536 |
+
+Can be set in config.yaml or via the `BOX__DEFAULT_MEMORY_MB` environment variable.
+
+**When to adjust:**
+- Node.js MCP servers (launched via npx/bunx): V8 + WebAssembly module initialisation needs significant memory; keep at ≥ 1536 MB
+- Python MCP servers (launched via uvx): 512 MB is usually enough, but the default is fine too
+- When memory is exhausted, the process is forcibly killed (return_code=137), logged as "Box managed process exited unexpectedly"
+
+**Per-server override:** Set `box.memory_mb` in the individual MCP server config to override the global default.
 
 ## Docker Backend Configuration (box.docker.*)
 
@@ -149,6 +167,7 @@ box:
 | `BOX__LOCAL__SKILLS_ROOT` | `box.local.skills_root` |
 | `BOX__LOCAL__ALLOWED_MOUNT_ROOTS` | `box.local.allowed_mount_roots`, comma-separated |
 | `BOX__LOCAL__WORKSPACE_QUOTA_MB` | `box.local.workspace_quota_mb` |
+| `BOX__DEFAULT_MEMORY_MB` | `box.default_memory_mb` |
 | `BOX__DOCKER__CPU_LIMIT_ENABLED` | `box.docker.cpu_limit_enabled` |
 | `BOX__E2B__API_KEY` | `box.e2b.api_key` |
 | `BOX__E2B__API_URL` | `box.e2b.api_url` |
