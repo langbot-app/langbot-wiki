@@ -242,6 +242,7 @@
                 "group": "Quick Start",
                 "pages": [
                   "en/insight/guide",
+                  "en/insight/troubleshooting",
                   "en/insight/features",
                   "en/insight/community",
                   "en/insight/data-collection-policy"
@@ -455,6 +456,7 @@
                 "group": "快速开始",
                 "pages": [
                   "zh/insight/guide",
+                  "zh/insight/troubleshooting",
                   "zh/insight/features",
                   "zh/insight/community",
                   "zh/insight/data-collection-policy"
@@ -693,6 +695,7 @@
                 "group": "クイックスタート",
                 "pages": [
                   "ja/insight/guide",
+                  "ja/insight/troubleshooting",
                   "ja/insight/features",
                   "ja/insight/community",
                   "ja/insight/data-collection-policy"
