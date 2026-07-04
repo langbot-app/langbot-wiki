@@ -95,6 +95,7 @@ stdio MCP 由 Box Runtime 托管，连接前 LangBot 会：
 | `host_path_mode` | 准备 `host_path` 时的访问模式，默认 `ro`；stdio MCP 通常会先 staging 到工作区 |
 | `startup_timeout_sec` | Box 准备和依赖安装超时，默认 120 秒；连接等待会额外预留约 30 秒 |
 | `image` | Docker 后端使用的运行镜像 |
+| `memory_mb` | 覆盖该服务的内存上限（MB）；优先级高于全局 `box.default_memory_mb` |
 
 <Warning>
 stdio MCP 在 Box 中运行，依赖安装和进程启动受 sandbox profile、网络权限、资源限制和挂载白名单影响。

@@ -129,6 +129,7 @@ box:
             - './data/box'
             - '/tmp'
         workspace_quota_mb: null  # Optional disk quota override (>= 0). null = profile default.
+    default_memory_mb: 1536  # Default nsjail cgroup memory limit per MCP stdio process (MB). Node.js MCP servers (npx/bunx) need more than Python ones due to V8 + WASM overhead. Too low = return_code=137 (OOM). Override per-server with box.memory_mb. Env: BOX__DEFAULT_MEMORY_MB.
     docker:
         cpu_limit_enabled: true  # When false, Docker sandbox containers are started without --cpus. Memory and PID limits still apply.
     e2b:
