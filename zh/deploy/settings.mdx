@@ -79,6 +79,16 @@ vdb:
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    valkey_search:
+        host: 'localhost'
+        port: 6379
+        db: 0
+        username: ''      # 可选（ACL 用户）
+        password: ''      # 可选（ACL / requirepass），不会记录到日志
+        tls: false        # 可选，用于 toB/SaaS 场景
+        index_algorithm: 'HNSW'    # HNSW（近似）或 FLAT（精确）
+        distance_metric: 'COSINE'  # COSINE、L2 或 IP
+        request_timeout: 5000      # 单次请求超时时间（毫秒）
 storage:
     use: local
     cleanup:
@@ -154,6 +164,7 @@ space:
 - SQLite 作为数据库时，监控记录自动清理后会直接释放数据库文件空间。
 - `plugin.binary_storage.max_value_bytes` 用于限制插件单个二进制存储值大小，默认 10 MiB。
 - WebUI 侧边栏的“存储分析”页面可查看数据库、日志、上传文件、向量库、插件、MCP、临时文件等空间占用和清理候选项。
+- `vdb.valkey_search` 基于 [Valkey Search](https://valkey.io/) 模块，通过官方异步客户端 `valkey-glide` 接入，支持向量搜索、全文搜索和混合搜索三种模式。需要运行已加载该模块的服务，例如 `valkey/valkey-bundle:9.1.0`（`docker run -d -p 6379:6379 valkey/valkey-bundle:9.1.0`）。注意：混合搜索采用先过滤再 KNN 的模型，因此 `vector_weight` 参数虽被接受但**不会生效**（Valkey Search 原生限制）。连接为惰性建立，服务不可用或配置错误不会阻塞启动。详见 [Valkey Search 集成文档](https://github.com/langbot-app/LangBot/blob/master/docs/VALKEY_SEARCH_INTEGRATION.md)。
 - `api.global_api_key` 是面向 Agent / 自动化的全局 API Key：设置后，调用 HTTP API 或内置 MCP 服务（`/mcp`）时在请求头携带 `X-API-Key: <key>` 或 `Authorization: Bearer <key>` 即可鉴权，无需登录会话、无需在数据库中创建 `lbk_` 密钥。它是明文写在 `config.yaml` 中的，请仅在可信 / 内网环境启用，并通过 HTTPS 暴露。详见 [API Key 鉴权](https://github.com/langbot-app/LangBot/blob/master/docs/API_KEY_AUTH.md)。
 
 ## 通过环境变量设置

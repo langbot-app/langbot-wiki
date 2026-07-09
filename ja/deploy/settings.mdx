@@ -79,6 +79,16 @@ vdb:
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    valkey_search:
+        host: 'localhost'
+        port: 6379
+        db: 0
+        username: ''      # 任意（ACL ユーザー）
+        password: ''      # 任意（ACL / requirepass）、ログには記録されません
+        tls: false        # 任意、toB/SaaS 環境向け
+        index_algorithm: 'HNSW'    # HNSW（近似）または FLAT（厳密）
+        distance_metric: 'COSINE'  # COSINE、L2、または IP
+        request_timeout: 5000      # リクエストごとのタイムアウト（ミリ秒）
 storage:
     use: local
     cleanup:
@@ -152,6 +162,7 @@ space:
 - SQLite をデータベースとして使用している場合、監視レコードの自動削除後にデータベースファイルの空き容量を直接解放します。
 - `plugin.binary_storage.max_value_bytes` は 1 つのプラグインバイナリストレージ値のサイズを制限します。デフォルトは 10 MiB です。
 - WebUI のサイドバーには「ストレージ分析」ページがあり、データベース、ログ、アップロードファイル、ベクターストア、プラグイン、MCP、一時ファイル、クリーンアップ候補を確認できます。
+- `vdb.valkey_search` は [Valkey Search](https://valkey.io/) モジュールを公式の非同期クライアント `valkey-glide` 経由で利用し、ベクター検索・全文検索・ハイブリッド検索の 3 モードに対応します。モジュールを読み込んだサーバー（例: `valkey/valkey-bundle:9.1.0`、`docker run -d -p 6379:6379 valkey/valkey-bundle:9.1.0`）を起動してください。注意: ハイブリッド検索はフィルタ後に KNN を行うモデルのため、`vector_weight` パラメータは受け付けられますが**反映されません**（Valkey Search の原生的な制限）。接続は遅延確立されるため、サーバーが停止・誤設定でも起動を妨げません。詳細は [Valkey Search 統合ドキュメント](https://github.com/langbot-app/LangBot/blob/master/docs/VALKEY_SEARCH_INTEGRATION.md) を参照してください。
 - `api.global_api_key` はエージェント / 自動化向けのグローバル API キーです。設定すると、HTTP API または組み込み MCP サーバー（`/mcp`）の呼び出し時に `X-API-Key: <key>` または `Authorization: Bearer *** を送るだけで認証されます（ログインセッションやデータベース保存の `lbk_` キーは不要）。`config.yaml` に平文で保存されるため、信頼できる / 内部デプロイでのみ有効化し、HTTPS で公開してください。[API キー認証](https://github.com/langbot-app/LangBot/blob/master/docs/API_KEY_AUTH.md) を参照。
 
 ## 環境変数による設定

@@ -79,6 +79,16 @@ vdb:
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    valkey_search:
+        host: 'localhost'
+        port: 6379
+        db: 0
+        username: ''      # Optional (ACL user)
+        password: ''      # Optional (ACL / requirepass), never logged
+        tls: false        # Optional, for toB/SaaS deployments
+        index_algorithm: 'HNSW'    # HNSW (approximate) or FLAT (exact)
+        distance_metric: 'COSINE'  # COSINE, L2, or IP
+        request_timeout: 5000      # Per-request timeout in ms
 storage:
     use: local
     cleanup:
@@ -154,6 +164,7 @@ space:
 - When SQLite is used as the database, automatic monitoring cleanup directly releases database file space after deleting expired records.
 - `plugin.binary_storage.max_value_bytes` limits the size of a single plugin binary storage value. The default is 10 MiB.
 - The WebUI sidebar includes a “Storage Analysis” page for viewing database, logs, uploaded files, vector store, plugins, MCP, temporary files, and cleanup candidates.
+- `vdb.valkey_search` uses the [Valkey Search](https://valkey.io/) module via the official async `valkey-glide` client and supports vector, full-text, and hybrid search. Run a server with the module loaded, e.g. `valkey/valkey-bundle:9.1.0` (`docker run -d -p 6379:6379 valkey/valkey-bundle:9.1.0`). Note: hybrid search follows a filter-then-KNN model, so the `vector_weight` parameter is accepted but **not honored** (a native Valkey Search limitation). The connection is lazy, so a down or misconfigured server does not block startup. See the [Valkey Search integration doc](https://github.com/langbot-app/LangBot/blob/master/docs/VALKEY_SEARCH_INTEGRATION.md) for details.
 - `api.global_api_key` is a global API key for agents / automation: once set, calls to the HTTP API or the built-in MCP server (`/mcp`) authenticate by sending `X-API-Key: <key>` or `Authorization: Bearer *** — no login session and no database-stored `lbk_` key required. It is stored in plaintext in `config.yaml`, so enable it only on trusted / internal deployments and serve it over HTTPS. See [API Key Authentication](https://github.com/langbot-app/LangBot/blob/master/docs/API_KEY_AUTH.md).
 
 ## Set Configuration Via Environment Variables
