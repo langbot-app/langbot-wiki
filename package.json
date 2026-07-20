@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "npx mintlify dev"
+    "dev": "npx mintlify dev",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "mintlify": "^4.2.375"
