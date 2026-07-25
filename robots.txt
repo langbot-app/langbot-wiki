@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /_next/
+
+Sitemap: https://docs.langbot.app/sitemap.xml
+Sitemap: https://docs.langbot.app/sitemap-alternates.xml
