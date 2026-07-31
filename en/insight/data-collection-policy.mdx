@@ -17,7 +17,8 @@ When telemetry is enabled (via LangBot Space integration), the following data is
 | `model_name` | The model name used for the query (e.g., `gpt-4o`, `deepseek-chat`) |
 | `duration_ms` | How long the query took to process (in milliseconds) |
 | `version` | The LangBot version you are running |
-| `instance_id` | A randomly generated UUID identifying your LangBot instance (generated at first launch, not linked to personal identity) |
+| `workspace_uuid` | A stable UUID identifying the Workspace where the query ran. For the default self-hosted Workspace it is aligned with the installation UUID and is not linked to personal identity. |
+| `runtime_instance_id` | For managed SaaS query events only, the runtime deployment identifier used to refresh idle-timeout activity. It is not stored in the analytics event record. |
 | `pipeline_plugins` | Names of pipeline plugins involved in the query |
 | `features` | Anonymous feature-usage counters for the query (see below) |
 | `error` | Error traceback if the query failed (no user content included) |
@@ -36,9 +37,9 @@ To understand which capabilities are actually used, each query event may include
 | `activated_skills` | Names of skills activated during the query |
 | `mcp_servers` | Names of MCP servers bound to the pipeline (omitted when "all enabled" is used) |
 
-### Instance heartbeat
+### Workspace heartbeat
 
-In addition to per-query events, LangBot sends an anonymous **instance heartbeat** once shortly after startup and then once per day. It describes the instance's configuration profile — never its data:
+In addition to per-query events, LangBot sends one anonymous **Workspace heartbeat** for each active Workspace shortly after startup and then once per day. It describes that Workspace's configuration profile — never its data:
 
 | Field | Description |
 |---|---|
@@ -92,7 +93,7 @@ space:
 
 When telemetry is disabled:
 - No query data will be sent
-- No instance heartbeats will be sent
+- No Workspace heartbeats will be sent
 - No surveys will be fetched or displayed
 - All other LangBot features continue to work normally
 
@@ -100,4 +101,4 @@ When telemetry is disabled:
 
 We may update this policy as LangBot evolves. Changes will be documented in our release notes and reflected in this page.
 
-*Last updated: June 2026*
+*Last updated: July 2026*
