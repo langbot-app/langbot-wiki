@@ -27,6 +27,8 @@ You can add multiple models, and then select which model to use in the pipeline.
 
 Enter these four parameters: `Model Name`, `Model Provider`, `Request URL`, and `API Key`, then submit.
 
+For OpenAI-compatible multi-model gateways, set **Model Provider** to an OpenAI-compatible option and point **Request URL** at the gateway's `/v1` endpoint — for example [DaoXE](https://daoxe.com) at `https://api.daoxe.com/v1` (use an exact model id from the gateway).
+
 For model capabilities, enable the ones the underlying model actually supports:
 
 - **Vision**: enable to recognize images
