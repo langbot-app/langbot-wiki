@@ -1,18 +1,57 @@
 ---
 title: "系统环境设置"
-description: "配置 LangBot 系统环境变量与运行时设置，定制你的 AI 机器人部署。"
+description: "完整说明 LangBot config.yaml 的 API、并发、数据库、向量库、存储、插件、MCP、监控与 Box 配置。"
 ---
 
-配置系统运行的一些环境信息，文件位于 `data/config.yaml`。
-一般不需要修改。
+LangBot 的运行配置位于 `data/config.yaml`。首次启动会从默认模板生成该文件；下面的示例与 LangBot 仓库中的 [`src/langbot/templates/config.yaml`](https://github.com/langbot-app/LangBot/blob/master/src/langbot/templates/config.yaml) 保持一致。
+
+<Info>
+大多数自部署用户只需要关注公网地址、数据库/向量库、对象存储与 Box Runtime。未理解用途的容量和 Cloud 安全上限建议保持默认值。
+</Info>
+
+## 完整默认配置
 
 ```yaml
-admins: []
 api:
     port: 5300
     webhook_prefix: 'http://127.0.0.1:5300'
     extra_webhook_prefix: ''
-    global_api_key: ''  # 全局 API Key。非空时即可直接用于 HTTP API 与 MCP 服务（/mcp）鉴权，无需登录态、无需数据库记录、无需 lbk_ 前缀；留空则关闭。明文存储，仅在可信/内网部署启用并配合 HTTPS。
+    # Canonical browser origin when WebUI and API use different origins in
+    # development (for example http://localhost:3000). Production bundled UI
+    # may leave this empty when webhook_prefix already has the browser origin.
+    # OAuth redirects trust only these server-side values, never request Host
+    # or Origin headers.
+    webui_url: ''
+    # Global API key for the HTTP service API and the MCP server. When set to a
+    # non-empty string, this key is accepted anywhere a web-UI-created API key is
+    # accepted (X-API-Key header or "Authorization: Bearer <key>"), WITHOUT any
+    # login session and without a database record. Leave empty to disable.
+    # Keep this value secret; only enable it on trusted/internal deployments.
+    global_api_key: ''
+workspace:
+    invitations:
+        # Public WebUI origin used to build invitation links. Leave empty to
+        # use api.webui_url, then api.webhook_prefix. Set via
+        # WORKSPACE__INVITATIONS__PUBLIC_WEB_URL in container deployments.
+        public_web_url: ''
+        email:
+            # Optional invitation email delivery. Empty provider keeps
+            # invitations link-only. Supported: resend, smtp.
+            provider: ''
+            from: ''
+            timeout_seconds: 10
+            resend:
+                api_url: 'https://api.resend.com/emails'
+                # Secret. Set via WORKSPACE__INVITATIONS__EMAIL__RESEND__API_KEY.
+                api_key: ''
+            smtp:
+                host: ''
+                port: 587
+                username: ''
+                # Secret. Set via WORKSPACE__INVITATIONS__EMAIL__SMTP__PASSWORD.
+                password: ''
+                starttls: true
+                ssl: false
 command:
     enable: true
     prefix:
@@ -22,6 +61,35 @@ command:
 concurrency:
     pipeline: 20
     session: 1
+    # Hard admission limits for queued + running pipeline queries.
+    pending_queries: 1000
+    pending_queries_per_workspace: 100
+webhooks:
+    # Bound database materialization and per-message outbound fan-out.
+    # Existing rows above this limit remain deletable through the management
+    # API, but only this many enabled destinations are dispatched.
+    # Supports WEBHOOKS__MAX_PER_WORKSPACE (hard cap: 64).
+    max_per_workspace: 16
+    # Instance-wide request admission. Delivery fails open when every slot is
+    # occupied instead of retaining an unbounded queue of webhook tasks.
+    # Supports WEBHOOKS__MAX_INFLIGHT_REQUESTS (hard cap: 128).
+    max_inflight_requests: 16
+cloud:
+    # Operational safety ceilings for the one logical Cloud instance. These
+    # are not subscription entitlements. An authoritative directory update
+    # that would exceed them is rejected atomically rather than truncated.
+    directory:
+        # Tune downward from the measured production capacity curve. Core has
+        # an absolute safety ceiling of 5,000 active Workspaces.
+        max_active_workspaces: 1000
+        # Full snapshots contain current Workspaces only. Archived tombstones
+        # are delivered through bounded per-Workspace deltas.
+        max_snapshot_workspaces: 1000
+        # Aggregate memberships accepted in one signed snapshot or delta.
+        max_snapshot_memberships: 20000
+        # Signed control-plane envelope buffered by the closed adapter before
+        # JSON/JWS verification (32 MiB; absolute maximum 64 MiB).
+        max_response_bytes: 33554432
 proxy:
     http: ''
     https: ''
@@ -31,13 +99,62 @@ system:
     recovery_key: ''
     allow_modify_login_info: true
     disabled_adapters: []
+    blocking_executor:
+        # All asyncio.to_thread work shares this process-wide bounded pool.
+        # Both running threads and queued calls are capped to prevent tenant
+        # bursts from creating an unbounded queue of retained request objects.
+        max_workers: 8
+        max_pending: 128
+        # One trusted Workspace can occupy at most this many running + queued
+        # slots. This must not exceed half of max_workers.
+        max_inflight_per_scope: 4
+    # Public outbound IP addresses of this LangBot deployment. Some platforms
+    # (e.g. WeCom, WeChat Official Account, QQ Official API) require the
+    # caller's IPs to be added to their trusted-IP / IP-whitelist settings.
+    # When set, the web UI shows these IPs on the bot config form of such
+    # adapters. Also settable via the SYSTEM__OUTBOUND_IPS env var
+    # (comma-separated). Empty list = hidden in the web UI.
+    outbound_ips: []
     limitation:
         max_bots: -1
         max_pipelines: -1
         max_extensions: -1
+        max_knowledge_bases: -1
+        # When set to a non-empty string, every pipeline is forced to use this
+        # Box sandbox-scope template regardless of its own configuration, and
+        # the per-pipeline "Sandbox Scope" selector is locked in the web UI.
+        # Used by SaaS deployments to confine a tenant to a single shared
+        # sandbox (set to '{global}'). Empty string = no restriction.
+        force_box_session_id_template: ''
     task_retention:
-        # 内存中最多保留的已完成异步任务记录数量
+        # Keep at most this many completed async task records in memory
         completed_limit: 200
+        # Bound progress output retained by one task, including running tasks.
+        max_log_chars: 200000
+        # Protect the shared process from user-triggered operation storms.
+        max_active_user_tasks: 256
+        max_active_user_tasks_per_workspace: 8
+    session_retention:
+        # Process-local conversation sessions are a cache, not durable history.
+        max_entries: 2000
+        max_entries_per_workspace: 200
+        idle_ttl_seconds: 86400
+        max_conversations_per_session: 20
+        max_messages_per_conversation: 100
+    websocket_retention:
+        # Bound live browser sockets and per-Workspace fan-out in the shared process.
+        max_connections: 1024
+        max_connections_per_workspace: 32
+        # Idle proxy runtimes are evicted when this process-local cache fills.
+        max_workspace_proxies: 1024
+        max_conversations_per_workspace: 200
+        max_messages_per_conversation: 100
+        conversation_idle_ttl_seconds: 86400
+        send_queue_size: 100
+    response_limits:
+        # Defense in depth for tenant-configured upstream providers.
+        max_generated_chars: 1048576
+        max_stream_chunks: 100000
     jwt:
         expire: 604800
         secret: ''
@@ -46,34 +163,59 @@ database:
     sqlite:
         path: 'data/langbot.db'
     postgresql:
+        # Optional SQLAlchemy URL (postgresql[+asyncpg]://...). When set, it
+        # overrides the structured fields and preserves TLS/query options.
+        url: ''
         host: '127.0.0.1'
         port: 5432
         user: 'postgres'
         password: 'postgres'
         database: 'postgres'
+        # One bounded pool is shared by business data and Cloud pgvector.
+        pool_size: 10
+        max_overflow: 10
+        pool_timeout_seconds: 30
+        pool_recycle_seconds: 1800
+        # Applied only to Cloud runtime connections. The one-shot release
+        # migration uses its operator connection without these short limits.
+        statement_timeout_ms: 60000
+        lock_timeout_ms: 5000
+        idle_in_transaction_session_timeout_ms: 60000
+    cloud_migration:
+        # `langbot migrate --cloud` reads an operator-only PostgreSQL DSN from
+        # this environment variable. The operator role must differ from the
+        # runtime role above; never put its password in this file or CLI args.
+        operator_dsn_env: 'LANGBOT_CLOUD_MIGRATION_DSN'
 vdb:
     use: chroma
+    # Bound process-local collection/index handles across all Workspaces.
+    runtime_cache_limit: 1024
     qdrant:
         url: ''
         host: localhost
         port: 6333
         api_key: ''
     seekdb:
-        mode: embedded  # 'embedded' 或 'server'
-        # 嵌入式模式配置：
+        mode: embedded  # 'embedded' or 'server'
+        # Embedded mode options:
         path: './data/seekdb'
         database: 'langbot'
-        # 服务器模式配置（mode='server' 时生效）：
+        # Server mode options (used when mode='server'):
         host: 'localhost'
         port: 2881
         user: 'root'
         password: ''
-        tenant: ''  # 可选，用于 OceanBase 多租户场景
+        tenant: ''  # Optional, for OceanBase server
     milvus:
         uri: 'http://127.0.0.1:19530'
         token: ''
         db_name: ''
     pgvector:
+        # SaaS/shared-schema deployments reuse database.postgresql. OSS can
+        # keep this false when deliberately using an external pgvector DB.
+        use_business_database: false
+        # Release migrations create one partial ANN index per enabled value.
+        allowed_dimensions: [384, 512, 768, 1024, 1536]
         host: '127.0.0.1'
         port: 5433
         database: 'langbot'
@@ -81,110 +223,296 @@ vdb:
         password: 'postgres'
     valkey_search:
         host: 'localhost'
-        port: 6379
+        port: 6379            # integration tests use 6380 -> valkey/valkey-bundle:9.1.0
         db: 0
-        username: ''      # 可选（ACL 用户）
-        password: ''      # 可选（ACL / requirepass），不会记录到日志
-        tls: false        # 可选，用于 toB/SaaS 场景
-        index_algorithm: 'HNSW'    # HNSW（近似）或 FLAT（精确）
-        distance_metric: 'COSINE'  # COSINE、L2 或 IP
-        request_timeout: 5000      # 单次请求超时时间（毫秒）
+        password: ''          # optional (toB auth)
+        username: ''          # optional (ACL user, toB)
+        tls: false            # optional (toB/SaaS)
+        index_algorithm: 'HNSW'   # HNSW | FLAT
+        distance_metric: 'COSINE' # COSINE | L2 | IP
+        request_timeout: 5000     # per-request timeout in ms (glide default 250ms is too low for KNN)
 storage:
     use: local
+    # Bound every object materialized into Core memory. Built-in Local/S3
+    # providers enforce this while reading (hard cap: 64 MiB).
+    max_object_read_bytes: 10485760
     cleanup:
-        # 是否定期清理本地/S3 上传文件和旧日志文件
+        # Enable periodic cleanup of local/S3 uploaded files and old log files
         enabled: true
-        # 清理检查间隔，单位为小时
+        # Cleanup check interval in hours
         check_interval_hours: 1
-        # 超过此天数的根目录上传文件会被删除
+        # Root-level uploaded files older than this will be deleted
         uploaded_file_retention_days: 7
-        # 最多保留此天数内的 LangBot 日志文件
+        # LangBot log files older than this many days will be deleted
         log_retention_days: 3
+        # Bound per-Workspace file cleanup and diagnostic candidate lists.
+        # Supports STORAGE__CLEANUP__MAX_FILES_PER_RUN (hard cap: 10000).
+        max_files_per_run: 1000
     s3:
         endpoint_url: ''
         access_key_id: ''
         secret_access_key: ''
         region: 'us-east-1'
         bucket: 'langbot-storage'
+        # boto3 is synchronous; bound the number of operations delegated to
+        # worker threads so an S3 slowdown cannot saturate the process.
+        max_concurrency: 16
 plugin:
     enable: true
     runtime_ws_url: 'ws://langbot_plugin_runtime:5400/control/ws'
     enable_marketplace: true
     display_plugin_debug_url: 'ws://localhost:5401/plugin/debug/ws'
+    worker:
+        # Instance-wide maximum for every plugin installation. Plugin
+        # manifests cannot raise or override these limits.
+        max_cpus: 1.0
+        max_memory_mb: 512
+        max_pids: 128
+        max_open_files: 256
+        max_file_size_mb: 512
+        # Instance-wide admission budgets. The effective worker count is the
+        # lowest of max_workers, max_total_cpus/max_cpus and
+        # max_total_memory_mb/max_memory_mb.
+        max_workers: 16
+        max_total_cpus: 8.0
+        max_total_memory_mb: 8192
+        # Includes disabled and historical installation fences retained to
+        # reject stale desired-state replay.
+        max_installations: 10000
+        # Restart storms are globally serialized by default. Repeated
+        # unexpected exits within the configured window open a Runtime-wide
+        # circuit; one half-open probe must remain stable before other
+        # installations may restart.
+        max_concurrent_restarts: 1
+        restart_failure_threshold: 8
+        restart_failure_window_seconds: 30.0
+        restart_circuit_open_seconds: 60.0
+        # Cloud shared Runtime sets this to true and fails closed unless
+        # delegated cgroup v2 controllers are available.
+        require_hard_limits: false
     binary_storage:
-        # 单个插件二进制存储值的最大字节数
+        # Max bytes for a single plugin binary storage value
         max_value_bytes: 10485760
-monitoring:
-    auto_cleanup:
-        # 是否自动清理过期监控记录
+mcp:
+    # Bound instance-wide MCP startup and shutdown bursts. Supports
+    # MCP__LIFECYCLE_CONCURRENCY and is clamped to a maximum of 128.
+    lifecycle_concurrency: 16
+    stdio:
+        # Independent gate for local stdio MCP transports. Cloud v2 sets
+        # MCP__STDIO__ENABLED=false even when Box Runtime is available.
         enabled: true
-        # 监控记录保留天数，超过此天数的记录会被删除
+monitoring:
+    query_limits:
+        # Maximum records materialized by one paginated monitoring request.
+        # Supports MONITORING__QUERY_LIMITS__PAGE_ROWS (hard cap: 5000).
+        page_rows: 1000
+        # CSV exports are currently assembled in memory. Keep this lower than
+        # the historical 100000-row default (hard cap: 50000).
+        export_rows: 10000
+        # Maximum related records returned by one session/message detail view
+        # (hard cap: 10000). Aggregate statistics remain database-computed.
+        detail_rows: 2000
+        # Token charts are grouped in SQL and return only the newest buckets
+        # (hard cap: 10000). Supports an environment variable override.
+        timeseries_buckets: 1000
+        # Bound high-offset scans that can otherwise monopolize PostgreSQL CPU
+        # (hard cap: 10000000).
+        max_offset: 1000000
+    auto_cleanup:
+        # Enable automatic cleanup of expired monitoring records
+        enabled: true
+        # Retention period in days, records older than this will be deleted
         retention_days: 30
-        # 清理检查间隔，单位为小时
+        # Cleanup check interval in hours
         check_interval_hours: 1
-        # 每个监控表单批删除的过期记录数量
+        # Number of expired rows to delete per table batch
         delete_batch_size: 1000
+        # Prevent one large Workspace backlog from monopolizing PostgreSQL.
+        # Supports MONITORING__AUTO_CLEANUP__MAX_BATCHES_PER_TABLE_PER_RUN.
+        max_batches_per_table_per_run: 4
 box:
-    enabled: true  # Box Runtime 总开关。false 时禁用沙箱、Skill 添加/编辑和 stdio MCP 等依赖 Box 的功能。
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', 或 'e2b'。可通过 BOX__BACKEND 写入。
+    # Master switch for the Box sandbox runtime. When false, LangBot does NOT
+    # attempt to connect to a remote Box runtime nor start a local stdio Box
+    # subprocess. Disabling Box also disables every feature that depends on it:
+    # the native sandbox tools (exec/read/write/edit/glob/grep), the activate
+    # skill tool, skill add/edit, and stdio-mode MCP servers. Skills can still
+    # be listed read-only and http/sse MCP servers continue to work.
+    enabled: true
+    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. Can be written via BOX__BACKEND.
     runtime:
-        endpoint: ''  # 外部 Box Runtime 基础 URL，如 'ws://127.0.0.1:5410'。留空时，非 Docker 部署使用本地自动管理的 Runtime；Docker 部署连接 Compose 网络中的 langbot_box:5410。
+        # External WebSocket runtimes also require LANGBOT_BOX_CONTROL_TOKEN in
+        # both LangBot and Box. Keep the shared secret out of this config file.
+        endpoint: ''  # External Box Runtime base URL, e.g. 'ws://127.0.0.1:5410'. Leave empty for local auto-managed runtime.
+    limits:
+        max_sessions: 64
+        max_managed_processes: 64
+        max_completed_processes: 256
+        # Core scans a Workspace before and after quota-enforced executions.
+        # Fail closed instead of repeatedly walking an inode bomb.
+        # Supports BOX__LIMITS__MAX_WORKSPACE_ENTRIES (hard cap: 1000000).
+        max_workspace_entries: 100000
+        # Retained admission fences prevent replay after entitlement expiry or
+        # revocation. Fail closed before that monotonic state can grow without
+        # bound; Cloud may override this with BOX__LIMITS__MAX_ADMISSION_RECORDS.
+        max_admission_records: 100000
+        max_rpc_file_bytes: 20971520
+    # Cloud v2 overrides these values through the instance config/environment.
+    # OSS keeps admission disabled and preserves the existing multi-session
+    # local behavior. These limits are Runtime-owned and cannot be relaxed by
+    # a pipeline, Workspace entitlement, or tool call.
+    admission:
+        required: false
+        logical_session_id: 'global'
+        required_backend: 'nsjail'
+        max_sessions: 1
+        max_managed_processes: 0
+        max_grant_ttl_sec: 300
+        max_timeout_sec: 120
+        cpus: 1.0
+        memory_mb: 512
+        pids_limit: 128
+        read_only_rootfs: true
+        # OSS admission-disabled mode uses 0 for unlimited compatibility.
+        # Cloud bootstrap requires a positive hard quota.
+        workspace_quota_mb: 0
+        readiness_cache_sec: 15
     local:
         profile: 'default'
-        image: ''  # 自定义本地沙箱镜像。留空使用 profile 默认值。
-        host_root: './data/box'  # 本地工作区挂载的主机根目录。Docker 部署时应使用可被 langbot_box 挂载的绝对主机路径。
-        default_workspace: ''  # 默认为 '<host_root>/default'。
-        skills_root: 'skills'  # Box 管理的 Skill 包目录。相对路径会解析到 host_root 下。
-        allowed_mount_roots:  # 默认为 ['<host_root>']。
+        image: ''  # Custom local sandbox image. Leave empty to use the profile default.
+        host_root: './data/box'  # Base host directory for local workspace mounts. Docker deployments should override this with an absolute host path.
+        default_workspace: ''  # Defaults to '<host_root>/default'. Relative paths are resolved under host_root.
+        skills_root: 'skills'  # Box-owned skill package directory. Relative paths are resolved under host_root.
+        allowed_mount_roots:  # Defaults to ['<host_root>'] when left empty.
             - './data/box'
             - '/tmp'
-        workspace_quota_mb: null  # 可选磁盘配额上限（>=0）。null=套餐默认值。
-    default_memory_mb: 1536  # 每个 MCP stdio 进程的 nsjail cgroup 内存上限（MB）。Node.js 类 MCP（npx/bunx）因 V8+WASM 需要更多内存，过低会导致进程被 OOM 杀死（return_code=137）。可用 BOX__DEFAULT_MEMORY_MB 覆盖。  # 可选磁盘配额覆盖 (>= 0)。null 表示使用 profile 默认值。
+        workspace_quota_mb: null  # Optional disk quota override (>= 0). null = profile default.
+    # Default nsjail cgroup memory limit for each MCP stdio server process, in MB.
+    # Node.js MCP servers (npx/bunx) need more memory than Python ones because V8
+    # and WebAssembly modules (e.g. undici llhttp) reserve large virtual address
+    # space at startup. Setting this too low causes processes to be killed with
+    # return_code=137 (OOM kill); the symptom is "Box managed process exited
+    # unexpectedly" in the logs.  Raise on machines with ample RAM; lower only if
+    # you run exclusively Python (uvx) MCP servers.
+    # Can also be set via BOX__DEFAULT_MEMORY_MB. Default: 1536.
+    default_memory_mb: 1536
     docker:
-        cpu_limit_enabled: true  # false 时 Docker 沙箱容器不传 --cpus；内存和 PID 限制仍然生效。
+        cpu_limit_enabled: true  # When false, Docker sandbox containers are started without --cpus. Memory and PID limits still apply.
     e2b:
-        api_key: ''  # 也可通过 E2B_API_KEY 环境变量设置。
-        api_url: ''  # 自托管部署的自定义 API URL。
-        template: ''  # 默认模板 ID（如 'base', 'python-3.11'）。
+        api_key: ''  # Can also be set via E2B_API_KEY env var.
+        api_url: ''  # Custom API URL for self-hosted deployments.
+        template: ''  # Default template ID (e.g. 'base', 'python-3.11').
 space:
-    # Space 服务 URL
+    # Space service URL for OAuth and API
     url: 'https://space.langbot.app'
-    # Space 模型请求 API URL（MaaS）
+    # Space API URL for model requests (MaaS)
     models_gateway_api_url: 'https://api.langbot.cloud/v1'
-    # OAuth 授权页面 URL
+    # OAuth authorization page URL (user will be redirected here)
     oauth_authorize_url: 'https://space.langbot.app/auth/authorize'
     disable_models_service: false
     disable_telemetry: false
 ```
 
-## 配置说明
+## 配置分组说明
 
-- `storage.cleanup.uploaded_file_retention_days` 只清理存储根目录下的临时上传文件，不会清理插件配置文件或带目录的内部对象。
-- `storage.cleanup.log_retention_days` 按日志文件名中的日期清理旧日志，默认最多保留 3 天。
-- SQLite 作为数据库时，监控记录自动清理后会直接释放数据库文件空间。
-- `plugin.binary_storage.max_value_bytes` 用于限制插件单个二进制存储值大小，默认 10 MiB。
-- WebUI 侧边栏的“存储分析”页面可查看数据库、日志、上传文件、向量库、插件、MCP、临时文件等空间占用和清理候选项。
-- `vdb.valkey_search` 基于 [Valkey Search](https://valkey.io/) 模块，通过官方异步客户端 `valkey-glide` 接入，支持向量搜索、全文搜索和混合搜索三种模式。需要运行已加载该模块的服务，例如 `valkey/valkey-bundle:9.1.0`（`docker run -d -p 6379:6379 valkey/valkey-bundle:9.1.0`）。注意：混合搜索采用先过滤再 KNN 的模型，因此 `vector_weight` 参数虽被接受但**不会生效**（Valkey Search 原生限制）。连接为惰性建立，服务不可用或配置错误不会阻塞启动。详见 [Valkey Search 集成文档](https://github.com/langbot-app/LangBot/blob/master/docs/VALKEY_SEARCH_INTEGRATION.md)。
-- `api.global_api_key` 是面向 Agent / 自动化的全局 API Key：设置后，调用 HTTP API 或内置 MCP 服务（`/mcp`）时在请求头携带 `X-API-Key: <key>` 或 `Authorization: Bearer <key>` 即可鉴权，无需登录会话、无需在数据库中创建 `lbk_` 密钥。它是明文写在 `config.yaml` 中的，请仅在可信 / 内网环境启用，并通过 HTTPS 暴露。详见 [API Key 鉴权](https://github.com/langbot-app/LangBot/blob/master/docs/API_KEY_AUTH.md)。
+### API、WebUI 与成员邀请
+
+- `api.port`：LangBot HTTP API 与 WebUI 的监听端口，默认 `5300`。
+- `api.webhook_prefix`：对外可访问的服务地址，用于生成机器人平台的 Webhook 回调地址；生产环境通常应设置为反向代理后的 HTTPS 域名。
+- `api.extra_webhook_prefix`：需要同时展示第二个回调入口时使用，留空即不启用。
+- `api.webui_url`：WebUI 与 API 跨域部署时的浏览器端规范来源，例如开发环境的 `http://localhost:3000`。OAuth 回调只信任该配置与 `webhook_prefix`，不会信任请求中的 `Host` 或 `Origin` 请求头。
+- `api.global_api_key`：供自动化程序、HTTP Service API 和内置 MCP 服务使用的全局密钥。设置后可通过 `X-API-Key` 或 `Authorization: Bearer` 鉴权，无需登录会话或数据库中的 `lbk_` 密钥；留空表示关闭。
+- `workspace.invitations.public_web_url`：邀请链接使用的 WebUI 公网地址；留空时依次回退到 `api.webui_url`、`api.webhook_prefix`。
+- `workspace.invitations.email`：可选的邀请邮件发送配置。`provider` 支持 `resend`、`smtp`，留空时只生成邀请链接、不发送邮件。
+
+<Warning>
+`global_api_key`、JWT 密钥、数据库密码、S3 密钥、Resend/SMTP 密钥和 E2B API Key 都属于敏感信息。生产环境优先使用环境变量注入，不要提交到 Git，也不要通过明文 HTTP 暴露服务。
+</Warning>
+
+### 命令、并发与 Webhook 限制
+
+- `command`：控制命令系统是否启用、命令前缀以及权限映射。
+- `concurrency.pipeline`：实例同时处理的流水线请求数量；`concurrency.session`：同一会话允许的并发数量。
+- `concurrency.pending_queries` 与 `pending_queries_per_workspace`：限制“排队中 + 执行中”的请求总量，防止突发流量形成无限队列。
+- `webhooks.max_per_workspace`：每个 Workspace 最多调度的启用 Webhook 数量，硬上限为 `64`。
+- `webhooks.max_inflight_requests`：全实例同时发送的 Webhook 请求数，硬上限为 `128`；槽位占满时会快速失败，不会无限积压任务。
+
+### Cloud 目录安全上限
+
+`cloud.directory` 是单个 LangBot Cloud 逻辑实例的**运行安全上限**，不是套餐权益：
+
+- `max_active_workspaces`：允许加载的活跃 Workspace 数量，Core 绝对上限为 `5000`。
+- `max_snapshot_workspaces` / `max_snapshot_memberships`：一次签名目录快照允许携带的 Workspace 与成员关系数量。
+- `max_response_bytes`：签名控制面响应在验证前允许缓冲的最大字节数，默认 `32 MiB`、绝对上限 `64 MiB`。
+
+超过这些上限的权威目录更新会被整体拒绝，而不是静默截断。普通自部署用户通常不需要修改这一组。
+
+### 系统限制与内存保留
+
+- `system.instance_id`、`edition`、`recovery_key`：实例身份、发行版与恢复信息；除非部署流程明确要求，否则保持默认。
+- `system.disabled_adapters`：禁用的消息平台适配器列表。
+- `system.blocking_executor`：限制所有 `asyncio.to_thread` 工作共享的线程池、排队任务和单 Workspace 占用，防止阻塞调用拖垮进程。
+- `system.limitation`：实例级机器人、流水线、扩展、知识库数量限制；`-1` 表示不限制。`force_box_session_id_template` 用于 SaaS 强制统一沙箱作用域，普通自部署应保持空字符串。
+- `task_retention`：异步任务记录、日志字符数和用户主动任务并发上限。
+- `session_retention`：进程内会话缓存上限与空闲 TTL；它不是持久聊天记录。
+- `websocket_retention`：浏览器连接数、Workspace 代理缓存、对话缓存与发送队列上限。
+- `response_limits`：限制单次上游模型响应的字符数和流式分块数。
+- `system.jwt.expire` 以秒为单位；生产环境应显式设置不可预测的 `system.jwt.secret`。
+
+### 数据库与向量数据库
+
+- `database.use` 支持 `sqlite` 与 `postgresql`。SQLite 适合单机轻量部署；多实例或较高并发建议使用 PostgreSQL。
+- `database.postgresql.url` 非空时优先于拆分的 `host`、`port`、`user`、`password`、`database` 字段，并可保留 TLS 与查询参数。
+- PostgreSQL 的 `pool_size`、`max_overflow`、连接池超时与回收参数共同限制连接资源；三个数据库超时字段只应用于 Cloud 运行时连接。
+- `database.cloud_migration.operator_dsn_env` 指定 Cloud 发布迁移读取的运维级 DSN 环境变量。运维角色必须与运行时角色分离，密码不要写入配置文件或命令行参数。
+- `vdb.use` 选择向量后端。页面列出了 Qdrant、SeekDB、Milvus、pgvector 与 Valkey Search 的连接参数；只需要配置实际选中的后端。
+- `vdb.runtime_cache_limit` 限制进程内集合/索引句柄数量。
+- `vdb.pgvector.use_business_database: true` 表示复用 `database.postgresql`；`allowed_dimensions` 限定发布迁移创建 ANN 索引的向量维度。
+- `vdb.valkey_search` 需要带 Search 模块的 Valkey 服务，例如 `valkey/valkey-bundle:9.1.0`。连接按需建立，支持 HNSW/FLAT 与 COSINE/L2/IP。
+
+### 存储、插件、MCP 与监控
+
+- `storage.use` 选择本地或 S3 存储；`max_object_read_bytes` 限制一次读入 Core 内存的对象大小，内置 Local/S3 实现的硬上限为 `64 MiB`。
+- `storage.cleanup` 控制上传文件与日志的周期清理。`max_files_per_run` 限制一次扫描的文件数，硬上限 `10000`。
+- `storage.s3.max_concurrency` 限制委托给工作线程的同步 boto3 操作数量。
+- `plugin.worker` 定义所有插件安装都不能突破的 CPU、内存、PID、打开文件、文件大小与全局 Worker 预算；插件清单不能抬高这些上限。重启参数用于抑制 Runtime 重启风暴。
+- `plugin.binary_storage.max_value_bytes` 限制单个插件二进制存储值，默认 `10 MiB`。
+- `mcp.lifecycle_concurrency` 限制 MCP 启停并发，硬上限 `128`；`mcp.stdio.enabled` 可独立禁用本地 stdio MCP，而不影响 HTTP/SSE MCP。
+- `monitoring.query_limits` 限制分页、CSV 导出、详情、时序桶和高 offset 查询在内存/数据库中的工作量。
+- `monitoring.auto_cleanup` 控制监控数据保留与分批删除；`max_batches_per_table_per_run` 防止单个 Workspace 的积压长期占用 PostgreSQL。
+
+### Box 沙箱
+
+- `box.enabled` 是总开关。关闭后不会连接或启动 Box Runtime，并禁用原生沙箱工具、Skill 添加/编辑和 stdio MCP；只读 Skill 列表以及 HTTP/SSE MCP 仍可使用。
+- `box.backend` 可选 `local`、`docker`、`nsjail`、`e2b`；`box.runtime.endpoint` 用于连接外部 WebSocket Runtime，留空时使用本地自动管理 Runtime。
+- `box.limits` 限制会话、托管进程、已完成进程、Workspace 扫描条目、准入记录和 RPC 文件大小。
+- `box.admission` 是 Cloud v2 的强制准入与硬资源配额。普通 OSS 默认 `required: false`；流水线、Workspace 权益或工具调用都不能放宽 Runtime 拥有的限制。
+- `box.local` 配置本地工作目录、Skill 根目录、允许挂载根目录和可选磁盘配额。Docker 部署时，`host_root` 应使用 Box 容器可挂载的绝对宿主机路径。
+- `box.default_memory_mb` 是每个 MCP stdio 进程的默认 nsjail cgroup 内存上限。Node.js MCP 通常比 Python MCP 占用更多内存；过低时常见 `return_code=137`。
+- `box.docker.cpu_limit_enabled: false` 只取消 Docker 的 CPU 参数，内存与 PID 限制仍然生效。
+- `box.e2b` 用于 E2B 或自托管兼容服务。
+
+### LangBot Space
+
+- `space.url`：Space OAuth 与 API 服务地址。
+- `space.models_gateway_api_url`：LangBot MaaS 的 OpenAI 兼容模型网关地址。
+- `space.oauth_authorize_url`：OAuth 授权页地址。
+- `space.disable_models_service` / `disable_telemetry`：分别关闭 Space 模型服务与遥测上报。
 
 ## 通过环境变量设置
 
-`config.yaml` 中的配置可以通过环境变量进行设置。环境变量名称为大写字母，使用双下划线连接，例如：`API__PORT` 代表 `api.port`。
+任何嵌套配置都可以转换为“大写 + 双下划线”环境变量：
 
-- `API__PORT` 代表 `api.port`
-- `CONCURRENCY__PIPELINE` 代表 `concurrency.pipeline`
-- `DATABASE__SQLITE__PATH` 代表 `database.sqlite.path`
-- `STORAGE__CLEANUP__UPLOADED_FILE_RETENTION_DAYS` 代表 `storage.cleanup.uploaded_file_retention_days`
-- `STORAGE__CLEANUP__LOG_RETENTION_DAYS` 代表 `storage.cleanup.log_retention_days`
-- `MONITORING__AUTO_CLEANUP__RETENTION_DAYS` 代表 `monitoring.auto_cleanup.retention_days`
-- `PLUGIN__BINARY_STORAGE__MAX_VALUE_BYTES` 代表 `plugin.binary_storage.max_value_bytes`
-- `BOX__ENABLED` 代表 `box.enabled`
-- `BOX__BACKEND` 代表 `box.backend`
-- `BOX__LOCAL__HOST_ROOT` 代表 `box.local.host_root`
-- `BOX__LOCAL__SKILLS_ROOT` 代表 `box.local.skills_root`
+- `API__PORT` → `api.port`
+- `WORKSPACE__INVITATIONS__PUBLIC_WEB_URL` → `workspace.invitations.public_web_url`
+- `CONCURRENCY__PENDING_QUERIES_PER_WORKSPACE` → `concurrency.pending_queries_per_workspace`
+- `DATABASE__POSTGRESQL__POOL_SIZE` → `database.postgresql.pool_size`
+- `STORAGE__CLEANUP__MAX_FILES_PER_RUN` → `storage.cleanup.max_files_per_run`
+- `PLUGIN__WORKER__MAX_TOTAL_MEMORY_MB` → `plugin.worker.max_total_memory_mb`
+- `MCP__STDIO__ENABLED` → `mcp.stdio.enabled`
+- `BOX__DEFAULT_MEMORY_MB` → `box.default_memory_mb`
 
-在启动时，LangBot 会读取所有环境变量，将对应的配置应用到 `config.yaml` 中并写入到 `data/config.yaml` 文件中。
+启动时，LangBot 会读取环境变量、应用对应配置，并写入 `data/config.yaml`。
 
 <Note>
-Box 相关配置应设置在 `langbot` 服务上，使用统一的 `BOX__*` 环境变量。LangBot 会在启动时写入 `data/config.yaml`，并通过 INIT RPC 将 Box 配置传给 `langbot_box`。不要在 `langbot_box` 服务上设置 `LANGBOT_BOX_*` 或 `BOX__*`，这些变量不会被直接读取。
+Docker 部署中，统一把 `BOX__*` 环境变量设置在 `langbot` 服务上。LangBot 会通过 INIT RPC 将 Box 配置传给 `langbot_box`；直接在 `langbot_box` 服务上设置 `LANGBOT_BOX_*` 或 `BOX__*` 不会被读取。
 </Note>
