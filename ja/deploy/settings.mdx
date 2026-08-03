@@ -12,354 +12,275 @@ LangBot の実行設定は `data/config.yaml` にあります。初回起動時�
 ## 完全なデフォルト設定
 
 ```yaml
+# HTTP API と WebUI の設定です。
 api:
     port: 5300
     webhook_prefix: 'http://127.0.0.1:5300'
     extra_webhook_prefix: ''
-    # Canonical browser origin when WebUI and API use different origins in
-    # development (for example http://localhost:3000). Production bundled UI
-    # may leave this empty when webhook_prefix already has the browser origin.
-    # OAuth redirects trust only these server-side values, never request Host
-    # or Origin headers.
+    # WebUI と API を別オリジンで配置する場合のブラウザー側 URL です。OAuth はこの値と webhook_prefix のみを信頼します。
     webui_url: ''
-    # Global API key for the HTTP service API and the MCP server. When set to a
-    # non-empty string, this key is accepted anywhere a web-UI-created API key is
-    # accepted (X-API-Key header or "Authorization: Bearer <key>"), WITHOUT any
-    # login session and without a database record. Leave empty to disable.
-    # Keep this value secret; only enable it on trusted/internal deployments.
+    # グローバル API キーです。空の場合は無効です。本番環境では環境変数から注入し、秘密として管理してください。
     global_api_key: ''
+# Workspace 関連の設定です。
 workspace:
+    # メンバー招待リンクと任意のメール送信設定です。
     invitations:
-        # Public WebUI origin used to build invitation links. Leave empty to
-        # use api.webui_url, then api.webhook_prefix. Set via
-        # WORKSPACE__INVITATIONS__PUBLIC_WEB_URL in container deployments.
+        # 招待リンクに使う WebUI の公開 URL です。空の場合は api.webui_url、api.webhook_prefix の順にフォールバックします。
         public_web_url: ''
+        # provider が空の場合はリンクだけを生成します。resend または smtp を選べます。
         email:
-            # Optional invitation email delivery. Empty provider keeps
-            # invitations link-only. Supported: resend, smtp.
             provider: ''
             from: ''
             timeout_seconds: 10
             resend:
                 api_url: 'https://api.resend.com/emails'
-                # Secret. Set via WORKSPACE__INVITATIONS__EMAIL__RESEND__API_KEY.
                 api_key: ''
             smtp:
                 host: ''
                 port: 587
                 username: ''
-                # Secret. Set via WORKSPACE__INVITATIONS__EMAIL__SMTP__PASSWORD.
                 password: ''
                 starttls: true
                 ssl: false
+# コマンド機能、プレフィックス、権限マッピングです。
 command:
     enable: true
     prefix:
     - '!'
     - ！
     privilege: {}
+# パイプライン、セッション、待機中クエリの同時実行上限です。
 concurrency:
     pipeline: 20
     session: 1
-    # Hard admission limits for queued + running pipeline queries.
     pending_queries: 1000
     pending_queries_per_workspace: 100
+# Webhook 数とインスタンス全体の同時送信数を制限し、無制限な待機を防ぎます。
 webhooks:
-    # Bound database materialization and per-message outbound fan-out.
-    # Existing rows above this limit remain deletable through the management
-    # API, but only this many enabled destinations are dispatched.
-    # Supports WEBHOOKS__MAX_PER_WORKSPACE (hard cap: 64).
     max_per_workspace: 16
-    # Instance-wide request admission. Delivery fails open when every slot is
-    # occupied instead of retaining an unbounded queue of webhook tasks.
-    # Supports WEBHOOKS__MAX_INFLIGHT_REQUESTS (hard cap: 128).
     max_inflight_requests: 16
+# Cloud の単一論理インスタンスに対する運用上の安全上限であり、プラン権限ではありません。
 cloud:
-    # Operational safety ceilings for the one logical Cloud instance. These
-    # are not subscription entitlements. An authoritative directory update
-    # that would exceed them is rejected atomically rather than truncated.
+    # 上限を超える正式なディレクトリ更新は、切り捨てず全体を拒否します。
     directory:
-        # Tune downward from the measured production capacity curve. Core has
-        # an absolute safety ceiling of 5,000 active Workspaces.
         max_active_workspaces: 1000
-        # Full snapshots contain current Workspaces only. Archived tombstones
-        # are delivered through bounded per-Workspace deltas.
         max_snapshot_workspaces: 1000
-        # Aggregate memberships accepted in one signed snapshot or delta.
         max_snapshot_memberships: 20000
-        # Signed control-plane envelope buffered by the closed adapter before
-        # JSON/JWS verification (32 MiB; absolute maximum 64 MiB).
         max_response_bytes: 33554432
+# 外向き HTTP/HTTPS プロキシです。
 proxy:
     http: ''
     https: ''
+# インスタンス識別子、全体リソース制限、ランタイム保持方針です。
 system:
     instance_id: ''
     edition: community
     recovery_key: ''
     allow_modify_login_info: true
     disabled_adapters: []
+    # すべての asyncio.to_thread 処理で共有する上限付きスレッドプールです。
     blocking_executor:
-        # All asyncio.to_thread work shares this process-wide bounded pool.
-        # Both running threads and queued calls are capped to prevent tenant
-        # bursts from creating an unbounded queue of retained request objects.
         max_workers: 8
         max_pending: 128
-        # One trusted Workspace can occupy at most this many running + queued
-        # slots. This must not exceed half of max_workers.
         max_inflight_per_scope: 4
-    # Public outbound IP addresses of this LangBot deployment. Some platforms
-    # (e.g. WeCom, WeChat Official Account, QQ Official API) require the
-    # caller's IPs to be added to their trusted-IP / IP-whitelist settings.
-    # When set, the web UI shows these IPs on the bot config form of such
-    # adapters. Also settable via the SYSTEM__OUTBOUND_IPS env var
-    # (comma-separated). Empty list = hidden in the web UI.
+    # 外向き IP アドレスです。一部のボット基盤では信頼済み IP への登録が必要です。
     outbound_ips: []
+    # インスタンス単位の件数制限です。-1 は無制限を示します。
     limitation:
         max_bots: -1
         max_pipelines: -1
         max_extensions: -1
         max_knowledge_bases: -1
-        # When set to a non-empty string, every pipeline is forced to use this
-        # Box sandbox-scope template regardless of its own configuration, and
-        # the per-pipeline "Sandbox Scope" selector is locked in the web UI.
-        # Used by SaaS deployments to confine a tenant to a single shared
-        # sandbox (set to '{global}'). Empty string = no restriction.
+        # SaaS でサンドボックス範囲を強制する設定です。通常のセルフホストでは空のままにします。
         force_box_session_id_template: ''
+    # 非同期タスク記録、ログ、ユーザー起動タスクの同時実行上限です。
     task_retention:
-        # Keep at most this many completed async task records in memory
         completed_limit: 200
-        # Bound progress output retained by one task, including running tasks.
         max_log_chars: 200000
-        # Protect the shared process from user-triggered operation storms.
         max_active_user_tasks: 256
         max_active_user_tasks_per_workspace: 8
+    # プロセス内セッションキャッシュの上限です。永続的な会話履歴ではありません。
     session_retention:
-        # Process-local conversation sessions are a cache, not durable history.
         max_entries: 2000
         max_entries_per_workspace: 200
         idle_ttl_seconds: 86400
         max_conversations_per_session: 20
         max_messages_per_conversation: 100
+    # ブラウザー接続、Workspace プロキシキャッシュ、送信キューの上限です。
     websocket_retention:
-        # Bound live browser sockets and per-Workspace fan-out in the shared process.
         max_connections: 1024
         max_connections_per_workspace: 32
-        # Idle proxy runtimes are evicted when this process-local cache fills.
         max_workspace_proxies: 1024
         max_conversations_per_workspace: 200
         max_messages_per_conversation: 100
         conversation_idle_ttl_seconds: 86400
         send_queue_size: 100
+    # 上流レスポンスの文字数とストリーミングチャンク数の上限です。
     response_limits:
-        # Defense in depth for tenant-configured upstream providers.
         max_generated_chars: 1048576
         max_stream_chunks: 100000
+    # JWT の有効期間と署名鍵です。本番環境ではランダムな秘密鍵を設定してください。
     jwt:
         expire: 604800
         secret: ''
+# 業務データベースです。sqlite または postgresql を選択できます。
 database:
     use: sqlite
     sqlite:
         path: 'data/langbot.db'
+    # PostgreSQL の接続プールとタイムアウト設定です。
     postgresql:
-        # Optional SQLAlchemy URL (postgresql[+asyncpg]://...). When set, it
-        # overrides the structured fields and preserves TLS/query options.
+        # 空でない場合は個別フィールドより優先され、TLS とクエリオプションを保持します。
         url: ''
         host: '127.0.0.1'
         port: 5432
         user: 'postgres'
         password: 'postgres'
         database: 'postgres'
-        # One bounded pool is shared by business data and Cloud pgvector.
         pool_size: 10
         max_overflow: 10
         pool_timeout_seconds: 30
         pool_recycle_seconds: 1800
-        # Applied only to Cloud runtime connections. The one-shot release
-        # migration uses its operator connection without these short limits.
         statement_timeout_ms: 60000
         lock_timeout_ms: 5000
         idle_in_transaction_session_timeout_ms: 60000
+    # Cloud リリース移行用の運用者接続設定です。
     cloud_migration:
-        # `langbot migrate --cloud` reads an operator-only PostgreSQL DSN from
-        # this environment variable. The operator role must differ from the
-        # runtime role above; never put its password in this file or CLI args.
+        # 環境変数名だけを指定します。運用者ロールは実行時ロールと分離してください。
         operator_dsn_env: 'LANGBOT_CLOUD_MIGRATION_DSN'
+# ベクトルデータベースです。use で選択したバックエンドだけを設定します。
 vdb:
     use: chroma
-    # Bound process-local collection/index handles across all Workspaces.
+    # プロセス内のコレクションまたはインデックスハンドル数を制限します。
     runtime_cache_limit: 1024
+    # Qdrant の接続設定です。
     qdrant:
         url: ''
         host: localhost
         port: 6333
         api_key: ''
+    # SeekDB の組み込みまたはサーバーモード設定です。
     seekdb:
-        mode: embedded  # 'embedded' or 'server'
-        # Embedded mode options:
+        mode: embedded
         path: './data/seekdb'
         database: 'langbot'
-        # Server mode options (used when mode='server'):
         host: 'localhost'
         port: 2881
         user: 'root'
         password: ''
-        tenant: ''  # Optional, for OceanBase server
+        tenant: ''
+    # Milvus の接続設定です。
     milvus:
         uri: 'http://127.0.0.1:19530'
         token: ''
         db_name: ''
+    # pgvector は業務用 PostgreSQL を再利用するか、独立 DB に接続できます。
     pgvector:
-        # SaaS/shared-schema deployments reuse database.postgresql. OSS can
-        # keep this false when deliberately using an external pgvector DB.
         use_business_database: false
-        # Release migrations create one partial ANN index per enabled value.
+        # リリース移行では、ここに指定した次元だけに ANN インデックスを作成します。
         allowed_dimensions: [384, 512, 768, 1024, 1536]
         host: '127.0.0.1'
         port: 5433
         database: 'langbot'
         user: 'postgres'
         password: 'postgres'
+    # Search モジュールを有効にした Valkey が必要です。
     valkey_search:
         host: 'localhost'
-        port: 6379            # integration tests use 6380 -> valkey/valkey-bundle:9.1.0
+        port: 6379
         db: 0
-        password: ''          # optional (toB auth)
-        username: ''          # optional (ACL user, toB)
-        tls: false            # optional (toB/SaaS)
-        index_algorithm: 'HNSW'   # HNSW | FLAT
-        distance_metric: 'COSINE' # COSINE | L2 | IP
-        request_timeout: 5000     # per-request timeout in ms (glide default 250ms is too low for KNN)
+        password: ''
+        username: ''
+        tls: false
+        index_algorithm: 'HNSW'
+        distance_metric: 'COSINE'
+        request_timeout: 5000
+# オブジェクトストレージ、読み込み上限、定期クリーンアップです。
 storage:
     use: local
-    # Bound every object materialized into Core memory. Built-in Local/S3
-    # providers enforce this while reading (hard cap: 64 MiB).
+    # Core メモリへ一度に読み込むオブジェクトの上限です。組み込み実装の絶対上限は 64 MiB です。
     max_object_read_bytes: 10485760
+    # ローカルまたは S3 のアップロードファイルと古いログを定期削除します。
     cleanup:
-        # Enable periodic cleanup of local/S3 uploaded files and old log files
         enabled: true
-        # Cleanup check interval in hours
         check_interval_hours: 1
-        # Root-level uploaded files older than this will be deleted
         uploaded_file_retention_days: 7
-        # LangBot log files older than this many days will be deleted
         log_retention_days: 3
-        # Bound per-Workspace file cleanup and diagnostic candidate lists.
-        # Supports STORAGE__CLEANUP__MAX_FILES_PER_RUN (hard cap: 10000).
         max_files_per_run: 1000
+    # S3 接続と同期処理の同時実行上限です。
     s3:
         endpoint_url: ''
         access_key_id: ''
         secret_access_key: ''
         region: 'us-east-1'
         bucket: 'langbot-storage'
-        # boto3 is synchronous; bound the number of operations delegated to
-        # worker threads so an S3 slowdown cannot saturate the process.
         max_concurrency: 16
+# プラグイン Worker のインスタンス全体のハード上限と受け入れ予算です。
 plugin:
     enable: true
     runtime_ws_url: 'ws://langbot_plugin_runtime:5400/control/ws'
     enable_marketplace: true
     display_plugin_debug_url: 'ws://localhost:5401/plugin/debug/ws'
+    # プラグインマニフェストからこれらの上限を引き上げることはできません。
     worker:
-        # Instance-wide maximum for every plugin installation. Plugin
-        # manifests cannot raise or override these limits.
         max_cpus: 1.0
         max_memory_mb: 512
         max_pids: 128
         max_open_files: 256
         max_file_size_mb: 512
-        # Instance-wide admission budgets. The effective worker count is the
-        # lowest of max_workers, max_total_cpus/max_cpus and
-        # max_total_memory_mb/max_memory_mb.
         max_workers: 16
         max_total_cpus: 8.0
         max_total_memory_mb: 8192
-        # Includes disabled and historical installation fences retained to
-        # reject stale desired-state replay.
         max_installations: 10000
-        # Restart storms are globally serialized by default. Repeated
-        # unexpected exits within the configured window open a Runtime-wide
-        # circuit; one half-open probe must remain stable before other
-        # installations may restart.
         max_concurrent_restarts: 1
         restart_failure_threshold: 8
         restart_failure_window_seconds: 30.0
         restart_circuit_open_seconds: 60.0
-        # Cloud shared Runtime sets this to true and fails closed unless
-        # delegated cgroup v2 controllers are available.
         require_hard_limits: false
+    # プラグインのバイナリストレージにおける単一値のサイズ上限です。
     binary_storage:
-        # Max bytes for a single plugin binary storage value
         max_value_bytes: 10485760
+# MCP ライフサイクルの同時実行数とローカル stdio トランスポートの設定です。
 mcp:
-    # Bound instance-wide MCP startup and shutdown bursts. Supports
-    # MCP__LIFECYCLE_CONCURRENCY and is clamped to a maximum of 128.
+    # インスタンス全体の MCP 起動・停止同時実行数です。絶対上限は 128 です。
     lifecycle_concurrency: 16
+    # 無効にしてもローカル stdio MCP だけが停止し、HTTP/SSE MCP には影響しません。
     stdio:
-        # Independent gate for local stdio MCP transports. Cloud v2 sets
-        # MCP__STDIO__ENABLED=false even when Box Runtime is available.
         enabled: true
+# 監視クエリの作業量と履歴データの削除方針です。
 monitoring:
+    # ページング、エクスポート、詳細、時系列バケット、高 offset クエリを制限します。
     query_limits:
-        # Maximum records materialized by one paginated monitoring request.
-        # Supports MONITORING__QUERY_LIMITS__PAGE_ROWS (hard cap: 5000).
         page_rows: 1000
-        # CSV exports are currently assembled in memory. Keep this lower than
-        # the historical 100000-row default (hard cap: 50000).
         export_rows: 10000
-        # Maximum related records returned by one session/message detail view
-        # (hard cap: 10000). Aggregate statistics remain database-computed.
         detail_rows: 2000
-        # Token charts are grouped in SQL and return only the newest buckets
-        # (hard cap: 10000). Supports an environment variable override.
         timeseries_buckets: 1000
-        # Bound high-offset scans that can otherwise monopolize PostgreSQL CPU
-        # (hard cap: 10000000).
         max_offset: 1000000
+    # 期限切れ監視レコードをバッチ単位で自動削除します。
     auto_cleanup:
-        # Enable automatic cleanup of expired monitoring records
         enabled: true
-        # Retention period in days, records older than this will be deleted
         retention_days: 30
-        # Cleanup check interval in hours
         check_interval_hours: 1
-        # Number of expired rows to delete per table batch
         delete_batch_size: 1000
-        # Prevent one large Workspace backlog from monopolizing PostgreSQL.
-        # Supports MONITORING__AUTO_CLEANUP__MAX_BATCHES_PER_TABLE_PER_RUN.
         max_batches_per_table_per_run: 4
+# Box サンドボックス Runtime 全体の設定です。
 box:
-    # Master switch for the Box sandbox runtime. When false, LangBot does NOT
-    # attempt to connect to a remote Box runtime nor start a local stdio Box
-    # subprocess. Disabling Box also disables every feature that depends on it:
-    # the native sandbox tools (exec/read/write/edit/glob/grep), the activate
-    # skill tool, skill add/edit, and stdio-mode MCP servers. Skills can still
-    # be listed read-only and http/sse MCP servers continue to work.
+    # 無効にすると Box に接続・起動せず、サンドボックス依存ツールと stdio MCP も無効になります。
     enabled: true
-    backend: 'local'  # 'local' (Docker/nsjail), 'docker', 'nsjail', or 'e2b'. Can be written via BOX__BACKEND.
+    # local、docker、nsjail、e2b から選択します。
+    backend: 'local'
+    # 外部 WebSocket Runtime の URL です。空の場合はローカル Runtime を自動管理します。
     runtime:
-        # External WebSocket runtimes also require LANGBOT_BOX_CONTROL_TOKEN in
-        # both LangBot and Box. Keep the shared secret out of this config file.
-        endpoint: ''  # External Box Runtime base URL, e.g. 'ws://127.0.0.1:5410'. Leave empty for local auto-managed runtime.
+        endpoint: ''
+    # セッション、プロセス、Workspace 走査、受け入れ記録、RPC ファイルの上限です。
     limits:
         max_sessions: 64
         max_managed_processes: 64
         max_completed_processes: 256
-        # Core scans a Workspace before and after quota-enforced executions.
-        # Fail closed instead of repeatedly walking an inode bomb.
-        # Supports BOX__LIMITS__MAX_WORKSPACE_ENTRIES (hard cap: 1000000).
         max_workspace_entries: 100000
-        # Retained admission fences prevent replay after entitlement expiry or
-        # revocation. Fail closed before that monotonic state can grow without
-        # bound; Cloud may override this with BOX__LIMITS__MAX_ADMISSION_RECORDS.
         max_admission_records: 100000
         max_rpc_file_bytes: 20971520
-    # Cloud v2 overrides these values through the instance config/environment.
-    # OSS keeps admission disabled and preserves the existing multi-session
-    # local behavior. These limits are Runtime-owned and cannot be relaxed by
-    # a pipeline, Workspace entitlement, or tool call.
+    # Cloud v2 の強制受け入れとハードクォータです。通常の OSS では既定で無効です。
     admission:
         required: false
         logical_session_id: 'global'
@@ -372,41 +293,34 @@ box:
         memory_mb: 512
         pids_limit: 128
         read_only_rootfs: true
-        # OSS admission-disabled mode uses 0 for unlimited compatibility.
-        # Cloud bootstrap requires a positive hard quota.
         workspace_quota_mb: 0
         readiness_cache_sec: 15
+    # ローカル作業領域、Skill ディレクトリ、マウントルート、任意のディスククォータです。
     local:
         profile: 'default'
-        image: ''  # Custom local sandbox image. Leave empty to use the profile default.
-        host_root: './data/box'  # Base host directory for local workspace mounts. Docker deployments should override this with an absolute host path.
-        default_workspace: ''  # Defaults to '<host_root>/default'. Relative paths are resolved under host_root.
-        skills_root: 'skills'  # Box-owned skill package directory. Relative paths are resolved under host_root.
-        allowed_mount_roots:  # Defaults to ['<host_root>'] when left empty.
+        image: ''
+        # Docker 配置では、コンテナからマウントできるホストの絶対パスに変更します。
+        host_root: './data/box'
+        default_workspace: ''
+        skills_root: 'skills'
+        allowed_mount_roots:
             - './data/box'
             - '/tmp'
-        workspace_quota_mb: null  # Optional disk quota override (>= 0). null = profile default.
-    # Default nsjail cgroup memory limit for each MCP stdio server process, in MB.
-    # Node.js MCP servers (npx/bunx) need more memory than Python ones because V8
-    # and WebAssembly modules (e.g. undici llhttp) reserve large virtual address
-    # space at startup. Setting this too low causes processes to be killed with
-    # return_code=137 (OOM kill); the symptom is "Box managed process exited
-    # unexpectedly" in the logs.  Raise on machines with ample RAM; lower only if
-    # you run exclusively Python (uvx) MCP servers.
-    # Can also be set via BOX__DEFAULT_MEMORY_MB. Default: 1536.
+        workspace_quota_mb: null
+    # 各 MCP stdio プロセスに対する nsjail cgroup の既定メモリ上限（MiB）です。
     default_memory_mb: 1536
+    # Docker サンドボックスの追加設定です。
     docker:
-        cpu_limit_enabled: true  # When false, Docker sandbox containers are started without --cpus. Memory and PID limits still apply.
+        cpu_limit_enabled: true
+    # E2B またはセルフホスト互換サービスの設定です。
     e2b:
-        api_key: ''  # Can also be set via E2B_API_KEY env var.
-        api_url: ''  # Custom API URL for self-hosted deployments.
-        template: ''  # Default template ID (e.g. 'base', 'python-3.11').
+        api_key: ''
+        api_url: ''
+        template: ''
+# LangBot Space の OAuth、モデルゲートウェイ、テレメトリ設定です。
 space:
-    # Space service URL for OAuth and API
     url: 'https://space.langbot.app'
-    # Space API URL for model requests (MaaS)
     models_gateway_api_url: 'https://api.langbot.cloud/v1'
-    # OAuth authorization page URL (user will be redirected here)
     oauth_authorize_url: 'https://space.langbot.app/auth/authorize'
     disable_models_service: false
     disable_telemetry: false
