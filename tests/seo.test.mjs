@@ -118,3 +118,33 @@ test("every Markdown image in the English guide has descriptive alt text", async
     assert.ok(alt.trim().length >= 8, `${src} is missing descriptive alt text`);
   }
 });
+
+test("localized config examples use locale-appropriate YAML comments", async () => {
+  const locales = {
+    en: { required: /[A-Za-z]/u, forbidden: cjk },
+    zh: { required: /[\u3400-\u4DBF\u4E00-\u9FFF]/u },
+    ja: { required: /[\u3040-\u30FF]/u },
+  };
+
+  for (const [locale, rules] of Object.entries(locales)) {
+    const page = await readFile(
+      new URL(`${locale}/deploy/settings.mdx`, repoRoot),
+      "utf8",
+    );
+    const yaml = page.match(/```yaml\n([\s\S]*?)\n```/)?.[1];
+    assert.ok(yaml, `${locale} settings page has no YAML block`);
+
+    const comments = yaml
+      .split(/\r?\n/)
+      .filter((line) => line.includes("#"))
+      .map((line) => line.slice(line.indexOf("#") + 1).trim());
+    assert.ok(comments.length >= 50, `${locale} config needs explanatory comments`);
+
+    for (const comment of comments) {
+      assert.match(comment, rules.required, `${locale}: ${comment}`);
+      if (rules.forbidden) {
+        assert.doesNotMatch(comment, rules.forbidden, `${locale}: ${comment}`);
+      }
+    }
+  }
+});
