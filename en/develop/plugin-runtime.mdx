@@ -79,6 +79,8 @@ plugin:
 And add the startup parameter `--standalone-runtime` when starting the LangBot main program (e.g., `uv run --no-sync main.py --standalone-runtime`). Make sure to include the `--no-sync` parameter in this command, which ensures that the local langbot-plugin-sdk you just synced will not be overwritten by the remote version.\
 Restart LangBot, and it will connect to this runtime using WebSocket.
 
+`LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN` is optional by default. When it is unset on both LangBot and Runtime, the local OSS control connection is established without a token. To protect an exposed port 5400, configure the same high-entropy value of at least 32 characters on both sides; configuring only one side makes the connection fail.
+
 ## langbot-plugin-sdk Architecture
 
 This codebase contains the following:

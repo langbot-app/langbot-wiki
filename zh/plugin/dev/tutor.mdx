@@ -118,7 +118,7 @@ cd HelloPlugin
 当您在开发插件时，推荐您按照[开发配置](/zh/develop/dev-config)中的方式 LangBot，此方式将以 Stdio 形式启动 Plugin Runtime，便于插件开发。
 </Info>
 
-复制插件目录下的`.env.example`文件为`.env`，检查或修改`DEBUG_RUNTIME_WS_URL`为您的 Plugin Runtime 的 WebSocket 地址。
+复制插件目录下的`.env.example`文件为`.env`。在 LangBot WebUI 的“扩展 → 调试信息”中复制当前工作区的调试地址和调试密钥，分别填写为 `DEBUG_RUNTIME_WS_URL` 和 `PLUGIN_DEBUG_KEY`。每个工作区的密钥不同，并每两小时自动轮换；过期后请重新复制。
 
 ```bash
 cp .env.example .env
