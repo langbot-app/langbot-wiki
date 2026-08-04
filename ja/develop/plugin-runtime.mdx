@@ -79,6 +79,8 @@ plugin:
 そして、LangBotメインプログラムの起動時に起動パラメーター`--standalone-runtime`を追加します(例: `uv run --no-sync main.py --standalone-runtime`)。このコマンドでは必ず`--no-sync`パラメーターを付けてください。これにより、同期したローカルのlangbot-plugin-sdkがリモート版で上書きされないことが保証されます。\
 LangBotを再起動すると、WebSocketを使用してこのランタイムに接続されます。
 
+`LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN` は既定では省略可能です。LangBot と Runtime の両方で未設定の場合、ローカル OSS の制御接続はトークンなしで確立されます。公開された 5400 ポートを保護する場合は、両側に同じ 32 文字以上の高エントロピー値を設定してください。片側だけに設定すると接続は失敗します。
+
 ## langbot-plugin-sdkアーキテクチャ
 
 このコードベースには以下が含まれています:

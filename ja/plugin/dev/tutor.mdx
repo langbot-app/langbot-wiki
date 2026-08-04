@@ -118,7 +118,7 @@ cd HelloPlugin
 プラグインを開発する際は、[開発設定](/en/develop/dev-config)方法に従ってLangBotを起動することをお勧めします。これによりPlugin RuntimeがStdioモードで起動され、プラグイン開発が容易になります。
 </Info>
 
-プラグインディレクトリの`.env.example`ファイルを`.env`にコピーし、`DEBUG_RUNTIME_WS_URL`をPlugin RuntimeのWebSocketアドレスに確認または変更します。
+`.env.example` を `.env` にコピーします。LangBot WebUI の **拡張機能 → デバッグ情報** を開き、現在の Workspace のデバッグ URL とデバッグキーを `DEBUG_RUNTIME_WS_URL` と `PLUGIN_DEBUG_KEY` に設定します。キーは Workspace ごとに異なり、2 時間ごとにローテーションするため、期限切れ後は再度コピーしてください。
 
 ```bash
 cp .env.example .env

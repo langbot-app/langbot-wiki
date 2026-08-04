@@ -79,6 +79,8 @@ plugin:
 并在启动 LangBot 主程序时携带启动参数`--standalone-runtime`（如：`uv run --no-sync main.py --standalone-runtime`）。此命令行中，请务必携带`--no-sync`参数，这将确保您刚刚同步的本地 langbot-plugin-sdk 不会被远程的覆盖。\
 重启 LangBot，将会使用 WebSocket 连接到此运行时。
 
+默认情况下无需配置 `LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN`：当 LangBot 与 Runtime 两端都未设置时，OSS 的本地控制连接直接建立。若部署环境需要为 5400 控制端口增加共享密钥，则必须在两端配置同一个至少 32 位的高熵值；只配置一端会导致连接失败。
+
 ## langbot-plugin-sdk 架构
 
 本代码库中包含以下内容：

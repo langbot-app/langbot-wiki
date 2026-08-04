@@ -118,7 +118,7 @@ Whether in `stdio` or `websocket` mode, Plugin Runtime will listen on port `5401
 When developing plugins, we recommend starting LangBot according to the [Development Configuration](/en/develop/dev-config) method, which will start Plugin Runtime in Stdio mode, making plugin development easier.
 </Info>
 
-Copy the `.env.example` file in the plugin directory to `.env`, and check or modify `DEBUG_RUNTIME_WS_URL` to your Plugin Runtime's WebSocket address.
+Copy `.env.example` to `.env`. In LangBot WebUI, open **Extensions → Debug Info** and copy the current Workspace's Debug URL and Debug Key into `DEBUG_RUNTIME_WS_URL` and `PLUGIN_DEBUG_KEY`. Every Workspace has a different key, and it rotates every two hours; copy it again after expiry.
 
 ```bash
 cp .env.example .env
