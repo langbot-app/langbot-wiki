@@ -40,7 +40,7 @@ test("custom robots policy is served from the Mintlify project root", async () =
     robots,
     /^Sitemap: https:\/\/docs\.langbot\.app\/sitemap\.xml$/m,
   );
-  assert.match(
+  assert.doesNotMatch(
     robots,
     /^Sitemap: https:\/\/docs\.langbot\.app\/sitemap-alternates\.xml$/m,
   );
