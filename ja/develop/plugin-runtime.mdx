@@ -42,10 +42,8 @@ source .venv/bin/activate
 ## プラグインランタイムの起動
 
 ```bash
-uv run --no-sync lbp rt
+python -m langbot_plugin.cli.__init__ rt
 ```
-
-または`python -m langbot_plugin.cli.__init__ rt`で起動してください。
 
 プラグインランタイムは以下のパラメーターを受け入れます:
 
@@ -76,10 +74,63 @@ plugin:
   runtime_ws_url: ws://localhost:5400/control/ws
 ```
 
-そして、LangBotメインプログラムの起動時に起動パラメーター`--standalone-runtime`を追加します(例: `uv run --no-sync main.py --standalone-runtime`)。このコマンドでは必ず`--no-sync`パラメーターを付けてください。これにより、同期したローカルのlangbot-plugin-sdkがリモート版で上書きされないことが保証されます。\
+LangBot の仮想環境を有効にしたターミナルで、Python を直接使用してメインプログラムを起動し、`--standalone-runtime` を追加します（例：`python main.py --standalone-runtime`）。現在の仮想環境の Python を直接呼び出す場合、依存関係は再同期されないため、インストールしたローカルの langbot-plugin-sdk がリモート版で上書きされることはありません。\
 LangBotを再起動すると、WebSocketを使用してこのランタイムに接続されます。
 
-`LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN` は既定では省略可能です。LangBot と Runtime の両方で未設定の場合、ローカル OSS の制御接続はトークンなしで確立されます。公開された 5400 ポートを保護する場合は、両側に同じ 32 文字以上の高エントロピー値を設定してください。片側だけに設定すると接続は失敗します。
+`LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN` は既定では省略可能です。LangBot と Runtime の両方で未設定の場合、ローカル OSS の制御接続はトークンなしで確立されます。公開された 5400 ポートを保護する場合は、両側に同じ 32 文字以上の高エントロピー値を設定してください。Runtime 側に token を設定すると、同じ値を送信しない LangBot は拒否されます。LangBot 側だけに設定しても Runtime 側の認証は有効になりません。
+
+### `lbp run` でプラグインをデバッグする
+
+Multi-Workspace 版では、デバッグプラグインは `5401` ポートへ到達できるだけでは Runtime に接続できません。Workspace ごとに、有効期限付きの個別デバッグキーが必要です：
+
+1. 上記の手順で LangBot と Plugin Runtime が起動し、接続済みであることを確認します。
+2. LangBot WebUI の「プラグイン」ページで「デバッグ情報」を開き、デバッグ URL とデバッグキーをコピーします。この操作には現在の Workspace のリソース管理権限が必要です。
+3. プラグインプロジェクトの `.env` に設定します：
+
+```bash
+DEBUG_RUNTIME_WS_URL=ws://localhost:5401/plugin/debug/ws
+PLUGIN_DEBUG_KEY=<WebUI からコピーしたデバッグキー>
+```
+
+4. プラグインプロジェクトのディレクトリで起動します：
+
+```bash
+python -m langbot_plugin.cli.__init__ run
+```
+
+`.env` に保存せず、`python -m langbot_plugin.cli.__init__ run --plugin-debug-key '<デバッグキー>'` を使用することもできます。キーは Workspace ごとに分離され、有効期限は 2 時間です。期限切れ、Runtime の再起動、または Workspace の切り替え後は WebUI から再取得してください。`DEBUG_RUNTIME_WS_URL` だけを設定したクライアントは拒否されます。
+
+## Box Runtime を standalone モードで起動する
+
+Box Runtime の制御接続ルールは Plugin Runtime と同じです。OSS standalone 開発では token は省略可能で、両側で `LANGBOT_BOX_CONTROL_TOKEN` が未設定の場合も接続できます：
+
+```bash
+# ターミナル 1：langbot-plugin-sdk ディレクトリ
+python -m langbot_plugin.cli.__init__ box
+```
+
+LangBot の `data/config.yaml` でローカル Box Runtime を指定します：
+
+```yaml
+box:
+  enabled: true
+  backend: local
+  runtime:
+    endpoint: ws://127.0.0.1:5410
+```
+
+```bash
+# ターミナル 2：LangBot ディレクトリ
+python main.py --standalone-runtime --standalone-box
+```
+
+公開された 5410 ポートを保護する場合は、両方のプロセスを起動する前に、同じ 32 文字以上で空白を含まない高エントロピー値を設定してください：
+
+```bash
+export LANGBOT_BOX_CONTROL_TOKEN='<両側で完全に同じ高エントロピーシークレット>'
+```
+
+Box Runtime 側に token を設定すると、同じ値を送信しない LangBot は拒否されます。LangBot 側だけに設定しても Box Runtime 側の認証は有効になりません。明示的に設定した値が 32 文字未満の場合は、引き続き両側で拒否されます。実際の値を設定ファイルや Git にコミットしないでください。
 
 ## langbot-plugin-sdkアーキテクチャ
 

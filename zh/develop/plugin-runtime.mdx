@@ -42,10 +42,8 @@ source .venv/bin/activate
 ## 启动插件运行时
 
 ```bash
-uv run --no-sync lbp rt
+python -m langbot_plugin.cli.__init__ rt
 ```
-
-或通过`python -m langbot_plugin.cli.__init__ rt`启动。
 
 Plugin Runtime 接受以下参数：
 
@@ -76,10 +74,63 @@ plugin:
   runtime_ws_url: ws://localhost:5400/control/ws
 ```
 
-并在启动 LangBot 主程序时携带启动参数`--standalone-runtime`（如：`uv run --no-sync main.py --standalone-runtime`）。此命令行中，请务必携带`--no-sync`参数，这将确保您刚刚同步的本地 langbot-plugin-sdk 不会被远程的覆盖。\
+并在已激活 LangBot 虚拟环境的终端中，直接使用 Python 启动主程序并携带参数`--standalone-runtime`（如：`python main.py --standalone-runtime`）。直接调用当前虚拟环境的 Python 不会再次同步依赖，因此不会把刚刚安装的本地 langbot-plugin-sdk 覆盖为远程版本。\
 重启 LangBot，将会使用 WebSocket 连接到此运行时。
 
-默认情况下无需配置 `LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN`：当 LangBot 与 Runtime 两端都未设置时，OSS 的本地控制连接直接建立。若部署环境需要为 5400 控制端口增加共享密钥，则必须在两端配置同一个至少 32 位的高熵值；只配置一端会导致连接失败。
+默认情况下无需配置 `LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN`：当 LangBot 与 Runtime 两端都未设置时，OSS 的本地控制连接直接建立。若部署环境需要为 5400 控制端口增加共享密钥，则应在两端配置同一个至少 32 位的高熵值。Runtime 端配置后，未携带相同密钥的 LangBot 会被拒绝；只在 LangBot 端配置并不会启用 Runtime 端的认证。
+
+### 使用 `lbp run` 调试插件
+
+多 Workspace 版本不再允许调试插件仅凭 `5401` 端口接入 Runtime。每个 Workspace 都有独立且会过期的调试密钥：
+
+1. 确认 LangBot 与 Plugin Runtime 已按上文启动并连接成功。
+2. 在 LangBot WebUI 的“插件”页面点击“调试信息”，复制调试 URL 和调试密钥。该操作需要当前 Workspace 的资源管理权限。
+3. 在插件项目的 `.env` 中配置：
+
+```bash
+DEBUG_RUNTIME_WS_URL=ws://localhost:5401/plugin/debug/ws
+PLUGIN_DEBUG_KEY=<从 WebUI 复制的调试密钥>
+```
+
+4. 在插件项目目录中启动：
+
+```bash
+python -m langbot_plugin.cli.__init__ run
+```
+
+也可以不写入 `.env`，改用 `python -m langbot_plugin.cli.__init__ run --plugin-debug-key '<调试密钥>'`。调试密钥按 Workspace 隔离且有效期为两小时；密钥过期、Runtime 重启或切换 Workspace 后，请回到 WebUI 重新获取。只配置 `DEBUG_RUNTIME_WS_URL` 会被 Runtime 拒绝。
+
+## 以 standalone 模式启动 Box Runtime
+
+Box Runtime 与 Plugin Runtime 的控制连接规则一致：OSS standalone 开发环境默认不强制配置 token，两端都未设置 `LANGBOT_BOX_CONTROL_TOKEN` 时可以直接连接：
+
+```bash
+# 终端 1：langbot-plugin-sdk 目录
+python -m langbot_plugin.cli.__init__ box
+```
+
+LangBot 的 `data/config.yaml` 使用本地 Box 地址：
+
+```yaml
+box:
+  enabled: true
+  backend: local
+  runtime:
+    endpoint: ws://127.0.0.1:5410
+```
+
+```bash
+# 终端 2：LangBot 目录
+python main.py --standalone-runtime --standalone-box
+```
+
+若需要保护暴露的 5410 端口，请在启动两个进程前分别设置完全相同、至少 32 位且不含空白的高熵值：
+
+```bash
+export LANGBOT_BOX_CONTROL_TOKEN='<两端完全相同的高熵密钥>'
+```
+
+Box Runtime 端一旦配置 token，就会拒绝未携带相同 token 的 LangBot。只在 LangBot 端设置不会启用 Box Runtime 端认证；显式配置但不足 32 位的值仍会被两端拒绝。不要把真实密钥提交到配置文件或 Git。
 
 ## langbot-plugin-sdk 架构
 
