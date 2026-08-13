@@ -27,6 +27,18 @@ Start the containers with the recommended `all` profile, which enables Box Runti
 docker compose --profile all up
 ```
 
+## Runtime tokens for Internet-accessible deployments
+
+The open-source edition skips token verification only when **both LangBot and the corresponding Runtime leave the token unset**. If the deployment is accessible from the Internet, strongly protect Plugin Runtime and Box Runtime with separate strong tokens:
+
+```bash
+export LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN="$(openssl rand -hex 32)"
+export LANGBOT_BOX_CONTROL_TOKEN="$(openssl rand -hex 32)"
+docker compose --profile all up -d
+```
+
+The official Compose file passes each variable to both ends of its connection. Setting only one end, using different values, or using a weak token causes the connection to be rejected. Store tokens in your deployment platform's secret manager and never commit them.
+
 This starts `langbot`, `langbot_plugin_runtime`, and `langbot_box`. If you only need the basic services and do not want to enable Box Runtime, run:
 
 ```bash

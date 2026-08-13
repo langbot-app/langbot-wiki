@@ -27,6 +27,18 @@ cd LangBot/docker
 docker compose --profile all up
 ```
 
+## 公网部署的 Runtime Token
+
+开源版仅在 LangBot 与对应 Runtime **两端都未设置 Token** 时跳过 Token 校验。若部署环境可从公网访问，强烈建议为 Plugin Runtime 和 Box Runtime 设置独立的强 Token：
+
+```bash
+export LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN="$(openssl rand -hex 32)"
+export LANGBOT_BOX_CONTROL_TOKEN="$(openssl rand -hex 32)"
+docker compose --profile all up -d
+```
+
+官方 Compose 文件会把每个变量传给对应连接的两端。只设置一端、两端值不一致或 Token 强度不足都会导致连接被拒绝。请把 Token 保存在部署平台的 Secret 管理中，不要提交到仓库。
+
 这会启动 `langbot`、`langbot_plugin_runtime` 和 `langbot_box`。如果只需要基础服务，不启用 Box Runtime，可以使用：
 
 ```bash

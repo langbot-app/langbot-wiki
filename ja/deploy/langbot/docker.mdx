@@ -26,6 +26,18 @@ cd LangBot/docker
 docker compose --profile all up
 ```
 
+## インターネット公開時の Runtime Token
+
+オープンソース版で Token 検証が省略されるのは、**LangBot と対応する Runtime の両方で Token が未設定の場合のみ**です。インターネットからアクセス可能な環境では、Plugin Runtime と Box Runtime にそれぞれ強力な Token を設定することを強く推奨します：
+
+```bash
+export LANGBOT_PLUGIN_RUNTIME_CONTROL_TOKEN="$(openssl rand -hex 32)"
+export LANGBOT_BOX_CONTROL_TOKEN="$(openssl rand -hex 32)"
+docker compose --profile all up -d
+```
+
+公式 Compose ファイルは、各変数を対応する接続の両端に渡します。片側だけの設定、値の不一致、または強度不足の Token は接続拒否の原因になります。Token はデプロイ環境の Secret 管理に保存し、リポジトリへコミットしないでください。
+
 これにより `langbot`、`langbot_plugin_runtime`、`langbot_box` が起動します。Box Runtime を有効にせず、基本サービスのみを使う場合は次を実行します：
 
 ```bash
