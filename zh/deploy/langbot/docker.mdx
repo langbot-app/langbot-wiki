@@ -45,6 +45,10 @@ docker compose --profile all up -d
 docker compose up
 ```
 
+## SeekDB 支持
+
+官方 Docker 镜像已经包含可选的 SeekDB 依赖，无需额外构建参数。容器会使用对应 Linux 架构的 `pylibseekdb` wheel，因此宿主机的 macOS 版本不会限制容器内的 embedded 模式；不使用 SeekDB 时保持默认 `vdb.use: chroma` 即可。
+
 `langbot_box` 通过主机 Docker socket 创建沙箱容器，因此 Box 根目录的宿主机路径和容器内路径必须一致：
 
 ```yaml

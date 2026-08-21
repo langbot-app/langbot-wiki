@@ -14,3 +14,20 @@ uvx langbot@latest
 ```
 
 This will set the current directory as the working directory, and you can access `http://localhost:5300` to start using it.
+
+## Optional SeekDB support
+
+The default installation uses Chroma and does not include the SeekDB Python
+SDK or native components. Install the `seekdb` extra only when you want to use
+SeekDB as the vector store or use its built-in embedding model:
+
+```bash
+uvx --from 'langbot[seekdb]@latest' langbot
+```
+
+SeekDB embedded mode also requires a compatible `pylibseekdb` wheel. Apple
+Silicon currently requires macOS 15 or later; follow
+[oceanbase/seekdb#1324](https://github.com/oceanbase/seekdb/issues/1324) for the
+macOS 14 ARM64 support plan. Because of the current `pyseekdb` package
+metadata, the extra also fails to resolve on macOS 14 ARM64 for server-only
+use. These platform limits do not affect LangBot when SeekDB is not installed.

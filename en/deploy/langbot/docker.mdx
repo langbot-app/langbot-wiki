@@ -45,6 +45,14 @@ This starts `langbot`, `langbot_plugin_runtime`, and `langbot_box`. If you only 
 docker compose up
 ```
 
+## SeekDB support
+
+The official Docker image already includes the optional SeekDB dependencies;
+no additional build argument is required. The container uses the matching
+Linux `pylibseekdb` wheel, so the host macOS version does not limit embedded
+mode inside the container. Keep the default `vdb.use: chroma` when SeekDB is
+not needed.
+
 `langbot_box` creates sandbox containers through the host Docker socket, so the Box root path must be identical on the host and inside the container:
 
 ```yaml

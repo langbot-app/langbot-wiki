@@ -18,6 +18,14 @@ pip install uv
 uv sync
 ```
 
+デフォルトのインストールにはオプションの SeekDB サポートは含まれません。SeekDB ベクトルストアまたは組み込み埋め込みモデルを使用する場合は、次を実行します：
+
+```bash
+uv sync --extra seekdb
+```
+
+組み込みモードの対応プラットフォームは `pylibseekdb` wheel に依存します。Apple Silicon では現在 macOS 15 以降が必要です。その他の LangBot 機能はデフォルトの `uv sync` で利用できます。
+
 3. メインプログラムを一度実行して設定ファイルを生成します
 
 ```bash

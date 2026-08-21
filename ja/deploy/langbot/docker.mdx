@@ -44,6 +44,10 @@ docker compose --profile all up -d
 docker compose up
 ```
 
+## SeekDB サポート
+
+公式 Docker イメージにはオプションの SeekDB 依存関係がすでに含まれており、追加のビルド引数は不要です。コンテナは対応する Linux アーキテクチャの `pylibseekdb` wheel を使用するため、ホストの macOS バージョンはコンテナ内の組み込みモードを制限しません。SeekDB を使用しない場合は、デフォルトの `vdb.use: chroma` のまま使用できます。
+
 `langbot_box` はホスト Docker socket 経由でサンドボックスコンテナを作成するため、Box root のホスト側パスとコンテナ内パスは同一である必要があります：
 
 ```yaml

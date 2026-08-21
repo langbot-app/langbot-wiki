@@ -22,6 +22,14 @@ pip install uv
 uv sync
 ```
 
+默认安装不包含可选的 SeekDB 支持。如果需要使用 SeekDB 向量数据库或内置嵌入模型，请改用：
+
+```bash
+uv sync --extra seekdb
+```
+
+SeekDB 嵌入式模式的平台支持取决于 `pylibseekdb` wheel；Apple Silicon 当前要求 macOS 15 或更高版本。其他功能仍可使用默认的 `uv sync` 安装。
+
 或者使用清华源
 
 ```bash

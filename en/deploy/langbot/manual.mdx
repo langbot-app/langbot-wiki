@@ -18,6 +18,17 @@ pip install uv
 uv sync
 ```
 
+The default installation does not include optional SeekDB support. If you need
+the SeekDB vector store or built-in embedding model, use:
+
+```bash
+uv sync --extra seekdb
+```
+
+Embedded-mode platform support depends on the available `pylibseekdb` wheels;
+Apple Silicon currently requires macOS 15 or later. All other LangBot features
+can use the default `uv sync` installation.
+
 3. Run the main program once to generate configuration files
 
 ```bash
