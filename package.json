@@ -2,6 +2,8 @@
   "scripts": {
     "dev": "npx mintlify dev",
     "generate:sitemap-alternates": "node scripts/generate-alternate-sitemap.mjs",
+    "sync:articles": "node scripts/sync-blog-articles.mjs",
+    "check:articles": "node scripts/sync-blog-articles.mjs --check",
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {

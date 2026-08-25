@@ -711,6 +711,49 @@
             ]
           },
           {
+            "tab": "Articles",
+            "groups": [
+              {
+                "group": "Browse",
+                "pages": [
+                  "en/articles/index"
+                ]
+              },
+              {
+                "group": "Product Updates",
+                "pages": [
+                  "en/articles/langbot-cloud-multi-user-workspaces"
+                ]
+              },
+              {
+                "group": "Engineering",
+                "pages": [
+                  "en/articles/langbot-v4100-sandbox-skills",
+                  "en/articles/langbot-v490-rag-plugin-architecture",
+                  "en/articles/langbot-plugin-system-deep-dive"
+                ]
+              },
+              {
+                "group": "Tutorials & Integrations",
+                "pages": [
+                  "en/articles/langtars-remote-pc-control-dify-n8n",
+                  "en/articles/connect-deepseek-to-wechat",
+                  "en/articles/deploy-ai-bot-in-5-minutes",
+                  "en/articles/dify-agent-discord-telegram-slack",
+                  "en/articles/langflow-drag-and-drop-ai-bot",
+                  "en/articles/n8n-multi-platform-ai-chatbot",
+                  "en/articles/dify-langbot-rag-knowledge-base"
+                ]
+              },
+              {
+                "group": "Announcements",
+                "pages": [
+                  "en/articles/welcome"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "API Reference",
             "groups": [
               {
@@ -950,6 +993,49 @@
             ]
           },
           {
+            "tab": "文章",
+            "groups": [
+              {
+                "group": "浏览",
+                "pages": [
+                  "zh/articles/index"
+                ]
+              },
+              {
+                "group": "产品动态",
+                "pages": [
+                  "zh/articles/langbot-cloud-multi-user-workspaces"
+                ]
+              },
+              {
+                "group": "技术解析",
+                "pages": [
+                  "zh/articles/langbot-v4100-sandbox-skills",
+                  "zh/articles/langbot-v490-rag-plugin-architecture",
+                  "zh/articles/langbot-plugin-system-deep-dive"
+                ]
+              },
+              {
+                "group": "教程与集成",
+                "pages": [
+                  "zh/articles/langtars-remote-pc-control-dify-n8n",
+                  "zh/articles/connect-deepseek-to-wechat",
+                  "zh/articles/deploy-ai-bot-in-5-minutes",
+                  "zh/articles/dify-agent-discord-telegram-slack",
+                  "zh/articles/langflow-drag-and-drop-ai-bot",
+                  "zh/articles/n8n-multi-platform-ai-chatbot",
+                  "zh/articles/dify-langbot-rag-knowledge-base"
+                ]
+              },
+              {
+                "group": "公告",
+                "pages": [
+                  "zh/articles/welcome"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "API 参考",
             "groups": [
               {
@@ -1159,6 +1245,49 @@
                   "ja/develop/plugin-runtime",
                   "ja/develop/comp-arch",
                   "ja/workshop/impl-platform-adapter"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "記事",
+            "groups": [
+              {
+                "group": "一覧",
+                "pages": [
+                  "ja/articles/index"
+                ]
+              },
+              {
+                "group": "製品アップデート",
+                "pages": [
+                  "ja/articles/langbot-cloud-multi-user-workspaces"
+                ]
+              },
+              {
+                "group": "エンジニアリング",
+                "pages": [
+                  "ja/articles/langbot-v4100-sandbox-skills",
+                  "ja/articles/langbot-v490-rag-plugin-architecture",
+                  "ja/articles/langbot-plugin-system-deep-dive"
+                ]
+              },
+              {
+                "group": "チュートリアルと連携",
+                "pages": [
+                  "ja/articles/langtars-remote-pc-control-dify-n8n",
+                  "ja/articles/connect-deepseek-to-wechat",
+                  "ja/articles/deploy-ai-bot-in-5-minutes",
+                  "ja/articles/dify-agent-discord-telegram-slack",
+                  "ja/articles/langflow-drag-and-drop-ai-bot",
+                  "ja/articles/n8n-multi-platform-ai-chatbot",
+                  "ja/articles/dify-langbot-rag-knowledge-base"
+                ]
+              },
+              {
+                "group": "お知らせ",
+                "pages": [
+                  "ja/articles/welcome"
                 ]
               }
             ]
