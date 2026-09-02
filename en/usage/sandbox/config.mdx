@@ -1,9 +1,9 @@
 ---
 title: "Sandbox Configuration"
-description: "Configure the LangBot sandbox (Box Runtime). Set up isolated code execution backends: Docker, nsjail or E2B."
+description: "Configure LangBot Box Runtime with Docker, nsjail, E2B, or the explicitly enabled non-isolated Host backend."
 ---
 
-Sandbox settings are owned by the LangBot main process; Box Runtime performs the actual execution. For most deployments, you only need to choose a backend, set the workspace directory, and pick a security profile.
+Box settings are owned by the LangBot main process; Box Runtime performs the actual execution. For most deployments, you only need to choose a backend, set the workspace directory, and pick a security profile. Docker, nsjail, and E2B provide sandbox environments; the Host backend runs commands directly on the Box Runtime host.
 
 <Note>
 All `box.*` settings on this page live in `data/config.yaml`. See [System Environment Settings](../../deploy/settings) for the file's location and how it's loaded.
@@ -36,7 +36,7 @@ Skills are loaded only from the Box-managed skill store. When Box Runtime or the
 
 ## Backend Selection
 
-The sandbox can run on **local containers** or **in the cloud**. `box.backend` picks which:
+Box can run in **local containers**, in a **cloud sandbox**, or as a **process on the Box Runtime host**. `box.backend` picks which:
 
 | `backend` | Where it runs | Behavior |
 |-----------|---------------|----------|
@@ -44,8 +44,13 @@ The sandbox can run on **local containers** or **in the cloud**. `box.backend` p
 | `docker` | Local containers | Force Docker; requires the Docker daemon |
 | `nsjail` | Local containers | Force Nsjail (Linux only); no custom image support |
 | `e2b` | Cloud | Use [E2B](https://e2b.dev) cloud sandbox; requires API key |
+| `host` | Box Runtime host | Start local processes with the Box Runtime user's permissions; requires POSIX and `sh` |
 
-`local` is shorthand for "auto-pick", not a fourth backend sitting next to `docker`/`nsjail`. The local backends (`local`/`docker`/`nsjail`) **share** the `box.local.*` config section; the cloud backend uses `box.e2b.*`.
+`local` is shorthand for "auto-pick", not a fourth backend sitting next to `docker`/`nsjail`. It only tries Docker and Nsjail and **never auto-selects `host`**. Local backends use workspace settings from `box.local.*`; the cloud backend uses `box.e2b.*`.
+
+<Warning>
+`host` is **not a sandbox**. Commands have the Box Runtime user's host permissions, with no filesystem, process, network, namespace, cgroup, rootfs, or image isolation. Read-only mounts and hard disk quotas are not guaranteed. Use it only for single-user local development with trusted input; never use it for public services, shared hosts, or untrusted code.
+</Warning>
 
 <Note>
 `backend` is a hard selection. Setting `docker` and finding Docker unavailable does **not** fall back to Nsjail or E2B — only `local` auto-fans-out.
@@ -55,7 +60,7 @@ The sandbox can run on **local containers** or **in the cloud**. `box.backend` p
 
 ## Security Profiles
 
-`box.local.profile` controls network, mounts, and resource limits for local backends:
+`box.local.profile` controls network, mounts, and resource limits for the Docker / Nsjail local sandbox backends:
 
 | Profile | Network | Mounts | Resources | When to use |
 |---------|---------|--------|-----------|-------------|
@@ -66,24 +71,59 @@ The sandbox can run on **local containers** or **in the cloud**. `box.backend` p
 
 Prefer least privilege: skip the network unless you need it (`default` / `offline_readonly`); only add necessary directories to `allowed_mount_roots`.
 
-## Local Backend Configuration (box.local.*)
+<Note>
+The Host backend does not enforce these isolation policies. A configured profile, CPU / memory / PID limit, read-only rootfs, or disabled network does not create a sandbox boundary around host processes.
+</Note>
 
-The local backends (`local` / `docker` / `nsjail`) share these settings:
+## Local Workspace Configuration (box.local.*)
+
+Docker, Nsjail, and Host share workspace path settings. Isolation and resource settings only take effect when the selected sandbox backend can enforce them:
 
 | Setting | Default | Notes |
 |---------|---------|-------|
-| `local.profile` | `default` | See "Security Profiles" above |
+| `local.profile` | `default` | Docker / Nsjail security profile; Host provides no matching isolation |
 | `local.image` | empty | Docker-only custom image; empty = use profile default |
 | `local.host_root` | `./data/box` | Host workspace base, mapped to `/workspace` inside the sandbox |
 | `local.default_workspace` | empty | Default workspace name; empty = `<host_root>/default` |
 | `local.skills_root` | `skills` | Skill package directory; relative paths resolve under `host_root` |
 | `local.allowed_mount_roots` | `[host_root]` | Allowlist of host directories the Agent can mount |
-| `local.workspace_quota_mb` | `null` | Workspace disk quota (MB); `null` = use profile default |
-| `default_memory_mb` | `1536` | Memory limit for each MCP stdio process (MB); overridable via `BOX__DEFAULT_MEMORY_MB` |
+| `local.workspace_quota_mb` | `null` | Workspace disk quota (MB); `null` = use profile default; Host provides no hard quota guarantee |
+| `default_memory_mb` | `1536` | Memory limit for each MCP stdio process (MB); Host cannot enforce it through cgroups |
+
+## Host Backend (Trusted Local Development)
+
+Host is the lowest-dependency local option and does not require Docker or Nsjail. It must be selected explicitly:
+
+```yaml
+box:
+  enabled: true
+  backend: 'host'
+  local:
+    host_root: './data/box'
+    skills_root: 'skills'
+```
+
+The WebUI, Agent tools, and calling conventions stay the same: session scopes, `exec/read/write/edit/glob/grep`, Skills, and stdio MCP all use the existing Box APIs. Only the execution layer changes:
+
+- `/workspace`, `workdir`, and Skill mount paths are translated to real paths on the Box Runtime host.
+- Child processes inherit only a minimal path, locale, and terminal environment plus variables explicitly supplied by the request. LangBot / Box control secrets are not inherited automatically. This reduces accidental leakage but does not provide filesystem isolation.
+- `exec` and managed processes start in separate process groups. Timeouts, cancellation, process stop, session deletion, and Runtime shutdown terminate the corresponding process trees.
+- Idle cleanup, managed-process keepalive, and `persistent` rules match the other backends.
+- Status responses include `unsafe_direct_execution: true` so operators can detect the lack of sandbox isolation.
+
+<Note>
+Host means the environment **where Box Runtime runs**. With LangBot's local stdio-managed Box Runtime, that is the current machine. If Box Runtime itself runs in a container, commands run directly in that container; Host does not automatically break through to the physical host.
+</Note>
+
+The Host MVP supports POSIX systems with `sh` (Linux / macOS). Use WSL on Windows; a native Windows process backend is not yet supported.
+
+When Host is used through an external WebSocket Box Runtime, set the same strong random `LANGBOT_BOX_CONTROL_TOKEN` on both LangBot and Box Runtime. The locally managed stdio Runtime needs no extra token configuration. Cloud environments with managed-sandbox admission still validate isolation capabilities and the required backend; Host does not bypass those checks.
 
 ## Box Sandbox Memory Configuration
 
 `box.default_memory_mb` sets the nsjail cgroup memory cap for every stdio-mode MCP server process.
+
+The Host backend has no cgroup memory isolation, so this value cannot limit MCP processes running on Host.
 
 | Setting | Notes | Default |
 |---|---|---|

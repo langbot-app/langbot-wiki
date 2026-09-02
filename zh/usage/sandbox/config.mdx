@@ -1,9 +1,9 @@
 ---
 title: "沙箱配置"
-description: "配置 LangBot 沙箱（Box Runtime），设置隔离的代码执行后端：Docker、nsjail 或 E2B。"
+description: "配置 LangBot Box Runtime，选择 Docker、nsjail、E2B，或显式启用不具备隔离能力的 Host 后端。"
 ---
 
-沙箱由 LangBot 主进程配置，Box Runtime 负责实际执行。常规部署只需要选择后端、设置工作目录和安全预设。
+Box 由 LangBot 主进程配置，Box Runtime 负责实际执行。常规部署只需要选择后端、设置工作目录和安全预设。Docker、nsjail 和 E2B 提供沙箱环境；Host 后端则直接在 Box Runtime 所在机器上执行命令。
 
 <Note>
 本页所有 `box.*` 配置都写在 `data/config.yaml` 中。配置文件的位置和加载机制详见[系统环境设置](../../deploy/settings)。
@@ -36,7 +36,7 @@ Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端�
 
 ## 后端选择
 
-沙箱可以跑在**本机容器**或**云端**。`box.backend` 选择走哪一种：
+Box 可以跑在**本机容器**、**云端沙箱**，也可以直接使用 **Box Runtime 主机进程**。`box.backend` 选择走哪一种：
 
 | `backend` | 跑在哪 | 行为 |
 |-----------|--------|------|
@@ -44,8 +44,13 @@ Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端�
 | `docker` | 本机容器 | 强制使用 Docker，需要 Docker daemon |
 | `nsjail` | 本机容器 | 强制使用 Nsjail（仅 Linux），不支持自定义镜像 |
 | `e2b` | 云端 | 使用 [E2B](https://e2b.dev) 云沙箱，需要 API Key |
+| `host` | Box Runtime 主机 | 直接以 Box Runtime 用户权限启动本机进程；仅支持 POSIX 系统且需要 `sh` |
 
-`local` 是「自动选择」的简写，不是和 `docker`/`nsjail` 平级的第四种后端。本机容器后端（`local`/`docker`/`nsjail`）**共用** `box.local.*` 配置段；云端后端用 `box.e2b.*` 配置段。
+`local` 是「自动选择」的简写，不是和 `docker`/`nsjail` 平级的第四种后端。它只会尝试 Docker 和 Nsjail，**永远不会自动选择 `host`**。本机后端使用 `box.local.*` 中的工作区配置；云端后端使用 `box.e2b.*`。
+
+<Warning>
+`host` **不是沙箱**。命令拥有 Box Runtime 用户的主机权限，没有文件系统、进程、网络、namespace、cgroup、rootfs 或镜像隔离，也不保证只读挂载和硬磁盘配额。它只适合单用户、可信输入的本地开发环境；不要用于公开服务、共享主机或执行不受信任的代码。
+</Warning>
 
 <Note>
 `backend` 是强制值。设为 `docker` 时如果 Docker 不可用，**不会**自动回退到 Nsjail 或 E2B——只有 `local` 会自动 fan-out。
@@ -55,7 +60,7 @@ Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端�
 
 ## 安全预设
 
-`box.local.profile` 控制本机后端的网络、挂载、资源限制：
+`box.local.profile` 控制 Docker / Nsjail 本机沙箱后端的网络、挂载和资源限制：
 
 | Profile | 网络 | 挂载 | 资源 | 建议场景 |
 |---------|------|------|------|----------|
@@ -66,24 +71,59 @@ Skills 只从 Box Runtime 管理的 skill store 加载。Box Runtime 或后端�
 
 优先使用最小权限：不需要网络就用 `default` 或 `offline_readonly`；只把必要目录加入 `allowed_mount_roots`。
 
-## 本机后端配置（box.local.*）
+<Note>
+Host 后端不执行这些隔离策略。即使配置了 profile、CPU / 内存 / PID 限制、只读 rootfs 或网络关闭，主机进程也不受这些沙箱边界保护。
+</Note>
 
-本机后端（`local` / `docker` / `nsjail`）共用以下配置：
+## 本机工作区配置（box.local.*）
+
+Docker、Nsjail 和 Host 共用工作区路径配置；隔离与资源配置仅在对应沙箱后端能够实施时生效：
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `local.profile` | `default` | 见上文「安全预设」 |
+| `local.profile` | `default` | Docker / Nsjail 安全预设；Host 不提供对应隔离 |
 | `local.image` | 空 | Docker 后端的自定义镜像；空 = 用 profile 默认 |
 | `local.host_root` | `./data/box` | 主机工作目录基础路径，映射为沙箱内 `/workspace` |
 | `local.default_workspace` | 空 | 默认工作空间名；空 = `<host_root>/default` |
 | `local.skills_root` | `skills` | Skill 包目录；相对路径解析到 `host_root` 下 |
 | `local.allowed_mount_roots` | `[host_root]` | Agent 可请求挂载的主机目录白名单 |
-| `local.workspace_quota_mb` | `null` | 工作区磁盘配额（MB），`null` = 用 profile 默认 |
-| `default_memory_mb` | `1536` | MCP stdio 进程内存上限（MB）；可通过 `BOX__DEFAULT_MEMORY_MB` 覆盖 |
+| `local.workspace_quota_mb` | `null` | 工作区磁盘配额（MB），`null` = 用 profile 默认；Host 不提供硬配额保证 |
+| `default_memory_mb` | `1536` | MCP stdio 进程内存上限（MB）；Host 无法用 cgroup 强制执行 |
+
+## Host 后端（可信本地开发）
+
+Host 是依赖最少的本地选项，不需要安装 Docker 或 Nsjail。它必须显式选择：
+
+```yaml
+box:
+  enabled: true
+  backend: 'host'
+  local:
+    host_root: './data/box'
+    skills_root: 'skills'
+```
+
+WebUI、Agent 工具和调用方式不变：仍然使用相同的会话作用域、`exec/read/write/edit/glob/grep`、Skills 和 stdio MCP。区别只在执行层：
+
+- `/workspace`、`workdir` 和 Skill 挂载路径会转换为 Box Runtime 主机上的实际路径。
+- 子进程只继承最小的 PATH、语言和终端环境，再叠加请求中显式传入的变量；LangBot / Box 控制密钥不会自动进入子进程环境。这能减少意外泄露，但不构成文件系统隔离。
+- `exec` 和托管进程在独立进程组中启动；超时、取消、停止、删除会话和 Runtime 关闭都会终止对应进程树。
+- 空闲回收、托管进程保活和 `persistent` 规则与其他后端一致。
+- 状态接口会返回 `unsafe_direct_execution: true`，便于运维侧识别当前没有沙箱隔离。
+
+<Note>
+Host 指的是 **Box Runtime 所在的环境**。LangBot 直接启动本地 stdio Box Runtime 时，它是当前机器；如果 Box Runtime 本身运行在容器里，命令会直接运行在那个容器中，而不是自动穿透到物理宿主机。
+</Note>
+
+Host MVP 支持带 `sh` 的 POSIX 系统（Linux / macOS）。Windows 请先使用 WSL；原生 Windows 进程后端尚未支持。
+
+外部 WebSocket Box Runtime 使用 Host 时，必须在 LangBot 与 Box Runtime 两侧设置相同的强随机 `LANGBOT_BOX_CONTROL_TOKEN`。本地自动管理的 stdio Box Runtime 不需要额外配置该令牌。启用了托管沙箱 admission 的 Cloud 环境仍会按隔离能力和指定后端进行校验，Host 不会绕过这些检查。
 
 ## Box 沙箱内存配置
 
 `box.default_memory_mb` 控制每个 stdio 模式 MCP 服务进程的 nsjail cgroup 内存上限。
+
+Host 后端不提供 cgroup 内存隔离，因此该值不能限制 Host 上的 MCP 进程。
 
 | 配置项 | 说明 | 默认值 |
 |---|---|---|
