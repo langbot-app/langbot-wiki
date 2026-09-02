@@ -1,9 +1,9 @@
 ---
 title: "サンドボックス設定"
-description: "LangBot サンドボックス（Box Runtime）を設定。隔離されたコード実行バックエンド（Docker・nsjail・E2B）を構成。"
+description: "LangBot Box Runtime を設定し、Docker・nsjail・E2B、または明示的に有効化する非隔離 Host バックエンドを選択。"
 ---
 
-サンドボックス設定は LangBot メインプロセスが管理し、Box Runtime が実際の実行を担当します。通常のデプロイでは、バックエンド、ワークスペースディレクトリ、セキュリティプロファイルだけを決めれば十分です。
+Box の設定は LangBot メインプロセスが管理し、Box Runtime が実際の実行を担当します。通常のデプロイでは、バックエンド、ワークスペースディレクトリ、セキュリティプロファイルだけを決めれば十分です。Docker、nsjail、E2B はサンドボックス環境を提供し、Host バックエンドは Box Runtime のホスト上でコマンドを直接実行します。
 
 <Note>
 このページの `box.*` 設定はすべて `data/config.yaml` に記述します。ファイルの場所と読み込みの仕組みは[システム環境設定](../../deploy/settings)を参照してください。
@@ -36,7 +36,7 @@ Skill は Box Runtime が管理する skill store からのみ読み込まれま
 
 ## バックエンドの選択
 
-サンドボックスは**ローカルコンテナ**または**クラウド**で動作させられます。`box.backend` でどちらを使うかを指定します：
+Box は**ローカルコンテナ**、**クラウドサンドボックス**、または **Box Runtime ホスト上のプロセス**として動作させられます。`box.backend` で使用する方式を指定します：
 
 | `backend` | 実行場所 | 動作 |
 |-----------|---------|------|
@@ -44,8 +44,13 @@ Skill は Box Runtime が管理する skill store からのみ読み込まれま
 | `docker` | ローカルコンテナ | Docker を強制使用。Docker daemon が必要 |
 | `nsjail` | ローカルコンテナ | Nsjail を強制使用（Linux のみ）。カスタムイメージ非対応 |
 | `e2b` | クラウド | [E2B](https://e2b.dev) クラウドサンドボックスを使用。API キーが必要 |
+| `host` | Box Runtime ホスト | Box Runtime ユーザーの権限でローカルプロセスを直接起動。POSIX と `sh` が必要 |
 
-`local` は「自動選択」のショートハンドであり、`docker` / `nsjail` と並列の 4 つ目のバックエンドではありません。ローカル系バックエンド（`local` / `docker` / `nsjail`）は `box.local.*` 設定セクションを**共有**し、クラウドバックエンドは `box.e2b.*` を使います。
+`local` は「自動選択」のショートハンドであり、`docker` / `nsjail` と並列の 4 つ目のバックエンドではありません。試行対象は Docker と Nsjail だけで、**`host` が自動選択されることはありません**。ローカル系バックエンドは `box.local.*` のワークスペース設定を使い、クラウドバックエンドは `box.e2b.*` を使います。
+
+<Warning>
+`host` は**サンドボックスではありません**。コマンドは Box Runtime ユーザーのホスト権限を持ち、ファイルシステム、プロセス、ネットワーク、namespace、cgroup、rootfs、イメージの隔離はありません。読み取り専用マウントやハードディスククォータも保証されません。単一ユーザーかつ信頼できる入力を扱うローカル開発にのみ使用し、公開サービス、共有ホスト、信頼できないコードには使用しないでください。
+</Warning>
 
 <Note>
 `backend` は強制値です。`docker` を指定して Docker が使えない場合、Nsjail や E2B に**自動でフォールバックしません**。自動 fan-out するのは `local` だけです。
@@ -55,7 +60,7 @@ Skill は Box Runtime が管理する skill store からのみ読み込まれま
 
 ## セキュリティプロファイル
 
-`box.local.profile` はローカル系バックエンドのネットワーク、マウント、リソース制限を制御します：
+`box.local.profile` は Docker / Nsjail ローカルサンドボックスバックエンドのネットワーク、マウント、リソース制限を制御します：
 
 | Profile | ネットワーク | マウント | リソース | 推奨シーン |
 |---------|---------|---------|---------|----------|
@@ -66,19 +71,52 @@ Skill は Box Runtime が管理する skill store からのみ読み込まれま
 
 最小権限を優先：ネットワークが不要なら `default` または `offline_readonly`；`allowed_mount_roots` には必要なディレクトリのみを追加。
 
-## ローカル系バックエンド設定（box.local.*）
+<Note>
+Host バックエンドはこれらの隔離ポリシーを適用しません。profile、CPU / メモリ / PID 制限、読み取り専用 rootfs、ネットワーク無効化を設定しても、ホストプロセスにサンドボックス境界は作られません。
+</Note>
 
-ローカル系バックエンド（`local` / `docker` / `nsjail`）は以下を共有します：
+## ローカルワークスペース設定（box.local.*）
+
+Docker、Nsjail、Host はワークスペースパス設定を共有します。隔離とリソース設定は、選択したサンドボックスバックエンドが実施できる場合にのみ有効です：
 
 | 設定項目 | 既定値 | 説明 |
 |---------|--------|------|
-| `local.profile` | `default` | 上記「セキュリティプロファイル」を参照 |
+| `local.profile` | `default` | Docker / Nsjail のセキュリティプロファイル。Host には対応する隔離なし |
 | `local.image` | 空 | Docker バックエンドのカスタムイメージ。空 = プロファイル既定を使用 |
 | `local.host_root` | `./data/box` | ホスト作業ディレクトリのベース。サンドボックス内の `/workspace` にマップ |
 | `local.default_workspace` | 空 | 既定ワークスペース名。空 = `<host_root>/default` |
 | `local.skills_root` | `skills` | Skill パッケージディレクトリ。相対パスは `host_root` 配下に解決 |
 | `local.allowed_mount_roots` | `[host_root]` | Agent がマウント要求できるホストディレクトリの許可リスト |
-| `local.workspace_quota_mb` | `null` | ワークスペースのディスク配額（MB）。`null` = プロファイル既定 |
+| `local.workspace_quota_mb` | `null` | ワークスペースのディスククォータ（MB）。`null` = プロファイル既定。Host ではハードクォータを保証しない |
+
+## Host バックエンド（信頼できるローカル開発）
+
+Host は依存関係が最も少ないローカルオプションで、Docker や Nsjail は不要です。必ず明示的に選択します：
+
+```yaml
+box:
+  enabled: true
+  backend: 'host'
+  local:
+    host_root: './data/box'
+    skills_root: 'skills'
+```
+
+WebUI、Agent ツール、呼び出し方法は変わりません。セッションスコープ、`exec/read/write/edit/glob/grep`、Skills、stdio MCP は既存の Box API をそのまま使います。違いは実行層だけです：
+
+- `/workspace`、`workdir`、Skill のマウントパスは Box Runtime ホスト上の実パスに変換されます。
+- 子プロセスは最小限のパス、ロケール、端末環境と、リクエストで明示的に渡された変数だけを継承します。LangBot / Box の制御シークレットは自動継承されません。これは意図しない漏えいを減らしますが、ファイルシステム隔離を提供するものではありません。
+- `exec` と管理対象プロセスは個別のプロセスグループで起動します。タイムアウト、キャンセル、プロセス停止、セッション削除、Runtime 終了時には対応するプロセスツリーを終了します。
+- アイドルクリーンアップ、管理対象プロセスによる維持、`persistent` のルールは他のバックエンドと同じです。
+- ステータスレスポンスには `unsafe_direct_execution: true` が含まれ、サンドボックス隔離がないことを運用側で識別できます。
+
+<Note>
+Host は **Box Runtime が動作する環境**を指します。LangBot がローカル stdio Box Runtime を管理する場合は現在のマシンです。Box Runtime 自体がコンテナ内で動作している場合、コマンドはそのコンテナ内で直接実行され、物理ホストへ自動的に抜けることはありません。
+</Note>
+
+Host MVP は `sh` を備えた POSIX システム（Linux / macOS）をサポートします。Windows では WSL を使用してください。Windows ネイティブのプロセスバックエンドはまだサポートされていません。
+
+外部 WebSocket Box Runtime で Host を使う場合、LangBot と Box Runtime の両方に同じ強力なランダム値の `LANGBOT_BOX_CONTROL_TOKEN` を設定してください。ローカル管理の stdio Runtime では追加のトークン設定は不要です。管理サンドボックス admission を有効にした Cloud 環境では、隔離能力と必須バックエンドの検証が継続され、Host がこれらを迂回することはありません。
 
 ## Docker バックエンド設定（box.docker.*）
 
