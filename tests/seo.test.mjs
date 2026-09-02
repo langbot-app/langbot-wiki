@@ -32,6 +32,42 @@ test("the historical README_EN URL keeps its permanent canonical redirect", asyn
   assert.notEqual(redirects[0].permanent, false);
 });
 
+test("navbar is localized and links to locale-aware product pages", async () => {
+  const docs = JSON.parse(await readFile(new URL("docs.json", repoRoot), "utf8"));
+  const languages = Object.fromEntries(
+    docs.navigation.languages.map((item) => [item.language, item.navbar]),
+  );
+  const expected = {
+    en: {
+      labels: ["Home", "Cloud", "Extensions", "Blog", "Roadmap"],
+      roadmap: "https://langbot.app/en/roadmap",
+    },
+    cn: {
+      labels: ["首页", "云服务", "扩展", "博客", "路线图"],
+      roadmap: "https://langbot.app/zh/roadmap",
+    },
+    jp: {
+      labels: ["ホーム", "クラウド", "拡張機能", "ブログ", "ロードマップ"],
+      roadmap: "https://langbot.app/ja/roadmap",
+    },
+  };
+
+  for (const [language, navbar] of Object.entries(languages)) {
+    assert.ok(expected[language], `unexpected language: ${language}`);
+    assert.deepEqual(
+      navbar.links.map((link) => link.label),
+      expected[language].labels,
+    );
+    assert.equal(navbar.links.at(-1).href, expected[language].roadmap);
+    assert.equal(navbar.primary.type, "button");
+    assert.equal(navbar.primary.label, "GitHub");
+    assert.equal(
+      navbar.primary.href,
+      "https://github.com/langbot-app/LangBot",
+    );
+  }
+});
+
 test("custom robots policy is served from the Mintlify project root", async () => {
   const robots = await readFile(new URL("robots.txt", repoRoot), "utf8");
   assert.match(robots, /^User-agent: \*$/m);

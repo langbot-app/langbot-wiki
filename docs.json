@@ -27,15 +27,15 @@
     "links": [
       {
         "label": "Home",
-        "href": "https://langbot.app"
+        "href": "https://langbot.app/en"
       },
       {
         "label": "Cloud",
-        "href": "https://space.langbot.app/cloud"
+        "href": "https://space.langbot.app/cloud?language=en"
       },
       {
-        "label": "Market",
-        "href": "https://space.langbot.app"
+        "label": "Extensions",
+        "href": "https://space.langbot.app/market?language=en"
       },
       {
         "label": "Blog",
@@ -43,9 +43,14 @@
       },
       {
         "label": "Roadmap",
-        "href": "https://langbot.featurebase.app/roadmap"
+        "href": "https://langbot.app/en/roadmap"
       }
-    ]
+    ],
+    "primary": {
+      "type": "button",
+      "label": "GitHub",
+      "href": "https://github.com/langbot-app/LangBot"
+    }
   },
   "footer": {
     "socials": {
@@ -772,7 +777,36 @@
               }
             ]
           }
-        ]
+        ],
+        "navbar": {
+          "links": [
+            {
+              "label": "Home",
+              "href": "https://langbot.app/en"
+            },
+            {
+              "label": "Cloud",
+              "href": "https://space.langbot.app/cloud?language=en"
+            },
+            {
+              "label": "Extensions",
+              "href": "https://space.langbot.app/market?language=en"
+            },
+            {
+              "label": "Blog",
+              "href": "https://langbot.app/en/blog"
+            },
+            {
+              "label": "Roadmap",
+              "href": "https://langbot.app/en/roadmap"
+            }
+          ],
+          "primary": {
+            "type": "button",
+            "label": "GitHub",
+            "href": "https://github.com/langbot-app/LangBot"
+          }
+        }
       },
       {
         "language": "cn",
@@ -1054,7 +1088,36 @@
               }
             ]
           }
-        ]
+        ],
+        "navbar": {
+          "links": [
+            {
+              "label": "首页",
+              "href": "https://langbot.app/zh"
+            },
+            {
+              "label": "云服务",
+              "href": "https://space.langbot.app/cloud?language=zh"
+            },
+            {
+              "label": "扩展",
+              "href": "https://space.langbot.app/market?language=zh"
+            },
+            {
+              "label": "博客",
+              "href": "https://langbot.app/zh/blog"
+            },
+            {
+              "label": "路线图",
+              "href": "https://langbot.app/zh/roadmap"
+            }
+          ],
+          "primary": {
+            "type": "button",
+            "label": "GitHub",
+            "href": "https://github.com/langbot-app/LangBot"
+          }
+        }
       },
       {
         "language": "jp",
@@ -1311,7 +1374,36 @@
               }
             ]
           }
-        ]
+        ],
+        "navbar": {
+          "links": [
+            {
+              "label": "ホーム",
+              "href": "https://langbot.app/ja"
+            },
+            {
+              "label": "クラウド",
+              "href": "https://space.langbot.app/cloud?language=ja"
+            },
+            {
+              "label": "拡張機能",
+              "href": "https://space.langbot.app/market?language=ja"
+            },
+            {
+              "label": "ブログ",
+              "href": "https://langbot.app/ja/blog"
+            },
+            {
+              "label": "ロードマップ",
+              "href": "https://langbot.app/ja/roadmap"
+            }
+          ],
+          "primary": {
+            "type": "button",
+            "label": "GitHub",
+            "href": "https://github.com/langbot-app/LangBot"
+          }
+        }
       }
     ]
   },
