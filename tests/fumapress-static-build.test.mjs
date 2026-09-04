@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { collectMdxDocuments } from "../scripts/prepare-fumapress.mjs";
@@ -228,4 +228,10 @@ test("generated pages contain no internal .html route links", async () => {
     for (const match of html.matchAll(/href="(\/[^"?#]+\.html)(?:[?#][^"]*)?"/g)) offenders.push([routeFromHtml(file), match[1]]);
   }
   assert.deepEqual(offenders, []);
+});
+
+
+test("static search stays within Cloudflare Pages' 25 MiB file limit", async () => {
+  const search = await stat(path.join(publicRoot, "api/search"));
+  assert.ok(search.size <= 25 * 1024 * 1024, `search artifact is ${search.size} bytes`);
 });

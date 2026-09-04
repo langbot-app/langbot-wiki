@@ -1,6 +1,7 @@
 import { defineMintlifyI18n, mintlifyPlugin, readMintlifyDocs } from "@fumapress/mintlify";
 import { defineConfig } from "fumapress";
 import { fumadocsMdx } from "fumapress/adapters/mdx";
+import { flexsearchPlugin } from "fumapress/plugins/flexsearch";
 import { openapiPlugin } from "fumapress/plugins/openapi";
 import { robotsPlugin } from "fumapress/plugins/robots";
 import { update } from "fumadocs-core/source";
@@ -145,6 +146,38 @@ export default defineConfig({
   // One registration is intentional: its adapter and loader plugin handle all
   // OpenAPI virtual pages, regardless of which content source generated them.
   .plugins(
+    flexsearchPlugin({
+      async buildIndex(page) {
+        const title = page.data.title ?? page.path;
+        const description = page.data.description;
+        const sourceStructuredData = typeof page.data.structuredData === "function"
+          ? await page.data.structuredData()
+          : page.data.structuredData;
+        // FlexSearch's static serialization expands multilingual documents
+        // considerably. Index titles, descriptions, a few headings, and the
+        // opening content so search remains useful without exceeding Pages'
+        // hard 25 MiB per-file limit. OpenAPI endpoints intentionally omit the
+        // schema body, which is duplicated across every generated operation.
+        const isOpenAPI = page.url.includes("/api-reference/");
+        const headings = isOpenAPI
+          ? []
+          : sourceStructuredData.headings.slice(0, 4).map((heading) => ({
+              ...heading,
+              content: heading.content.slice(0, 100),
+            }));
+        const openingContent = isOpenAPI
+          ? []
+          : sourceStructuredData.contents.slice(0, 2).map((content) => content.content.slice(0, 300));
+        const structuredData = {
+          headings,
+          contents: [{
+            heading: undefined,
+            content: [title, description, ...openingContent, page.url].filter(Boolean).join(" "),
+          }],
+        };
+        return { id: page.url, title, description, url: page.url, structuredData };
+      },
+    }),
     mintlifyPlugin({ features: { navbar: false } }),
     openapiPlugin({ server: enOpenAPI }),
     robotsPlugin({
