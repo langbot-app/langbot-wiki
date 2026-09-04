@@ -14,7 +14,9 @@ test("the documentation keeps a neutral base with custom section and TOC treatme
   assert.match(css, /#nd-toc > div > div/);
   assert.match(css, /#nd-toc > div > div > a > svg/);
   assert.match(css, /#nd-toc > div > div > div\.absolute/);
+  assert.match(css, /\[data-toc-popover-content\].*> div\.absolute/s);
   assert.match(css, /a\[data-active="true"\]::before/);
+  assert.match(css, /\[data-toc-popover-content\] a\[href\^="#"\]\[data-active="true"\]::before/);
   assert.match(css, /inset-inline-start: 0\.5rem/);
   assert.match(css, /border-radius: 0/);
 });
