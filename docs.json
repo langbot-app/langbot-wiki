@@ -806,11 +806,6 @@
             "label": "GitHub",
             "href": "https://github.com/langbot-app/LangBot"
           }
-        },
-        "banner": {
-          "content": "This documentation has moved to [langbot.app/docs](https://langbot.app/docs/en). This legacy site is no longer updated.",
-          "type": "warning",
-          "dismissible": false
         }
       },
       {
@@ -1122,11 +1117,6 @@
             "label": "GitHub",
             "href": "https://github.com/langbot-app/LangBot"
           }
-        },
-        "banner": {
-          "content": "本文档已迁移至 [langbot.app/docs](https://langbot.app/docs/zh)，此旧站不再更新。",
-          "type": "warning",
-          "dismissible": false
         }
       },
       {
@@ -1413,11 +1403,6 @@
             "label": "GitHub",
             "href": "https://github.com/langbot-app/LangBot"
           }
-        },
-        "banner": {
-          "content": "ドキュメントは [langbot.app/docs](https://langbot.app/docs/ja) に移行しました。この旧サイトは今後更新されません。",
-          "type": "warning",
-          "dismissible": false
         }
       }
     ]
@@ -1427,10 +1412,5 @@
   },
   "metadata": {
     "google-site-verification": "LBNmWbXCAXdoqrbwg5Gep-xzQ7u7lJHSdpR49N3Ttgg"
-  },
-  "banner": {
-    "content": "This documentation has moved to [langbot.app/docs](https://langbot.app/docs/en). This legacy site is no longer updated.",
-    "type": "warning",
-    "dismissible": false
   }
 }
