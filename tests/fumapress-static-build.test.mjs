@@ -96,6 +96,29 @@ test("representative localized guides and canonical host are emitted", async () 
   assert.doesNotMatch(robots, /https:\/\/docs\.langbot\.app\//);
 });
 
+test("platform navigation renders logo assets instead of icon path text", async () => {
+  for (const locale of ["en", "zh", "ja"]) {
+    const html = await readFile(
+      path.join(publicRoot, locale, "usage/platforms/discord/index.html"),
+      "utf8",
+    );
+    const asideStart = html.indexOf('<aside id="nd-sidebar"');
+    const asideEnd = html.indexOf("</aside>", asideStart);
+    const sidebar = html.slice(asideStart, asideEnd);
+    assert.match(
+      sidebar,
+      /<img[^>]+src="\/images\/platforms\/discord\.svg"[^>]*>/,
+      `${locale} sidebar is missing the Discord logo`,
+    );
+    assert.match(sidebar, />Discord</, `${locale} sidebar is missing the platform title`);
+    assert.doesNotMatch(
+      sidebar,
+      />\/images\/platforms\/discord\.svg(?:<!-- -->)?Discord</,
+      `${locale} sidebar exposes the icon path as text`,
+    );
+  }
+});
+
 test("all locales emit the OpenAPI surface with endpoint semantics", async () => {
   const representatives = {
     en: ["system/get-system-information", "Get system information", "GET", "/api/v1/system/info"],

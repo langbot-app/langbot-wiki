@@ -22,6 +22,32 @@ function nodeName(node: PageTreeNode) {
   return typeof node.name === "string" ? node.name : "";
 }
 
+function renderNavigationIcon(icon: PageTreeNode["icon"]) {
+  if (typeof icon !== "string" || !icon.startsWith("/")) return icon;
+  return (
+    <img
+      src={icon}
+      alt=""
+      aria-hidden="true"
+      className="size-4 shrink-0 object-contain"
+    />
+  );
+}
+
+function renderNavigationIcons(node: PageTreeNode): PageTreeNode {
+  if (node.type === "folder") {
+    return {
+      ...node,
+      icon: renderNavigationIcon(node.icon),
+      index: node.index
+        ? { ...node.index, icon: renderNavigationIcon(node.index.icon) }
+        : undefined,
+      children: node.children.map(renderNavigationIcons),
+    };
+  }
+  return { ...node, icon: renderNavigationIcon(node.icon) };
+}
+
 const openApiTagOrder = Object.fromEntries(LOCALES.map((locale) => {
   const spec = JSON.parse(readFileSync(`openapi/service-api-${locale}.json`, "utf8"));
   const tags: string[] = [];
@@ -329,7 +355,11 @@ export default defineConfig({
               sourceTree = (await context.getLoader()).getPageTree(page.locale);
               sourceTrees.set(locale, sourceTree);
             }
-            props.layoutProps.tree = sectionizeMintlifyTree(props.layoutProps.tree, sourceTree, locale);
+            props.layoutProps.tree = {
+              ...props.layoutProps.tree,
+              children: sectionizeMintlifyTree(props.layoutProps.tree, sourceTree, locale)
+                .children.map(renderNavigationIcons),
+            };
             return props;
           });
         }
