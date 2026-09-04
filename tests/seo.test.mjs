@@ -74,12 +74,13 @@ test("custom robots policy is served from the Mintlify project root", async () =
   assert.match(robots, /^Allow: \/_next\/$/m);
   assert.match(
     robots,
-    /^Sitemap: https:\/\/docs\.langbot\.app\/sitemap\.xml$/m,
+    /^Sitemap: https:\/\/docs\.langbot\.dev\/sitemap\.xml$/m,
   );
-  assert.doesNotMatch(
+  assert.match(
     robots,
-    /^Sitemap: https:\/\/docs\.langbot\.app\/sitemap-alternates\.xml$/m,
+    /^Sitemap: https:\/\/docs\.langbot\.dev\/sitemap-alternates\.xml$/m,
   );
+  assert.doesNotMatch(robots, /https:\/\/docs\.langbot\.app/);
 });
 
 test("alternate sitemap declares reciprocal en, zh-CN, ja and x-default links", async () => {
@@ -91,6 +92,8 @@ test("alternate sitemap declares reciprocal en, zh-CN, ja and x-default links", 
     (match) => match[1],
   );
   assert.ok(blocks.length > 0);
+  assert.match(sitemap, /https:\/\/docs\.langbot\.dev\//);
+  assert.doesNotMatch(sitemap, /https:\/\/docs\.langbot\.app\//);
 
   const groups = new Map();
   for (const block of blocks) {
@@ -103,7 +106,7 @@ test("alternate sitemap declares reciprocal en, zh-CN, ja and x-default links", 
     );
     assert.ok(links.en);
     assert.ok(links["zh-CN"]);
-    assert.equal(links["x-default"], links["zh-CN"]);
+    assert.equal(links["x-default"], links.en);
     const reciprocalUrls = [links.en, links["zh-CN"], links.ja].filter(Boolean);
     const key = reciprocalUrls.join("\n");
     groups.set(key, [...(groups.get(key) ?? []), loc]);

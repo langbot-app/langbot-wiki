@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+@import "fumapress/css/preset.css";
+@import "fumadocs-openapi/css/preset.css";
+
+:root {
+  --color-fd-primary: #4692dd;
+}
+
+body {
+  font-family: "Noto Sans SC", "Noto Sans", system-ui, sans-serif;
+}
