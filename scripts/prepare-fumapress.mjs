@@ -115,33 +115,15 @@ function cloudflarePattern(value, destination = false) {
   return value.replace(/:([A-Za-z][A-Za-z0-9_]*)\*/g, destination ? ":splat" : "*");
 }
 
-function slugifyOpenApiSummary(value) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-export function collectOpenApiRedirectTargets(spec) {
-  const targets = new Map();
-  for (const [apiPath, pathItem] of Object.entries(spec?.paths ?? {})) {
-    for (const [method, operation] of Object.entries(pathItem)) {
-      if (!/^(?:get|post|put|patch|delete|head|options)$/i.test(method) || !operation?.summary) continue;
-      const summarySlug = slugifyOpenApiSummary(operation.summary);
-      const routePath = apiPath.replaceAll("{", "").replaceAll("}", "");
-      targets.set(summarySlug, `/en/api-reference${routePath}/${method.toLowerCase()}`);
-    }
-  }
-  return targets;
-}
-
-export function renderCloudflareRedirects(docs, englishOpenApiSpec) {
-  const apiTargets = collectOpenApiRedirectTargets(englishOpenApiSpec);
-  const lines = ["/ /en/insight/guide 302"];
+export function renderCloudflareRedirects(docs) {
+  const lines = [
+    "/ /en/insight/guide 302",
+    "/zh/develop/adapter/discord /zh/develop/adapter/discord/README 308",
+    "/scripts/README-blog-articles /en/articles 308",
+  ];
   for (const redirect of docs.redirects ?? []) {
     const status = redirect.permanent === false ? 307 : 308;
-    const destinationSlug = redirect.destination.match(/^\/en\/api-reference\/[^/]+\/([^/:*]+)$/)?.[1];
-    const destination = destinationSlug && apiTargets.get(destinationSlug)
-      ? apiTargets.get(destinationSlug)
-      : redirect.destination;
-    lines.push(`${cloudflarePattern(redirect.source)} ${cloudflarePattern(destination, true)} ${status}`);
+    lines.push(`${cloudflarePattern(redirect.source)} ${cloudflarePattern(redirect.destination, true)} ${status}`);
   }
   return `${lines.join("\n")}\n`;
 }
@@ -159,8 +141,6 @@ export async function prepareFumapress({ root = ROOT, outRoot = root } = {}) {
   if (openapi.length !== LOCALES.length) {
     throw new Error(`Expected one nested OpenAPI source per locale, found ${openapi.length}`);
   }
-  const englishOpenApi = JSON.parse(await readFile(path.join(root, openapi.find((item) => item.locale === "en").source), "utf8"));
-
   const contentRoot = path.join(outRoot, "content");
   const publicRoot = path.join(outRoot, "public");
   await rm(contentRoot, { recursive: true, force: true });
@@ -200,13 +180,13 @@ export async function prepareFumapress({ root = ROOT, outRoot = root } = {}) {
   }
 
   await cp(path.join(root, "robots.txt"), path.join(publicRoot, "robots.txt"), { force: true });
-  await writeFile(path.join(publicRoot, "_redirects"), renderCloudflareRedirects(docs, englishOpenApi));
+  await writeFile(path.join(publicRoot, "_redirects"), renderCloudflareRedirects(docs));
 
   return {
     documents: documents.length,
     fallbackDefaults: 0,
     localeOnlyDocuments,
-    redirects: (docs.redirects?.length ?? 0) + 1,
+    redirects: (docs.redirects?.length ?? 0) + 3,
     locales: [...LOCALES],
     openapi,
   };

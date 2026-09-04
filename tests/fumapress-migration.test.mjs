@@ -144,14 +144,15 @@ test("canonical MDX and nested OpenAPI sources are discovered", async () => {
 
 test("Cloudflare redirects preserve all Mintlify routes and add root", async () => {
   const docs = JSON.parse(await readFile(path.join(root, "docs.json"), "utf8"));
-  const spec = JSON.parse(await readFile(path.join(root, "openapi/service-api-en.json"), "utf8"));
-  const lines = renderCloudflareRedirects(docs, spec).trim().split("\n");
-  assert.equal(lines.length, docs.redirects.length + 1);
+  const lines = renderCloudflareRedirects(docs).trim().split("\n");
+  assert.equal(lines.length, docs.redirects.length + 3);
   assert.equal(lines[0], "/ /en/insight/guide 302");
   assert.ok(lines.includes("/README_EN /en/insight/guide 308"));
+  assert.ok(lines.includes("/zh/develop/adapter/discord /zh/develop/adapter/discord/README 308"));
+  assert.ok(lines.includes("/scripts/README-blog-articles /en/articles 308"));
   assert.ok(lines.some((line) => line.startsWith("/en/deploy/platforms/* /en/usage/platforms/:splat ")));
-  assert.ok(lines.includes("/en/api-reference/system/获取系统信息 /en/api-reference/api/v1/system/info/get 308"));
-  assert.ok(lines.includes("/en/api-reference/model-providers/创建供应商 /en/api-reference/api/v1/provider/providers/post 308"));
+  assert.ok(lines.includes("/en/api-reference/system/获取系统信息 /en/api-reference/system/get-system-information 308"));
+  assert.ok(lines.includes("/en/api-reference/model-providers/创建供应商 /en/api-reference/model-providers/create-a-model-provider 308"));
 });
 
 test("Fumapress config wires static localized docs, OpenAPI, and Mintlify support", async () => {
@@ -165,6 +166,8 @@ test("Fumapress config wires static localized docs, OpenAPI, and Mintlify suppor
     assert.match(config, new RegExp(`input:[\\s\\S]*openapi/${filename}`));
     assert.match(config, new RegExp(`staticSource\\(\\{\\s*baseDir:\\s*["']${locale}/api-reference["']`));
   }
+  assert.match(config, /groupBy:\s*["']tag["']/);
+  assert.match(config, /legacyOpenApiSlug/);
   assert.match(config, /mintlifyPlugin\(/);
   assert.match(config, /openapiPlugin\(\{\s*server:\s*\w+OpenAPI\s*\}\)/);
   assert.match(config, /fumadocsMdx\(/);
@@ -179,7 +182,7 @@ test("prebuild is deterministic and preserves local assets and SEO files", async
     assert.equal(first.documents, 302);
     assert.equal(first.fallbackDefaults, 0);
     assert.equal(first.localeOnlyDocuments, 14);
-    assert.equal(first.redirects, 102);
+    assert.equal(first.redirects, 104);
     assert.deepEqual(first.locales, ["en", "zh", "ja"]);
     await readFile(path.join(temp, "content/docs/insight/guide.mdx"), "utf8");
     await readFile(path.join(temp, "content/docs/insight/guide.zh.mdx"), "utf8");

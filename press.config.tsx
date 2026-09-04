@@ -8,7 +8,7 @@ import { update } from "fumadocs-core/source";
 import { uiTranslations } from "fumadocs-ui/i18n";
 import { defineDocs } from "fumadocs-mdx/macro";
 import { createOpenAPI, type OpenAPIServer } from "fumadocs-openapi/server";
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 const SITE_URL = "https://docs.langbot.dev";
@@ -16,17 +16,27 @@ const LOCALES = ["en", "zh", "ja"] as const;
 const MINTLIFY_LOCALE = { en: "en", zh: "cn", ja: "jp" } as const;
 const HREFLANG = { en: "en", zh: "zh-CN", ja: "ja" } as const;
 const mintlifyDocs = readMintlifyDocs();
-const translations = defineMintlifyI18n(mintlifyDocs, {
+const i18n = defineMintlifyI18n(mintlifyDocs, {
   localeMap: { en: "en", cn: "zh", jp: "ja" },
-}).translations()
+});
+const translations = i18n.translations()
   .extend(uiTranslations())
   .add({
     en: { displayName: "English" },
     zh: { displayName: "简体中文" },
     ja: { displayName: "日本語" },
   });
+// Fumapress stores translations.config as its runtime i18n config. Preserve
+// the Mintlify adapter's locale bridge there so navigation.languages selects
+// the matching English, Chinese, or Japanese tree instead of always using en.
+Object.assign(translations.config, {
+  _getMintlifyLanguage: (i18n as typeof i18n & {
+    _getMintlifyLanguage?: (locale: string) => string | undefined;
+  })._getMintlifyLanguage,
+});
 // Locale-only files must not inherit the English storage and create indexed
 // pages in locales where no canonical source translation exists.
+i18n.fallbackLanguage = null;
 translations.config.fallbackLanguage = null;
 
 function collectRouteLocales() {
@@ -70,6 +80,42 @@ const enOpenAPI = createOpenAPI({ input: ["openapi/service-api-en.json"] });
 const zhOpenAPI = createOpenAPI({ input: ["openapi/service-api-zh.json"] });
 const jaOpenAPI = createOpenAPI({ input: ["openapi/service-api-ja.json"] });
 
+function legacyOpenApiSlug(value: string) {
+  return value.replace(/\s+/g, "-").toLowerCase();
+}
+
+const legacyOpenApiLayout = {
+  groupBy: "tag" as const,
+  name: (entry: { info: { title: string } }) => legacyOpenApiSlug(entry.info.title),
+};
+
+function encodeRoute(route: string) {
+  return route.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
+
+const openApiAlternates = new Map<string, Partial<Record<(typeof LOCALES)[number], string>>>();
+for (const locale of LOCALES) {
+  const spec = JSON.parse(readFileSync(`openapi/service-api-${locale}.json`, "utf8"));
+  for (const [apiPath, pathItem] of Object.entries(spec.paths ?? {}) as [string, Record<string, any>][]) {
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (!/^(?:get|post|put|patch|delete|head|options)$/i.test(method) || !operation?.summary) continue;
+      const tag = operation.tags?.[0] ?? "unknown";
+      const route = encodeRoute(`api-reference/${legacyOpenApiSlug(tag)}/${legacyOpenApiSlug(operation.summary)}`);
+      const key = `${method.toLowerCase()} ${apiPath}`;
+      const alternates = openApiAlternates.get(key) ?? {};
+      alternates[locale] = route;
+      openApiAlternates.set(key, alternates);
+    }
+  }
+}
+const openApiAlternatesByRoute = new Map<string, Partial<Record<(typeof LOCALES)[number], string>>>();
+for (const alternates of openApiAlternates.values()) {
+  for (const locale of LOCALES) {
+    const route = alternates[locale];
+    if (route) openApiAlternatesByRoute.set(`${locale}:${route}`, alternates);
+  }
+}
+
 function localizeOpenAPISource(
   source: Awaited<ReturnType<OpenAPIServer["staticSource"]>>,
   locale: string,
@@ -103,18 +149,19 @@ export default defineConfig({
   content: {
     docs: docs.toFumadocsSource(),
     openapiEn: localizeOpenAPISource(
-      await enOpenAPI.staticSource({ baseDir: "en/api-reference" }),
+      await enOpenAPI.staticSource({ baseDir: "en/api-reference", ...legacyOpenApiLayout }),
       "en",
     ),
     openapiZh: localizeOpenAPISource(
-      await zhOpenAPI.staticSource({ baseDir: "zh/api-reference" }),
+      await zhOpenAPI.staticSource({ baseDir: "zh/api-reference", ...legacyOpenApiLayout }),
       "zh",
     ),
     openapiJa: localizeOpenAPISource(
-      await jaOpenAPI.staticSource({ baseDir: "ja/api-reference" }),
+      await jaOpenAPI.staticSource({ baseDir: "ja/api-reference", ...legacyOpenApiLayout }),
       "ja",
     ),
   },
+  i18n,
   translations,
   defaultLayoutProps: ({ lang }) => ({
     links: localizedNavbar(lang),
@@ -123,10 +170,10 @@ export default defineConfig({
     page: (page) => {
       const locale = page.locale as (typeof LOCALES)[number];
       const route = page.slugs.join("/");
-      const available = route.startsWith("api-reference/")
-        ? new Set<string>(LOCALES)
-        : routeLocales.get(route) ?? new Set<string>([locale]);
-      const alternates = LOCALES.filter((candidate) => available.has(candidate));
+      const localizedRoutes = route.startsWith("api-reference/")
+        ? openApiAlternatesByRoute.get(`${locale}:${route}`) ?? { [locale]: route }
+        : Object.fromEntries([...routeLocales.get(route) ?? new Set<string>([locale])].map((candidate) => [candidate, route]));
+      const alternates = LOCALES.filter((candidate) => localizedRoutes[candidate]);
       const defaultLocale = alternates.includes("en") ? "en" : alternates[0];
       return <>
         <link rel="canonical" href={`${SITE_URL}${page.url}`} />
@@ -135,14 +182,14 @@ export default defineConfig({
             key={candidate}
             rel="alternate"
             hrefLang={HREFLANG[candidate]}
-            href={`${SITE_URL}/${candidate}/${route}`.replace(/\/$/, "")}
+            href={`${SITE_URL}/${candidate}/${localizedRoutes[candidate]}`.replace(/\/$/, "")}
           />
         ))}
         {defaultLocale && (
           <link
             rel="alternate"
             hrefLang="x-default"
-            href={`${SITE_URL}/${defaultLocale}/${route}`.replace(/\/$/, "")}
+            href={`${SITE_URL}/${defaultLocale}/${localizedRoutes[defaultLocale]}`.replace(/\/$/, "")}
           />
         )}
       </>;

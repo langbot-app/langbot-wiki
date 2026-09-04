@@ -67,24 +67,36 @@ test("representative localized guides and canonical host are emitted", async () 
 
 test("all locales emit the OpenAPI surface with endpoint semantics", async () => {
   const representatives = {
-    en: ["Get system information", "GET", "/api/v1/system/info"],
-    zh: ["获取系统信息", "GET", "/api/v1/system/info"],
-    ja: ["获取系统信息", "GET", "/api/v1/system/info"],
+    en: ["system/get-system-information", "Get system information", "GET", "/api/v1/system/info"],
+    zh: ["系统/获取系统信息", "获取系统信息", "GET", "/api/v1/system/info"],
+    ja: ["system/获取系统信息", "获取系统信息", "GET", "/api/v1/system/info"],
   };
   const sitemap = await readFile(path.join(publicRoot, "sitemap.xml"), "utf8");
 
-  for (const [locale, semantics] of Object.entries(representatives)) {
+  for (const [locale, [representativePath, ...semantics]] of Object.entries(representatives)) {
     const apiRoot = path.join(publicRoot, locale, "api-reference");
     const routes = await collectHtmlRoutes(apiRoot);
     assert.ok(routes.length >= 50, `${locale} emitted only ${routes.length} API routes`);
 
-    const representative = path.join(apiRoot, "api/v1/system/info/get/index.html");
+    const encodedRepresentativePath = representativePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+    const representative = path.join(apiRoot, encodedRepresentativePath, "index.html");
     const html = await readFile(representative, "utf8");
     for (const semantic of semantics) assert.ok(html.includes(semantic), `${locale} page is missing ${semantic}`);
-    assert.ok(sitemap.includes(`https://docs.langbot.dev/${locale}/api-reference/api/v1/system/info/get`));
+    assert.ok(sitemap.includes(`https://docs.langbot.dev/${locale}/api-reference/${encodedRepresentativePath}`));
   }
 });
 
+test("canonical sitemap routes match the legacy Mintlify directory structure", async () => {
+  const legacy = new Set((await readFile(path.join(root, "tests/fixtures/legacy-sitemap-routes.txt"), "utf8"))
+    .trim().split("\n").map((route) => route.replace(/\/$/, "")));
+  // Mintlify accidentally indexed this repository maintenance note; preserve
+  // its URL as a redirect without treating it as public documentation.
+  legacy.delete("/scripts/README-blog-articles");
+  const sitemap = await readFile(path.join(publicRoot, "sitemap.xml"), "utf8");
+  const actual = new Set([...sitemap.matchAll(/<loc>https:\/\/docs\.langbot\.dev(\/[^<]+)<\/loc>/g)]
+    .map((match) => decodeURIComponent(match[1]).replace(/\/$/, "")));
+  assert.deepEqual([...actual].sort(), [...legacy].sort());
+});
 
 const locales = ["en", "zh", "ja"];
 const hreflangByLocale = { en: "en", zh: "zh-CN", ja: "ja" };
@@ -120,11 +132,11 @@ function extractHeadLinks(html, rel) {
     }));
 }
 
-test("rendered navbar uses each locale's docs.json labels and hrefs", async () => {
+test("rendered navbar and documentation tree use each locale's docs.json labels", async () => {
   const expected = {
-    en: ["Home", "https://langbot.app/en", "Roadmap", "https://langbot.app/en/roadmap"],
-    zh: ["首页", "https://langbot.app/zh", "路线图", "https://langbot.app/zh/roadmap"],
-    ja: ["ホーム", "https://langbot.app/ja", "ロードマップ", "https://langbot.app/ja/roadmap"],
+    en: ["Home", "https://langbot.app/en", "Roadmap", "https://langbot.app/en/roadmap", "Guides", "Quick Start", "Installation", "Developers", "Articles", "API Reference"],
+    zh: ["首页", "https://langbot.app/zh", "路线图", "https://langbot.app/zh/roadmap", "指南", "快速开始", "安装部署", "开发者", "文章", "API 参考"],
+    ja: ["ホーム", "https://langbot.app/ja", "ロードマップ", "https://langbot.app/ja/roadmap", "ガイド", "クイックスタート", "インストール", "開発者", "記事", "API リファレンス"],
   };
   for (const locale of locales) {
     const html = await readFile(path.join(publicRoot, locale, "insight/guide/index.html"), "utf8");
@@ -179,18 +191,27 @@ test("every page emits a canonical and reciprocal available hreflangs", async ()
 
     const [, locale, ...suffixParts] = route.split("/");
     const suffix = suffixParts.join("/");
-    const expected = {};
-    for (const candidate of locales) {
-      const candidateRoute = `/${candidate}/${suffix}`.replace(/\/$/, "");
-      if (routes.has(candidateRoute)) expected[hreflangByLocale[candidate]] = `https://docs.langbot.dev${candidateRoute}`;
-    }
-    expected["x-default"] = expected.en ?? expected["zh-CN"] ?? expected.ja;
     const actual = Object.fromEntries(
       extractHeadLinks(html, "alternate")
         .filter((item) => item.hreflang)
         .map((item) => [item.hreflang, item.href]),
     );
-    assert.deepEqual(actual, expected, route);
+    if (suffix.startsWith("api-reference/")) {
+      assert.deepEqual(Object.keys(actual).sort(), ["en", "ja", "x-default", "zh-CN"]);
+      assert.equal(actual["x-default"], actual.en);
+      for (const href of Object.values(actual)) {
+        const target = new URL(href).pathname.replace(/\/$/, "");
+        assert.ok(routes.has(target), `${route} links to missing alternate ${target}`);
+      }
+    } else {
+      const expected = {};
+      for (const candidate of locales) {
+        const candidateRoute = `/${candidate}/${suffix}`.replace(/\/$/, "");
+        if (routes.has(candidateRoute)) expected[hreflangByLocale[candidate]] = `https://docs.langbot.dev${candidateRoute}`;
+      }
+      expected["x-default"] = expected.en ?? expected["zh-CN"] ?? expected.ja;
+      assert.deepEqual(actual, expected, route);
+    }
   }
 });
 
