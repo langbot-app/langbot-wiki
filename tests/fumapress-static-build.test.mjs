@@ -119,6 +119,40 @@ test("platform navigation renders logo assets instead of icon path text", async 
   }
 });
 
+test("nested bot groups preserve the logos declared in docs.json", async () => {
+  const html = await readFile(
+    path.join(publicRoot, "zh/usage/platforms/discord/index.html"),
+    "utf8",
+  );
+  const asideStart = html.indexOf('<aside id="nd-sidebar"');
+  const asideEnd = html.indexOf("</aside>", asideStart);
+  const sidebar = html.slice(asideStart, asideEnd);
+  for (const [title, logo] of [
+    ["企业微信", "wecom.svg"],
+    ["微信", "wechat.svg"],
+    ["QQ 官方机器人", "qq.svg"],
+    ["QQ (OneBot v11)", "qq.svg"],
+  ]) {
+    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapedLogo = logo.replace(".", "\\.");
+    assert.match(
+      sidebar,
+      new RegExp(`<img[^>]+src="/images/platforms/${escapedLogo}"[^>]*>\\s*${escapedTitle}<svg`),
+      `zh sidebar is missing the ${logo} logo for ${title}`,
+    );
+  }
+  assert.doesNotMatch(
+    sidebar,
+    />robot(?:<!-- -->)?Satori/,
+    "zh sidebar exposes the named robot icon as text",
+  );
+  assert.match(
+    sidebar,
+    /<svg[^>]+class="[^"]*lucide-bot[^"]*"[^>]*>[\s\S]*?<\/svg>Satori/,
+    "zh sidebar is missing the Satori robot icon",
+  );
+});
+
 test("all locales emit the OpenAPI surface with endpoint semantics", async () => {
   const representatives = {
     en: ["system/get-system-information", "Get system information", "GET", "/api/v1/system/info"],

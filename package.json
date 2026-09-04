@@ -29,6 +29,7 @@
     "fumadocs-ui": "npm:@fumadocs/base-ui@^16.15.6",
     "fumapress": "^1.2.0",
     "hono": "^4.9.9",
+    "lucide-react": "^1.41.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "shiki": "^3.20.0",

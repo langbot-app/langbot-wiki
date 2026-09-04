@@ -9,6 +9,7 @@ import { update } from "fumadocs-core/source";
 import { uiTranslations } from "fumadocs-ui/i18n";
 import { defineDocs } from "fumadocs-mdx/macro";
 import { createOpenAPI, type OpenAPIServer } from "fumadocs-openapi/server";
+import { Bot } from "lucide-react";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
@@ -23,6 +24,9 @@ function nodeName(node: PageTreeNode) {
 }
 
 function renderNavigationIcon(icon: PageTreeNode["icon"]) {
+  if (icon === "robot") {
+    return <Bot aria-hidden="true" className="size-4 shrink-0" />;
+  }
   if (typeof icon !== "string" || !icon.startsWith("/")) return icon;
   return (
     <img
@@ -46,6 +50,35 @@ function renderNavigationIcons(node: PageTreeNode): PageTreeNode {
     };
   }
   return { ...node, icon: renderNavigationIcon(node.icon) };
+}
+
+
+type ConfiguredNavigationGroup = {
+  group: string;
+  icon?: string;
+  pages?: unknown[];
+};
+
+function restoreConfiguredFolderIcons(
+  nodes: PageTreeNode[],
+  configuredPages: unknown[],
+): PageTreeNode[] {
+  const configuredGroups = new Map<string, ConfiguredNavigationGroup>();
+  for (const entry of configuredPages) {
+    if (!entry || typeof entry !== "object" || !("group" in entry)) continue;
+    const group = entry as ConfiguredNavigationGroup;
+    configuredGroups.set(group.group, group);
+  }
+  return nodes.map((node) => {
+    if (node.type !== "folder") return node;
+    const configured = configuredGroups.get(nodeName(node));
+    if (!configured) return node;
+    return {
+      ...node,
+      icon: configured.icon ?? node.icon,
+      children: restoreConfiguredFolderIcons(node.children, configured.pages ?? []),
+    };
+  });
 }
 
 const openApiTagOrder = Object.fromEntries(LOCALES.map((locale) => {
@@ -115,7 +148,10 @@ function sectionizeMintlifyTree(
         const sourceGroup = sourceGroups.get(group.group);
         if (!sourceGroup) continue;
         if (sourceGroup.index) children.push(sourceGroup.index);
-        children.push(...sourceGroup.children);
+        children.push(...restoreConfiguredFolderIcons(
+          sourceGroup.children,
+          "pages" in group ? group.pages ?? [] : [],
+        ));
       }
       const tab: Folder = { ...node, root: true, children };
       return tab;
