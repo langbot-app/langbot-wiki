@@ -1,5 +1,5 @@
 {
-  "name": "langbot-wiki",
+  "name": "langbot-docs",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,14 +11,15 @@
     "prepare:fumapress": "node scripts/prepare-fumapress.mjs",
     "build": "fumapress build",
     "prebuild": "npm run prepare:fumapress",
-    "postbuild": "npm run generate:sitemap-alternates && npm run normalize:static-paths && npm run test:static",
+    "postbuild": "npm run finalize:base-path && npm run generate:sitemap-alternates && npm run normalize:static-paths && npm run test:static",
     "typecheck": "tsc --noEmit",
     "normalize:static-paths": "node scripts/normalize-static-paths.mjs",
     "test:static": "node --test tests/fumapress-static-build.test.mjs",
     "generate:sitemap-alternates": "node scripts/generate-alternate-sitemap.mjs",
     "sync:articles": "node scripts/sync-blog-articles.mjs",
     "check:articles": "node scripts/sync-blog-articles.mjs --check",
-    "test": "node --test tests/blog-articles.test.mjs tests/fumapress-migration.test.mjs tests/seo.test.mjs && python3 -m unittest discover -s tests -p 'test_*.py'"
+    "test": "node --test tests/blog-articles.test.mjs tests/fumapress-migration.test.mjs tests/seo.test.mjs && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "finalize:base-path": "node scripts/finalize-base-path.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

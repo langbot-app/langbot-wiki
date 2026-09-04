@@ -38,7 +38,7 @@ function staticHtmlForCanonicalDocument(document) {
 }
 
 function staticHtmlForUrlPath(urlPath) {
-  const parts = urlPath.replace(/^\//, "").replace(/\/$/, "").split("/")
+  const parts = urlPath.replace(/^\/docs(?:\/|$)/, "").replace(/^\//, "").replace(/\/$/, "").split("/")
     .map((segment) => decodeURIComponent(segment));
   return path.join(publicRoot, ...parts, "index.html");
 }
@@ -90,9 +90,9 @@ test("representative localized guides and canonical host are emitted", async () 
   }
   const sitemap = await readFile(path.join(publicRoot, "sitemap.xml"), "utf8");
   const robots = await readFile(path.join(publicRoot, "robots.txt"), "utf8");
-  assert.match(sitemap, /https:\/\/docs\.langbot\.dev\//);
+  assert.match(sitemap, /https:\/\/langbot\.app\/docs\//);
   assert.doesNotMatch(sitemap, /https:\/\/docs\.langbot\.app\//);
-  assert.match(robots, /https:\/\/docs\.langbot\.dev\/sitemap\.xml/);
+  assert.match(robots, /https:\/\/langbot\.app\/docs\/sitemap\.xml/);
   assert.doesNotMatch(robots, /https:\/\/docs\.langbot\.app\//);
 });
 
@@ -107,7 +107,7 @@ test("platform navigation renders logo assets instead of icon path text", async 
     const sidebar = html.slice(asideStart, asideEnd);
     assert.match(
       sidebar,
-      /<img[^>]+src="\/images\/platforms\/discord\.svg"[^>]*>/,
+      /<img[^>]+src="\/docs\/images\/platforms\/discord\.svg"[^>]*>/,
       `${locale} sidebar is missing the Discord logo`,
     );
     assert.match(sidebar, />Discord</, `${locale} sidebar is missing the platform title`);
@@ -137,7 +137,7 @@ test("nested bot groups preserve the logos declared in docs.json", async () => {
     const escapedLogo = logo.replace(".", "\\.");
     assert.match(
       sidebar,
-      new RegExp(`<img[^>]+src="/images/platforms/${escapedLogo}"[^>]*>\\s*${escapedTitle}<svg`),
+      new RegExp(`<img[^>]+src="/docs/images/platforms/${escapedLogo}"[^>]*>\\s*${escapedTitle}<svg`),
       `zh sidebar is missing the ${logo} logo for ${title}`,
     );
   }
@@ -170,7 +170,7 @@ test("all locales emit the OpenAPI surface with endpoint semantics", async () =>
     const representative = path.join(apiRoot, representativePath, "index.html");
     const html = await readFile(representative, "utf8");
     for (const semantic of semantics) assert.ok(html.includes(semantic), `${locale} page is missing ${semantic}`);
-    assert.ok(sitemap.includes(`https://docs.langbot.dev/${locale}/api-reference/${encodedRepresentativePath}`));
+    assert.ok(sitemap.includes(`https://langbot.app/docs/${locale}/api-reference/${encodedRepresentativePath}`));
 
     const spec = JSON.parse(await readFile(path.join(root, `openapi/service-api-${locale}.json`), "utf8"));
     const tagOrder = [];
@@ -200,7 +200,7 @@ test("canonical sitemap routes match the legacy Mintlify directory structure", a
   // its URL as a redirect without treating it as public documentation.
   legacy.delete("/scripts/README-blog-articles");
   const sitemap = await readFile(path.join(publicRoot, "sitemap.xml"), "utf8");
-  const actual = new Set([...sitemap.matchAll(/<loc>https:\/\/docs\.langbot\.dev(\/[^<]+)<\/loc>/g)]
+  const actual = new Set([...sitemap.matchAll(/<loc>https:\/\/langbot\.app\/docs(\/[^<]+)<\/loc>/g)]
     .map((match) => decodeURIComponent(match[1]).replace(/\/$/, "")));
   assert.deepEqual([...actual].sort(), [...legacy].sort());
 });
@@ -321,7 +321,7 @@ test("every legacy navigation entry resolves to its exact sidebar URL", async ()
       const asideStart = html.indexOf('<aside id="nd-sidebar"');
       const asideEnd = html.indexOf("</aside>", asideStart);
       const sidebar = html.slice(asideStart, asideEnd);
-      if (!sidebar.includes(`href="/${route}"`)) failures.push({ page, htmlPath });
+      if (!sidebar.includes(`href="/docs/${route}"`)) failures.push({ page, htmlPath });
     }
   }
   assert.deepEqual(failures, []);
@@ -332,8 +332,8 @@ test("the Chinese quick-start navigation keeps the incumbent troubleshooting pag
   const asideStart = html.indexOf('<aside id="nd-sidebar"');
   const asideEnd = html.indexOf("</aside>", asideStart);
   const sidebar = html.slice(asideStart, asideEnd);
-  assert.match(sidebar, /href="\/zh\/insight\/troubleshooting"/);
-  assert.doesNotMatch(sidebar, /href="\/zh\/develop\/adapter\/discord\/troubleshooting"/);
+  assert.match(sidebar, /href="\/docs\/zh\/insight\/troubleshooting"/);
+  assert.doesNotMatch(sidebar, /href="\/docs\/zh\/develop\/adapter\/discord\/troubleshooting"/);
 });
 
 test("the exact 14 zh-only sources publish no fallback en or ja routes", async () => {
@@ -366,14 +366,14 @@ test("the exact 14 zh-only sources publish no fallback en or ja routes", async (
 
 test("every page emits a canonical and reciprocal available hreflangs", async () => {
   const sitemap = await readFile(path.join(publicRoot, "sitemap.xml"), "utf8");
-  const routes = new Set([...sitemap.matchAll(/<loc>https:\/\/docs\.langbot\.dev(\/[^<]+)<\/loc>/g)].map((match) => match[1].replace(/\/$/, "")));
+  const routes = new Set([...sitemap.matchAll(/<loc>https:\/\/langbot\.app\/docs(\/[^<]+)<\/loc>/g)].map((match) => match[1].replace(/\/$/, "")));
   const allFiles = await collectHtmlRoutes(publicRoot);
   const localized = allFiles.filter((file) => routes.has(routeFromHtml(file)));
   for (const file of localized) {
     const route = routeFromHtml(file);
     const html = await readFile(file, "utf8");
     const canonical = extractHeadLinks(html, "canonical");
-    assert.deepEqual(canonical, [{ href: `https://docs.langbot.dev${route}`, hreflang: undefined }], route);
+    assert.deepEqual(canonical, [{ href: `https://langbot.app/docs${route}`, hreflang: undefined }], route);
 
     const [, locale, ...suffixParts] = route.split("/");
     const suffix = suffixParts.join("/");
@@ -386,14 +386,14 @@ test("every page emits a canonical and reciprocal available hreflangs", async ()
       assert.deepEqual(Object.keys(actual).sort(), ["en", "ja", "x-default", "zh-CN"]);
       assert.equal(actual["x-default"], actual.en);
       for (const href of Object.values(actual)) {
-        const target = new URL(href).pathname.replace(/\/$/, "");
+        const target = new URL(href).pathname.replace(/^\/docs/, "").replace(/\/$/, "");
         assert.ok(routes.has(target), `${route} links to missing alternate ${target}`);
       }
     } else {
       const expected = {};
       for (const candidate of locales) {
         const candidateRoute = `/${candidate}/${suffix}`.replace(/\/$/, "");
-        if (routes.has(candidateRoute)) expected[hreflangByLocale[candidate]] = `https://docs.langbot.dev${candidateRoute}`;
+        if (routes.has(candidateRoute)) expected[hreflangByLocale[candidate]] = `https://langbot.app/docs${candidateRoute}`;
       }
       expected["x-default"] = expected.en ?? expected["zh-CN"] ?? expected.ja;
       assert.deepEqual(actual, expected, route);
@@ -404,8 +404,8 @@ test("every page emits a canonical and reciprocal available hreflangs", async ()
 test("alternate sitemap is complete, reciprocal, and advertised", async () => {
   const sitemap = await readFile(path.join(publicRoot, "sitemap-alternates.xml"), "utf8");
   const robots = await readFile(path.join(publicRoot, "robots.txt"), "utf8");
-  assert.match(robots, /^Sitemap: https:\/\/docs\.langbot\.dev\/sitemap\.xml$/m);
-  assert.match(robots, /^Sitemap: https:\/\/docs\.langbot\.dev\/sitemap-alternates\.xml$/m);
+  assert.match(robots, /^Sitemap: https:\/\/langbot\.app\/docs\/sitemap\.xml$/m);
+  assert.match(robots, /^Sitemap: https:\/\/langbot\.app\/docs\/sitemap-alternates\.xml$/m);
 
   const blocks = [...sitemap.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((match) => match[1]);
   const groups = new Map();
@@ -432,7 +432,7 @@ test("alternate sitemap is complete, reciprocal, and advertised", async () => {
     "articles/n8n-multi-platform-ai-chatbot",
     "articles/dify-langbot-rag-knowledge-base",
     "articles/welcome",
-  ]) assert.ok(sitemap.includes(`https://docs.langbot.dev/en/${slug}`), `alternate sitemap missing ${slug}`);
+  ]) assert.ok(sitemap.includes(`https://langbot.app/docs/en/${slug}`), `alternate sitemap missing ${slug}`);
 });
 
 test("generated pages contain no internal .html route links", async () => {

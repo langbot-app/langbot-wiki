@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const BASE = "https://docs.langbot.dev";
+const BASE = "https://langbot.app/docs";
 const LOCALES = ["en", "zh", "ja"];
 const HREFLANG = { en: "en", zh: "zh-CN", ja: "ja" };
 

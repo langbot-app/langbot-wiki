@@ -4,5 +4,5 @@ import { fumadocsMdx } from "fumadocs-mdx/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [press(), fumadocsMdx(), tailwindcss()],
+  plugins: [press({ basePath: "/docs/" }), fumadocsMdx(), tailwindcss()],
 });

@@ -13,7 +13,7 @@ import { Bot } from "lucide-react";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-const SITE_URL = "https://docs.langbot.dev";
+const SITE_URL = "https://langbot.app/docs";
 const LOCALES = ["en", "zh", "ja"] as const;
 const MINTLIFY_LOCALE = { en: "en", zh: "cn", ja: "jp" } as const;
 const HREFLANG = { en: "en", zh: "zh-CN", ja: "ja" } as const;
@@ -405,6 +405,6 @@ export default defineConfig({
     robotsPlugin({
       rules: [{ userAgent: "*", allow: ["/", "/_next/"] }],
       sitemap: true,
-      additionalContent: "Sitemap: https://docs.langbot.dev/sitemap-alternates.xml",
+      additionalContent: "Sitemap: https://langbot.app/docs/sitemap-alternates.xml",
     }),
   );
