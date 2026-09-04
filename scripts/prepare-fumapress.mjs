@@ -111,6 +111,22 @@ export function collectOpenApiSources(docs) {
   return sources.sort((left, right) => LOCALES.indexOf(left.locale) - LOCALES.indexOf(right.locale));
 }
 
+export function normalizeMintlifyNavigationForFumapress(docs) {
+  const normalized = structuredClone(docs);
+  for (const language of normalized.navigation?.languages ?? []) {
+    const locale = mapMintlifyLocale(language.language);
+    visitNavigation(language, (item) => {
+      if (!Array.isArray(item.pages)) return;
+      item.pages = item.pages.map((entry) =>
+        typeof entry === "string" && entry.startsWith(`${locale}/`)
+          ? entry.slice(locale.length + 1)
+          : entry,
+      );
+    });
+  }
+  return normalized;
+}
+
 function cloudflarePattern(value, destination = false) {
   return value.replace(/:([A-Za-z][A-Za-z0-9_]*)\*/g, destination ? ":splat" : "*");
 }
@@ -147,6 +163,10 @@ export async function prepareFumapress({ root = ROOT, outRoot = root } = {}) {
   await rm(publicRoot, { recursive: true, force: true });
   await mkdir(path.join(contentRoot, "docs"), { recursive: true });
   await mkdir(publicRoot, { recursive: true });
+  await writeFile(
+    path.join(contentRoot, "fumapress-docs.json"),
+    `${JSON.stringify(normalizeMintlifyNavigationForFumapress(docs), null, 2)}\n`,
+  );
 
   const documentsByPath = new Map();
   for (const document of documents) {

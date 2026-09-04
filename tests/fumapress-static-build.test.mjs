@@ -7,6 +7,14 @@ import { collectMdxDocuments } from "../scripts/prepare-fumapress.mjs";
 const root = path.resolve(import.meta.dirname, "..");
 const publicRoot = path.join(root, "dist/public");
 
+test("the documentation keeps a neutral base with custom section and TOC treatments", async () => {
+  const css = await readFile(path.join(root, "src/app.css"), "utf8");
+  assert.match(css, /fumadocs-ui\/css\/neutral\.css/);
+  assert.doesNotMatch(css, /fumadocs-ui\/css\/ocean\.css/);
+  assert.match(css, /#nd-toc > div > div/);
+  assert.match(css, /#nd-toc > div > div > a > svg/);
+});
+
 async function collectHtmlRoutes(directory) {
   const routes = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -83,6 +91,25 @@ test("all locales emit the OpenAPI surface with endpoint semantics", async () =>
     const html = await readFile(representative, "utf8");
     for (const semantic of semantics) assert.ok(html.includes(semantic), `${locale} page is missing ${semantic}`);
     assert.ok(sitemap.includes(`https://docs.langbot.dev/${locale}/api-reference/${encodedRepresentativePath}`));
+
+    const spec = JSON.parse(await readFile(path.join(root, `openapi/service-api-${locale}.json`), "utf8"));
+    const tagOrder = [];
+    for (const pathItem of Object.values(spec.paths ?? {})) {
+      for (const operation of Object.values(pathItem)) {
+        if (!operation || typeof operation !== "object") continue;
+        for (const tag of operation.tags ?? []) if (!tagOrder.includes(tag)) tagOrder.push(tag);
+      }
+    }
+    const asideStart = html.indexOf('<aside id="nd-sidebar"');
+    const asideEnd = html.indexOf("</aside>", asideStart);
+    const sidebar = html.slice(asideStart, asideEnd);
+    assert.match(sidebar, /<p[^>]*>HTTP API Reference<\/p>/, `${locale} OpenAPI section is missing`);
+    let previousTag = -1;
+    for (const tag of tagOrder) {
+      const position = sidebar.indexOf(`>${tag}<`);
+      assert.ok(position > previousTag, `${locale} OpenAPI tag order changed at ${tag}`);
+      previousTag = position;
+    }
   }
 });
 
@@ -148,6 +175,85 @@ test("rendered navbar and documentation tree use each locale's docs.json labels"
       assert.ok(!html.includes(expected[other][1]), `${locale} navbar includes ${other} home link`);
     }
   }
+});
+
+function collectNavigationPages(value, output = []) {
+  if (typeof value === "string") output.push(value);
+  else if (Array.isArray(value)) value.forEach((item) => collectNavigationPages(item, output));
+  else if (value && typeof value === "object") {
+    if (value.hidden) return output;
+    for (const key of ["tabs", "groups", "pages"]) {
+      if (Array.isArray(value[key])) collectNavigationPages(value[key], output);
+    }
+  }
+  return output;
+}
+
+function firstNavigationPage(value) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const page = firstNavigationPage(item);
+      if (page) return page;
+    }
+  } else if (value && typeof value === "object" && !value.hidden) {
+    return firstNavigationPage(value.pages ?? value.groups ?? []);
+  }
+}
+
+function escapeHtml(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+test("docs.json tabs and groups render as root selectors and non-collapsible sections", async () => {
+  const docs = JSON.parse(await readFile(path.join(root, "docs.json"), "utf8"));
+  const localeMap = { en: "en", cn: "zh", jp: "ja" };
+  for (const language of docs.navigation.languages) {
+    const locale = localeMap[language.language];
+    for (const tab of language.tabs.filter((item) => !item.hidden)) {
+      const sourcePage = firstNavigationPage(tab.groups);
+      assert.ok(sourcePage, `${locale} ${tab.tab} has no representative page`);
+      const route = sourcePage.replace(/\/index$/, "");
+      const html = await readFile(path.join(publicRoot, route, "index.html"), "utf8");
+      const asideStart = html.indexOf('<aside id="nd-sidebar"');
+      const asideEnd = html.indexOf("</aside>", asideStart);
+      const sidebar = html.slice(asideStart, asideEnd);
+      assert.ok(sidebar.includes(`>${escapeHtml(tab.tab)}</p>`), `${locale} ${tab.tab} is not the root selector`);
+      for (const group of tab.groups.filter((item) => !item.hidden)) {
+        assert.ok(sidebar.includes(`>${escapeHtml(group.group)}</p>`), `${locale} ${tab.tab}/${group.group} is not a section label`);
+      }
+    }
+  }
+});
+
+test("every legacy navigation entry resolves to its exact sidebar URL", async () => {
+  const docs = JSON.parse(await readFile(path.join(root, "docs.json"), "utf8"));
+  const localeMap = { en: "en", cn: "zh", jp: "ja" };
+  const failures = [];
+  for (const language of docs.navigation.languages) {
+    const locale = localeMap[language.language];
+    const pages = collectNavigationPages(language.tabs ?? []);
+    for (const page of pages) {
+      if (!page.startsWith(`${locale}/`)) continue;
+      const route = page.replace(/\/index$/, "");
+      const htmlPath = path.join(publicRoot, route, "index.html");
+      const html = await readFile(htmlPath, "utf8");
+      const asideStart = html.indexOf('<aside id="nd-sidebar"');
+      const asideEnd = html.indexOf("</aside>", asideStart);
+      const sidebar = html.slice(asideStart, asideEnd);
+      if (!sidebar.includes(`href="/${route}"`)) failures.push({ page, htmlPath });
+    }
+  }
+  assert.deepEqual(failures, []);
+});
+
+test("the Chinese quick-start navigation keeps the incumbent troubleshooting page", async () => {
+  const html = await readFile(path.join(publicRoot, "zh/insight/guide/index.html"), "utf8");
+  const asideStart = html.indexOf('<aside id="nd-sidebar"');
+  const asideEnd = html.indexOf("</aside>", asideStart);
+  const sidebar = html.slice(asideStart, asideEnd);
+  assert.match(sidebar, /href="\/zh\/insight\/troubleshooting"/);
+  assert.doesNotMatch(sidebar, /href="\/zh\/develop\/adapter\/discord\/troubleshooting"/);
 });
 
 test("the exact 14 zh-only sources publish no fallback en or ja routes", async () => {

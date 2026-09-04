@@ -7,6 +7,7 @@ import {
   collectMdxDocuments,
   collectOpenApiSources,
   mapMintlifyLocale,
+  normalizeMintlifyNavigationForFumapress,
   normalizeMdxContent,
   prepareFumapress,
   renderCloudflareRedirects,
@@ -18,6 +19,42 @@ test("Mintlify locales are mapped to public URL locales", () => {
   assert.equal(mapMintlifyLocale("en"), "en");
   assert.equal(mapMintlifyLocale("cn"), "zh");
   assert.equal(mapMintlifyLocale("jp"), "ja");
+});
+
+test("Fumapress navigation preserves docs.json hierarchy while removing storage locale prefixes", async () => {
+  const docs = JSON.parse(await readFile(path.join(root, "docs.json"), "utf8"));
+  const original = structuredClone(docs);
+  const normalized = normalizeMintlifyNavigationForFumapress(docs);
+  assert.deepEqual(docs, original, "normalization must not mutate canonical docs.json");
+
+  const localeMap = { en: "en", cn: "zh", jp: "ja" };
+  for (const language of normalized.navigation.languages) {
+    const locale = localeMap[language.language];
+    const originalLanguage = original.navigation.languages.find((item) => item.language === language.language);
+    assert.deepEqual(
+      language.tabs.map((tab) => tab.tab),
+      originalLanguage.tabs.map((tab) => tab.tab),
+      `${locale} tab order changed`,
+    );
+    for (let tabIndex = 0; tabIndex < language.tabs.length; tabIndex += 1) {
+      const actualTab = language.tabs[tabIndex];
+      const expectedTab = originalLanguage.tabs[tabIndex];
+      assert.deepEqual(actualTab.groups.map((group) => group.group), expectedTab.groups.map((group) => group.group));
+      for (let groupIndex = 0; groupIndex < actualTab.groups.length; groupIndex += 1) {
+        const actualPages = actualTab.groups[groupIndex].pages ?? [];
+        const normalizePages = (value) => {
+          if (typeof value === "string") return value.startsWith(`${locale}/`) ? value.slice(locale.length + 1) : value;
+          if (Array.isArray(value)) return value.map(normalizePages);
+          if (value && typeof value === "object") return Object.fromEntries(
+            Object.entries(value).map(([key, child]) => [key, key === "pages" ? normalizePages(child) : child]),
+          );
+          return value;
+        };
+        const expectedPages = normalizePages(expectedTab.groups[groupIndex].pages ?? []);
+        assert.deepEqual(actualPages, expectedPages, `${locale} navigation pages changed`);
+      }
+    }
+  }
 });
 
 test("MDX compatibility normalization rewrites unsupported env fences", () => {

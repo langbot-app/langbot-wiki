@@ -11,3 +11,26 @@
 body {
   font-family: "Noto Sans SC", "Noto Sans", system-ui, sans-serif;
 }
+
+
+/* Keep the page outline visually quiet: one rail, no stepped connectors. */
+#nd-toc > div > div {
+  border-inline-start: 1px solid color-mix(in oklab, var(--color-fd-foreground) 10%, transparent);
+  margin-inline-start: 0.53125rem;
+}
+
+#nd-toc > div > div > a > svg {
+  display: none;
+}
+
+/* Mintlify-style section labels: headings, not expandable folder controls. */
+#nd-sidebar p.inline-flex.items-center.gap-2 {
+  margin-block: 1.15rem 0.35rem;
+  padding-inline: 0.5rem;
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  line-height: 1.25rem;
+  text-transform: uppercase;
+}

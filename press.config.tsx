@@ -1,5 +1,6 @@
 import { defineMintlifyI18n, mintlifyPlugin, readMintlifyDocs } from "@fumapress/mintlify";
 import { defineConfig } from "fumapress";
+import type { Folder, Node as PageTreeNode, Root, Separator } from "fumadocs-core/page-tree";
 import { fumadocsMdx } from "fumapress/adapters/mdx";
 import { flexsearchPlugin } from "fumapress/plugins/flexsearch";
 import { openapiPlugin } from "fumapress/plugins/openapi";
@@ -16,6 +17,86 @@ const LOCALES = ["en", "zh", "ja"] as const;
 const MINTLIFY_LOCALE = { en: "en", zh: "cn", ja: "jp" } as const;
 const HREFLANG = { en: "en", zh: "zh-CN", ja: "ja" } as const;
 const mintlifyDocs = readMintlifyDocs();
+
+function nodeName(node: PageTreeNode) {
+  return typeof node.name === "string" ? node.name : "";
+}
+
+const openApiTagOrder = Object.fromEntries(LOCALES.map((locale) => {
+  const spec = JSON.parse(readFileSync(`openapi/service-api-${locale}.json`, "utf8"));
+  const tags: string[] = [];
+  for (const pathItem of Object.values(spec.paths ?? {}) as Record<string, any>[]) {
+    for (const operation of Object.values(pathItem)) {
+      if (!operation || typeof operation !== "object") continue;
+      for (const tag of operation.tags ?? []) if (!tags.includes(tag)) tags.push(tag);
+    }
+  }
+  return [locale, tags];
+})) as Record<(typeof LOCALES)[number], string[]>;
+
+function generatedOpenApiGroups(tree: Root, locale: (typeof LOCALES)[number]) {
+  const apiRoot = tree.children.find(
+    (node) => node.type === "folder" && node.$ref?.folder === "api-reference",
+  );
+  if (!apiRoot || apiRoot.type !== "folder") return [];
+  const order = openApiTagOrder[locale];
+  const rank = (name: string) => order.findIndex((tag) => tag.toLocaleLowerCase() === name.toLocaleLowerCase());
+  return [...apiRoot.children]
+    .sort((left, right) => {
+      const leftIndex = rank(nodeName(left));
+      const rightIndex = rank(nodeName(right));
+      return (leftIndex < 0 ? Number.MAX_SAFE_INTEGER : leftIndex)
+        - (rightIndex < 0 ? Number.MAX_SAFE_INTEGER : rightIndex);
+    })
+    .map((node) => {
+      const index = rank(nodeName(node));
+      return index >= 0 ? { ...node, name: order[index] } : node;
+    });
+}
+
+function sectionizeMintlifyTree(
+  tree: Root,
+  sourceTree: Root,
+  locale: (typeof LOCALES)[number],
+): Root {
+  const language = mintlifyDocs.navigation.languages?.find(
+    (entry) => entry.language === MINTLIFY_LOCALE[locale],
+  );
+  const generatedApiGroups = generatedOpenApiGroups(sourceTree, locale);
+  return {
+    ...tree,
+    children: tree.children.map((node): PageTreeNode => {
+      if (node.type !== "folder") return node;
+      const configuredTab = language?.tabs?.find((tab) => tab.tab === nodeName(node));
+      const sourceGroups = new Map(
+        node.children
+          .filter((child): child is Folder => child.type === "folder")
+          .map((child) => [nodeName(child), child]),
+      );
+      const children: PageTreeNode[] = [];
+      for (const group of configuredTab?.groups ?? []) {
+        if (group.hidden) continue;
+        const separator: Separator = {
+          $id: `${node.$id}:${group.group}:section`,
+          type: "separator",
+          name: group.group,
+        };
+        children.push(separator);
+        if ("openapi" in group && group.openapi) {
+          children.push(...generatedApiGroups);
+          continue;
+        }
+        const sourceGroup = sourceGroups.get(group.group);
+        if (!sourceGroup) continue;
+        if (sourceGroup.index) children.push(sourceGroup.index);
+        children.push(...sourceGroup.children);
+      }
+      const tab: Folder = { ...node, root: true, children };
+      return tab;
+    }),
+  };
+}
+
 const i18n = defineMintlifyI18n(mintlifyDocs, {
   localeMap: { en: "en", cn: "zh", jp: "ja" },
 });
@@ -232,7 +313,28 @@ export default defineConfig({
         return { id: page.url, title, description, url: page.url, structuredData };
       },
     }),
-    mintlifyPlugin({ features: { navbar: false } }),
+    mintlifyPlugin({ path: "content/fumapress-docs.json", features: { navbar: false } }),
+    {
+      name: "langbot:sectioned-navigation",
+      enforce: "post",
+      init() {
+        const context = this;
+        const sourceTrees = new Map<string, Root>();
+        for (const key of ["core:docs-layout", "core:notebook-layout"] as const) {
+          const data = (this.data[key] ??= {});
+          (data.transformers ??= []).push(async ({ data: props, page }) => {
+            const locale = page.locale as (typeof LOCALES)[number];
+            let sourceTree = sourceTrees.get(locale);
+            if (!sourceTree) {
+              sourceTree = (await context.getLoader()).getPageTree(page.locale);
+              sourceTrees.set(locale, sourceTree);
+            }
+            props.layoutProps.tree = sectionizeMintlifyTree(props.layoutProps.tree, sourceTree, locale);
+            return props;
+          });
+        }
+      },
+    },
     openapiPlugin({ server: enOpenAPI }),
     robotsPlugin({
       rules: [{ userAgent: "*", allow: ["/", "/_next/"] }],
