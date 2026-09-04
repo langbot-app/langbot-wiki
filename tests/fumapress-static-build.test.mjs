@@ -13,6 +13,10 @@ test("the documentation keeps a neutral base with custom section and TOC treatme
   assert.doesNotMatch(css, /fumadocs-ui\/css\/ocean\.css/);
   assert.match(css, /#nd-toc > div > div/);
   assert.match(css, /#nd-toc > div > div > a > svg/);
+  assert.match(css, /#nd-toc > div > div > div\.absolute/);
+  assert.match(css, /a\[data-active="true"\]::before/);
+  assert.match(css, /inset-inline-start: 0\.5rem/);
+  assert.match(css, /border-radius: 0/);
 });
 
 async function collectHtmlRoutes(directory) {
