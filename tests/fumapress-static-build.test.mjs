@@ -31,6 +31,12 @@ function staticHtmlForCanonicalDocument(document) {
   return path.join(publicRoot, ...parts, "index.html");
 }
 
+function staticHtmlForUrlPath(urlPath) {
+  const parts = urlPath.replace(/^\//, "").replace(/\/$/, "").split("/")
+    .map((segment) => decodeURIComponent(segment));
+  return path.join(publicRoot, ...parts, "index.html");
+}
+
 test("all 302 canonical localized documents have static HTML", async () => {
   const documents = await collectMdxDocuments(root);
   assert.equal(documents.length, 302);
@@ -50,9 +56,20 @@ test("every fixed redirect destination resolves to generated output", async () =
     .trim().split("\n").map((line) => line.split(/\s+/));
   for (const [source, destination] of redirects) {
     if (destination.includes(":splat")) continue;
-    const target = destination.replace(/^\//, "").replace(/\/$/, "");
-    await access(path.join(publicRoot, target, "index.html"), undefined, `${source} -> ${destination}`);
+    await access(staticHtmlForUrlPath(destination), undefined, `${source} -> ${destination}`);
   }
+});
+
+test("static output uses decoded filesystem paths for edge hosting", async () => {
+  const encodedComponents = [];
+  async function walk(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      if (/%[0-9A-Fa-f]{2}/.test(entry.name)) encodedComponents.push(path.join(directory, entry.name));
+      if (entry.isDirectory()) await walk(path.join(directory, entry.name));
+    }
+  }
+  await walk(publicRoot);
+  assert.deepEqual(encodedComponents, []);
 });
 
 test("static routes never repeat their locale prefix", async () => {
@@ -87,7 +104,7 @@ test("all locales emit the OpenAPI surface with endpoint semantics", async () =>
     assert.ok(routes.length >= 50, `${locale} emitted only ${routes.length} API routes`);
 
     const encodedRepresentativePath = representativePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
-    const representative = path.join(apiRoot, encodedRepresentativePath, "index.html");
+    const representative = path.join(apiRoot, representativePath, "index.html");
     const html = await readFile(representative, "utf8");
     for (const semantic of semantics) assert.ok(html.includes(semantic), `${locale} page is missing ${semantic}`);
     assert.ok(sitemap.includes(`https://docs.langbot.dev/${locale}/api-reference/${encodedRepresentativePath}`));
