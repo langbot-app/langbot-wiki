@@ -5,6 +5,7 @@ import { flexsearchPlugin } from "fumapress/plugins/flexsearch";
 import { openapiPlugin } from "fumapress/plugins/openapi";
 import { robotsPlugin } from "fumapress/plugins/robots";
 import { update } from "fumadocs-core/source";
+import { uiTranslations } from "fumadocs-ui/i18n";
 import { defineDocs } from "fumadocs-mdx/macro";
 import { createOpenAPI, type OpenAPIServer } from "fumadocs-openapi/server";
 import { readdirSync } from "node:fs";
@@ -17,7 +18,13 @@ const HREFLANG = { en: "en", zh: "zh-CN", ja: "ja" } as const;
 const mintlifyDocs = readMintlifyDocs();
 const translations = defineMintlifyI18n(mintlifyDocs, {
   localeMap: { en: "en", cn: "zh", jp: "ja" },
-}).translations();
+}).translations()
+  .extend(uiTranslations())
+  .add({
+    en: { displayName: "English" },
+    zh: { displayName: "简体中文" },
+    ja: { displayName: "日本語" },
+  });
 // Locale-only files must not inherit the English storage and create indexed
 // pages in locales where no canonical source translation exists.
 translations.config.fallbackLanguage = null;

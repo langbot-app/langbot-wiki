@@ -129,6 +129,9 @@ test("rendered navbar uses each locale's docs.json labels and hrefs", async () =
   for (const locale of locales) {
     const html = await readFile(path.join(publicRoot, locale, "insight/guide/index.html"), "utf8");
     for (const value of expected[locale]) assert.ok(html.includes(value), `${locale} navbar missing ${value}`);
+    for (const languageName of ["English", "简体中文", "日本語"]) {
+      assert.ok(html.includes(languageName), `${locale} language selector missing ${languageName}`);
+    }
     for (const other of locales.filter((item) => item !== locale)) {
       assert.ok(!html.includes(expected[other][1]), `${locale} navbar includes ${other} home link`);
     }
