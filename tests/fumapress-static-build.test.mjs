@@ -37,6 +37,16 @@ test("all 302 canonical localized documents have static HTML", async () => {
   assert.deepEqual(missing, []);
 });
 
+test("every fixed redirect destination resolves to generated output", async () => {
+  const redirects = (await readFile(path.join(publicRoot, "_redirects"), "utf8"))
+    .trim().split("\n").map((line) => line.split(/\s+/));
+  for (const [source, destination] of redirects) {
+    if (destination.includes(":splat")) continue;
+    const target = destination.replace(/^\//, "").replace(/\/$/, "");
+    await access(path.join(publicRoot, target, "index.html"), undefined, `${source} -> ${destination}`);
+  }
+});
+
 test("static routes never repeat their locale prefix", async () => {
   for (const locale of ["en", "zh", "ja"]) {
     await assert.rejects(access(path.join(publicRoot, locale, locale)), { code: "ENOENT" });

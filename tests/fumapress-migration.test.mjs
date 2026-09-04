@@ -144,11 +144,14 @@ test("canonical MDX and nested OpenAPI sources are discovered", async () => {
 
 test("Cloudflare redirects preserve all Mintlify routes and add root", async () => {
   const docs = JSON.parse(await readFile(path.join(root, "docs.json"), "utf8"));
-  const lines = renderCloudflareRedirects(docs).trim().split("\n");
+  const spec = JSON.parse(await readFile(path.join(root, "openapi/service-api-en.json"), "utf8"));
+  const lines = renderCloudflareRedirects(docs, spec).trim().split("\n");
   assert.equal(lines.length, docs.redirects.length + 1);
   assert.equal(lines[0], "/ /en/insight/guide 302");
   assert.ok(lines.includes("/README_EN /en/insight/guide 308"));
   assert.ok(lines.some((line) => line.startsWith("/en/deploy/platforms/* /en/usage/platforms/:splat ")));
+  assert.ok(lines.includes("/en/api-reference/system/获取系统信息 /en/api-reference/api/v1/system/info/get 308"));
+  assert.ok(lines.includes("/en/api-reference/model-providers/创建供应商 /en/api-reference/api/v1/provider/providers/post 308"));
 });
 
 test("Fumapress config wires static localized docs, OpenAPI, and Mintlify support", async () => {
