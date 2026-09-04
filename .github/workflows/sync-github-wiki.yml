@@ -81,7 +81,7 @@ jobs:
             echo "GitHub Wiki is already up to date."
             exit 0
           fi
-          git config user.name "langbot-wiki-sync[bot]"
+          git config user.name "langbot-docs-sync[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "docs: sync from langbot-wiki@${SOURCE_SHA::7}"
+          git commit -m "docs: sync from langbot-docs@${SOURCE_SHA::7}"
           git push origin HEAD:master
