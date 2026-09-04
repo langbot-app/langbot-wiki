@@ -340,7 +340,7 @@ async function main() {
   if (!args.source) throw new Error("Pass --source /path/to/langbot-landing-page or set LANGBOT_LANDING_REPO");
   if (!existsSync(path.join(args.source, "src/content/blog"))) throw new Error(`Not a LangBot landing repository: ${args.source}`);
   const { byLocale, slugs } = await loadPosts(args.source);
-  const outputRoot = await mkdtemp(path.join(tmpdir(), "langbot-wiki-article-sync-"));
+  const outputRoot = await mkdtemp(path.join(tmpdir(), "langbot-docs-article-sync-"));
   const assetRoot = args.check ? outputRoot : ROOT;
   const imageCache = new Map();
   const localePosts = new Map();
