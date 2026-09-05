@@ -39,15 +39,15 @@ test("navbar is localized and links to locale-aware product pages", async () => 
   );
   const expected = {
     en: {
-      labels: ["Home", "Cloud", "Extensions", "Blog", "Roadmap"],
+      labels: ["Cloud", "Extensions", "Blog", "Roadmap"],
       roadmap: "https://langbot.app/en/roadmap",
     },
     cn: {
-      labels: ["首页", "云服务", "扩展", "博客", "路线图"],
+      labels: ["云服务", "扩展", "博客", "路线图"],
       roadmap: "https://langbot.app/zh/roadmap",
     },
     jp: {
-      labels: ["ホーム", "クラウド", "拡張機能", "ブログ", "ロードマップ"],
+      labels: ["クラウド", "拡張機能", "ブログ", "ロードマップ"],
       roadmap: "https://langbot.app/ja/roadmap",
     },
   };
@@ -58,14 +58,29 @@ test("navbar is localized and links to locale-aware product pages", async () => 
       navbar.links.map((link) => link.label),
       expected[language].labels,
     );
+    assert.deepEqual(
+      navbar.links.map((link) => link.icon),
+      ["cloud", "blocks", "newspaper", "map"],
+    );
     assert.equal(navbar.links.at(-1).href, expected[language].roadmap);
     assert.equal(navbar.primary.type, "button");
     assert.equal(navbar.primary.label, "GitHub");
+    assert.equal(navbar.primary.icon, "github");
     assert.equal(
       navbar.primary.href,
       "https://github.com/langbot-app/LangBot",
     );
   }
+
+  assert.deepEqual(
+    docs.navbar.links.map((link) => link.label),
+    expected.en.labels,
+  );
+  assert.deepEqual(
+    docs.navbar.links.map((link) => link.icon),
+    ["cloud", "blocks", "newspaper", "map"],
+  );
+  assert.equal(docs.navbar.primary.icon, "github");
 });
 
 test("custom robots policy is served from the Mintlify project root", async () => {

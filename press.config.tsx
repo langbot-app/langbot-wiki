@@ -9,7 +9,7 @@ import { update } from "fumadocs-core/source";
 import { uiTranslations } from "fumadocs-ui/i18n";
 import { defineDocs } from "fumadocs-mdx/macro";
 import { createOpenAPI, type OpenAPIServer } from "fumadocs-openapi/server";
-import { Bot } from "lucide-react";
+import { Blocks, Bot, Cloud, ExternalLink, Map as MapIcon, Newspaper } from "lucide-react";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
@@ -204,20 +204,72 @@ function collectRouteLocales() {
 
 const routeLocales = collectRouteLocales();
 
+function GithubMark(props: import("react").ComponentProps<"svg">) {
+  return <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M12 .7a11.5 11.5 0 0 0-3.64 22.4c.58.1.79-.25.79-.56v-2.02c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.78 1.2 1.78 1.2 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.74-1.55-2.57-.29-5.27-1.28-5.27-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.47.11-3.05 0 0 .97-.31 3.16 1.18a10.96 10.96 0 0 1 5.75 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.58.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.71 5.39-5.29 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z" />
+  </svg>;
+}
+
+const QUICK_LINK_ICONS = {
+  blocks: Blocks,
+  cloud: Cloud,
+  github: GithubMark,
+  map: MapIcon,
+  newspaper: Newspaper,
+} as const;
+
+type QuickLinkIcon = keyof typeof QUICK_LINK_ICONS;
+type ConfiguredNavbarLink = {
+  href: string;
+  icon?: QuickLinkIcon;
+  label?: string;
+};
+type ConfiguredNavbar = {
+  links?: ConfiguredNavbarLink[];
+  primary?: ConfiguredNavbarLink & { type?: string };
+};
+
+function quickLinkIcon(name: QuickLinkIcon | undefined) {
+  if (!name) return undefined;
+  const Icon = QUICK_LINK_ICONS[name];
+  return <Icon aria-hidden="true" className="size-4 shrink-0" />;
+}
+
+function quickLinkText(text: string) {
+  return <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+    <span>{text}</span>
+    <ExternalLink aria-hidden="true" className="size-3 shrink-0 text-fd-muted-foreground" />
+  </span>;
+}
+
 function localizedNavbar(lang: string | undefined) {
   const locale = LOCALES.includes(lang as (typeof LOCALES)[number]) ? lang as (typeof LOCALES)[number] : "en";
   const language = mintlifyDocs.navigation.languages?.find(
     (entry) => entry.language === MINTLIFY_LOCALE[locale],
   );
-  const navbar = language?.navbar ?? mintlifyDocs.navbar;
+  const navbar = (language?.navbar ?? mintlifyDocs.navbar) as ConfiguredNavbar | undefined;
+  const linkItem = (link: ConfiguredNavbarLink) => ({
+    text: quickLinkText(link.label ?? link.href),
+    url: link.href,
+    icon: quickLinkIcon(link.icon),
+    external: true,
+  });
   return [
-    ...(navbar?.links ?? []).map((link) => ({ text: link.label ?? link.href, url: link.href })),
-    ...(navbar?.primary ? [{
-      type: "button" as const,
-      text: navbar.primary.label ?? navbar.primary.href,
-      url: navbar.primary.href,
-    }] : []),
+    ...(navbar?.links ?? []).map(linkItem),
+    ...(navbar?.primary ? [{ ...linkItem(navbar.primary), type: "button" as const }] : []),
   ];
+}
+
+function docsBrand() {
+  return <span className="inline-flex items-center gap-2">
+    <img
+      src="/langbot-logo.png"
+      alt=""
+      aria-hidden="true"
+      className="size-6 shrink-0 rounded-md object-contain"
+    />
+    <span>LangBot Docs</span>
+  </span>;
 }
 const enOpenAPI = createOpenAPI({ input: ["openapi/service-api-en.json"] });
 const zhOpenAPI = createOpenAPI({ input: ["openapi/service-api-zh.json"] });
@@ -306,9 +358,16 @@ export default defineConfig({
   },
   i18n,
   translations,
-  defaultLayoutProps: ({ lang }) => ({
-    links: localizedNavbar(lang),
-  }),
+  defaultLayoutProps: ({ lang }) => {
+    const locale = LOCALES.includes(lang as (typeof LOCALES)[number]) ? lang as (typeof LOCALES)[number] : "en";
+    return {
+      links: localizedNavbar(locale),
+      nav: {
+        title: docsBrand(),
+        url: `/${locale}/insight/guide`,
+      },
+    };
+  },
   meta: {
     page: (page) => {
       const locale = page.locale as (typeof LOCALES)[number];
