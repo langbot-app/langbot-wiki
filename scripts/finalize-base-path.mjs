@@ -26,6 +26,8 @@ function prefixPublicAssets(content) {
     .replaceAll("'/images/", `'${BASE_PATH}/images/`)
     .replaceAll('"/favicon.ico"', `"${BASE_PATH}/favicon.ico"`)
     .replaceAll("'/favicon.ico'", `'${BASE_PATH}/favicon.ico'`)
+    .replaceAll('"/langbot-logo.png"', `"${BASE_PATH}/langbot-logo.png"`)
+    .replaceAll("'/langbot-logo.png'", `'${BASE_PATH}/langbot-logo.png'`)
     .replaceAll('"/rss.xml"', `"${BASE_PATH}/rss.xml"`)
     .replaceAll("'/rss.xml'", `'${BASE_PATH}/rss.xml'`);
 }

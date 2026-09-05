@@ -253,6 +253,8 @@ test("rendered navbar and documentation tree use each locale's docs.json labels"
   for (const locale of locales) {
     const html = await readFile(path.join(publicRoot, locale, "insight/guide/index.html"), "utf8");
     for (const value of expected[locale]) assert.ok(html.includes(value), `${locale} navbar missing ${value}`);
+    assert.match(html, /<img[^>]+src="\/docs\/langbot-logo\.png"[^>]*>/, `${locale} docs brand logo is not base-path scoped`);
+    assert.doesNotMatch(html, /<img[^>]+src="\/langbot-logo\.png"[^>]*>/, `${locale} docs brand logo points outside /docs`);
     assert.ok(!html.includes(`href="${removedHomeLinks[locale]}"`), `${locale} navbar still includes Home`);
     for (const languageName of ["English", "简体中文", "日本語"]) {
       assert.ok(html.includes(languageName), `${locale} language selector missing ${languageName}`);
