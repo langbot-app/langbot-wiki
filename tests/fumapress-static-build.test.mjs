@@ -241,18 +241,24 @@ function extractHeadLinks(html, rel) {
 
 test("rendered navbar and documentation tree use each locale's docs.json labels", async () => {
   const expected = {
-    en: ["Home", "https://langbot.app/en", "Roadmap", "https://langbot.app/en/roadmap", "Guides", "Quick Start", "Installation", "Developers", "Articles", "API Reference"],
-    zh: ["首页", "https://langbot.app/zh", "路线图", "https://langbot.app/zh/roadmap", "指南", "快速开始", "安装部署", "开发者", "文章", "API 参考"],
-    ja: ["ホーム", "https://langbot.app/ja", "ロードマップ", "https://langbot.app/ja/roadmap", "ガイド", "クイックスタート", "インストール", "開発者", "記事", "API リファレンス"],
+    en: ["Roadmap", "https://langbot.app/en/roadmap", "Guides", "Quick Start", "Installation", "Developers", "Articles", "API Reference"],
+    zh: ["路线图", "https://langbot.app/zh/roadmap", "指南", "快速开始", "安装部署", "开发者", "文章", "API 参考"],
+    ja: ["ロードマップ", "https://langbot.app/ja/roadmap", "ガイド", "クイックスタート", "インストール", "開発者", "記事", "API リファレンス"],
+  };
+  const removedHomeLinks = {
+    en: "https://langbot.app/en",
+    zh: "https://langbot.app/zh",
+    ja: "https://langbot.app/ja",
   };
   for (const locale of locales) {
     const html = await readFile(path.join(publicRoot, locale, "insight/guide/index.html"), "utf8");
     for (const value of expected[locale]) assert.ok(html.includes(value), `${locale} navbar missing ${value}`);
+    assert.ok(!html.includes(`href="${removedHomeLinks[locale]}"`), `${locale} navbar still includes Home`);
     for (const languageName of ["English", "简体中文", "日本語"]) {
       assert.ok(html.includes(languageName), `${locale} language selector missing ${languageName}`);
     }
     for (const other of locales.filter((item) => item !== locale)) {
-      assert.ok(!html.includes(expected[other][1]), `${locale} navbar includes ${other} home link`);
+      assert.ok(!html.includes(expected[other][1]), `${locale} navbar includes ${other} roadmap link`);
     }
   }
 });
